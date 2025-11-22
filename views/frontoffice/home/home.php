@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once __DIR__ .'/../../../controllers/AuthController.php'; // Correction du chemin
+require_once __DIR__ .'/../../../controllers/AuthController.php'; 
 
 $authController = new AuthController();
 $isLoggedIn = $authController->isLoggedIn();
@@ -15,7 +15,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
  
 </head>
 <body>
-    <!-- Navigation -->
+  
     <nav class="navbar">
         <div class="nav-container">
             <a href="index.php" class="logo">MonSite</a>
@@ -35,7 +35,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
                     <span style="color: #667eea; font-weight: 600;">
                         Bonjour, <?php echo htmlspecialchars($currentUser['prenom']); ?>!
                     </span>
-                    <!-- Remplacer l'ancien lien de déconnexion par : -->
+                    
                      <a href="../../../controllers/logout.php" class="btn btn-secondary" onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?')">Déconnexion</a>
                 <?php else: ?>
                     <a href="../auth/sign-in.php" class="btn btn-secondary">Connexion</a>
@@ -45,7 +45,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
         </div>
     </nav>
 
-    <!-- Hero Section -->
+
     <section class="hero">
         <div class="container">
             <?php if ($isLoggedIn): ?>
@@ -73,7 +73,6 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
         </div>
     </section>
 
-    <!-- Features Section -->
     <section class="features" id="features">
         <div class="container">
             <h2 class="section-title">Pourquoi nous choisir ?</h2>
@@ -112,7 +111,6 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
         </div>
     </section>
 
-    <!-- Additional Info Section -->
     <section style="background: #f8f9fa; padding: 80px 2rem;">
         <div class="container" style="text-align: center;">
             <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color: #333;">Prêt à commencer ?</h2>
@@ -129,7 +127,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
         </div>
     </section>
 
-    <!-- Footer -->
+   
     <footer>
         <div class="container">
             <p>&copy; <?php echo date('Y'); ?> MonSite. Tous droits réservés.</p>
@@ -142,7 +140,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
     </footer>
 
     <script>
-        // Smooth scroll pour les ancres
+       
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -156,7 +154,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
             });
         });
 
-        // Animation au scroll
+       
         const observerOptions = {
             threshold: 0.1,
             rootMargin: '0px 0px -50px 0px'
@@ -171,7 +169,6 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
             });
         }, observerOptions);
 
-        // Observer les cartes de fonctionnalités
         document.querySelectorAll('.feature-card').forEach(card => {
             card.style.opacity = '0';
             card.style.transform = 'translateY(20px)';

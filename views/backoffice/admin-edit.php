@@ -1,5 +1,5 @@
 <?php
-// views/backoffice/admin-edit-user.php
+
 include_once '../../controllers/AdminController.php';
 
 session_start();
@@ -24,7 +24,6 @@ if (!$userResult['success']) {
 
 $user = $userResult['user'];
 
-// Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $result = $adminController->manageUsers('update', $_POST, $user_id);
     
@@ -105,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                             </div>
 
-                            <!-- Section mot de passe optionnelle -->
+                            
                             <div class="card mt-4">
                                 <div class="card-header">
                                     <h6>Changer le mot de passe (optionnel)</h6>

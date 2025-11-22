@@ -8,7 +8,7 @@ class UtilisateurController {
         $this->pdo = config::getConnexion();
     }
 
-    // 🔹 CRUD complet pour la gestion admin
+    
     public function getAllUsers() {
         try {
             $req = $this->pdo->query('SELECT * FROM utilisateur ORDER BY date_inscription DESC');
@@ -107,19 +107,19 @@ class UtilisateurController {
         try {
             $stats = [];
 
-            // Total users
+          
             $req = $this->pdo->query('SELECT COUNT(*) as total FROM utilisateur');
             $stats['total'] = $req->fetch()['total'];
 
-            // Users by status
+           
             $req = $this->pdo->query('SELECT statut, COUNT(*) as count FROM utilisateur GROUP BY statut');
             $stats['by_status'] = $req->fetchAll();
 
-            // Users by role
+            
             $req = $this->pdo->query('SELECT role, COUNT(*) as count FROM utilisateur GROUP BY role');
             $stats['by_role'] = $req->fetchAll();
 
-            // New users this month
+            
             $req = $this->pdo->query('SELECT COUNT(*) as count FROM utilisateur WHERE MONTH(date_inscription) = MONTH(CURRENT_DATE())');
             $stats['new_this_month'] = $req->fetch()['count'];
 

@@ -289,13 +289,12 @@ $dashboardData = $adminController->dashboard();
             </div>
         </div>
     </section>
-    <!--================End Banner Area =================-->
+    
 
-    <!--================Dashboard Area =================-->
+  
     <section class="dashboard-area">
         <div class="container">
             <div class="animate-fade-in-up">
-                <!-- Statistiques -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon">
@@ -324,7 +323,7 @@ $dashboardData = $adminController->dashboard();
                     <?php endforeach; ?>
                 </div>
 
-                <!-- Utilisateurs récents -->
+                
                 <div class="recent-users">
                     <h3 class="section-title">Utilisateurs Récents</h3>
                     <div class="table-responsive">
@@ -363,7 +362,7 @@ $dashboardData = $adminController->dashboard();
                     </div>
                 </div>
 
-                <!-- Actions rapides -->
+                
                 <div class="dashboard-actions">
                     <a href="admin-edit.php" class="btn-dashboard btn-primary">
                         <i class="ti-user"></i> Gérer les utilisateurs
@@ -383,9 +382,9 @@ $dashboardData = $adminController->dashboard();
             </div>
         </div>
     </section>
-    <!--================End Dashboard Area =================-->
+   
 
-    <!--================ Footer Area =================-->
+    
     <footer class="footer-area area-padding-top">
         <div class="container">
             <div class="row">
@@ -436,9 +435,9 @@ $dashboardData = $adminController->dashboard();
             </div>
         </div>
     </footer>
-    <!--================ End Footer Area =================-->
+    
 
-    <!-- Optional JavaScript -->
+   
     <script src="../assets/js/jquery-2.2.4.min.js"></script>
     <script src="../assets/js/popper.js"></script>
     <script src="../assets/js/bootstrap.min.js"></script>
@@ -446,7 +445,7 @@ $dashboardData = $adminController->dashboard();
     <script src="../assets/js/theme.js"></script>
     
     <script>
-        // Confirmation de déconnexion
+        
         document.querySelectorAll('a[href*="logout"]').forEach(link => {
             link.addEventListener('click', function(e) {
                 if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
@@ -455,7 +454,7 @@ $dashboardData = $adminController->dashboard();
             });
         });
 
-        // Animation au chargement
+       
         document.addEventListener('DOMContentLoaded', function() {
             const statCards = document.querySelectorAll('.stat-card');
             statCards.forEach((card, index) => {

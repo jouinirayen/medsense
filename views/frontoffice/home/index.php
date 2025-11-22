@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once __DIR__ .'/../../../controllers/AuthController.php'; // Correction du chemin
+require_once __DIR__ .'/../../../controllers/AuthController.php'; 
 
 $authController = new AuthController();
 $isLoggedIn = $authController->isLoggedIn();
@@ -9,25 +9,25 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
 <!doctype html>
 <html lang="en">
 <head>
-    <!-- Required meta tags -->
+  
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="icon" href="img/favicon.png" type="image/png">
     <title>Medcare Medical</title>
-    <!-- Bootstrap CSS -->
+    
     <link rel="stylesheet" href="../../assets/css/bootstrap.css">
     <link rel="stylesheet" href="../../assets/css/themify-icons.css">
     <link rel="stylesheet" href="../../assets/css/flaticon.css">
     <link rel="stylesheet" href="../../assets/vendors/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="../../assets/vendors/owl-carousel/owl.carousel.min.css">
     <link rel="stylesheet" href="../../assets/vendors/animate-css/animate.css">
-    <!-- main css -->
+    
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/responsive.css">
 </head>
 <body>
      
-<!--================Header Menu Area =================-->
+
 <header class="header_area">
     <div class="top_menu row m0">
         <div class="container">
@@ -43,7 +43,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
                     <li><a href="#"><i class="ti-skype"></i></a></li>
                     <li><a href="#"><i class="ti-vimeo-alt"></i></a></li>
                 </ul>
-                <!-- Section authentification dans le header top -->
+                
                 <div class="auth-top" style="display: inline-block; margin-left: 20px;">
                     <?php if ($isLoggedIn && $currentUser): ?>
                         <span style="color: #fff; margin-right: 15px;">
@@ -67,14 +67,14 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
     <div class="main_menu">
         <nav class="navbar navbar-expand-lg navbar-light">
             <div class="container">
-                <!-- Brand and toggle get grouped for better mobile display -->
+                
                 <a class="navbar-brand logo_h" href="index.php"><img src="../../assets/img/logo.png" alt=""></a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <!-- Collect the nav links, forms, and other content for toggling -->
+                
                 <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
                     <ul class="nav navbar-nav menu_nav ml-auto">
                         <li class="nav-item active"><a class="nav-link" href="index.php">Home</a></li>
@@ -91,7 +91,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
                         </li>
                         <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
                         
-                        <!-- Menu utilisateur connecté -->
+                     
                         <?php if ($isLoggedIn && $currentUser): ?>
                             <li class="nav-item submenu dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
@@ -112,9 +112,8 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
         </nav>
     </div>
 </header>
-<!--================Header Menu Area =================-->
 
-<!--================Home Banner Area =================-->
+
 <section class="banner-area d-flex align-items-center">
     <div class="container">
         <div class="row">
@@ -142,8 +141,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
         </div>
     </div>
 </section>
-<!--================End Home Banner Area =================-->
-<!--================ CTA Section =================-->
+
 <?php if (!$isLoggedIn): ?>
 <section class="cta-section" style="background: linear-gradient(90deg, #071551ff 0%, #7a9edbff 100%); padding: 80px 0; color: white;">
     <div class="container">
@@ -159,15 +157,14 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
     </div>
 </section>
 <?php endif; ?>
-<!--================ End CTA Section =================-->
-<!--================ appointment Area Starts =================-->
+
 <section class="appointment-area">
     <div class="container">
         <div class="appointment-inner">
             <div class="row">
                 <div class="col-sm-12 col-lg-5 offset-lg-1">
                     <h3>Have Some Questions?</h3>
-                    <!-- Le contenu de l'accordéon reste le même -->
+                   
                 </div>
                 <div class="col-lg-5">
                     <div class="appointment-form">
@@ -201,9 +198,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
         </div>
     </div>
 </section>
-<!--================ appointment Area End =================-->
 
-    <!--================ Service section start =================-->  
 
     <div class="service-area area-padding-top">
         <div class="container">
@@ -254,10 +249,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
             </div>
         </div>
     </div>    
-    <!--================ Service section end =================-->      
-
-
-    <!--================About  Area =================-->
+ 
     <section class="about-area">
         <div class="container">
             <div class="row align-items-center">
@@ -276,9 +268,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
             </div>
         </div>
     </section>
-    <!--================About Area End =================-->
-
-    <!--================ Team section start =================-->  
+ 
     <section class="team-area area-padding">
         <div class="container">
             <div class="area-heading row">
@@ -351,10 +341,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
             </div>
         </div>
     </section>
-    <!--================ Team section end =================-->  
-
-
-    <!--================ appointment Area Starts =================-->
+  
     <section class="appointment-area">
         <div class="container">
 
@@ -470,10 +457,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
 
         </div>
     </section>
-    <!--================ appointment Area End =================-->
-
-
-    <!-- ================ testimonial section start ================= -->      
+  
     <section class="testimonial">
         <div class="container">
             <div class="testi_slider owl-carousel owl-theme">
@@ -519,9 +503,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
             </div>
         </div>
     </section>
-    <!-- ================ testimonial section end ================= -->    
-
-    <!-- ================ Hotline Area Starts ================= -->  
+ 
     <section class="hotline-area text-center area-padding">
         <div class="container">
             <div class="row">
@@ -533,12 +515,7 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
             </div>
         </div>
     </section>
-    <!-- ================ Hotline Area End ================= -->  
 
-
-
-
-    <!--================ Start Blog Area =================-->
     <section class="blog-area area-padding">
         <div class="container">
             <div class="area-heading row">
@@ -624,45 +601,45 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
             </div>
         </div>
     </section>
-    <!--================ End Blog Area =================-->
 
-    <!--================ Start Brands Area =================-->
     <section class="brands-area background_one">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-10">
                     <div class="owl-carousel brand-carousel">
-                        <!-- single-brand -->
+                       
                         <div class="single-brand-item d-table">
                             <div class="d-table-cell">
                                 <img src="img/brand/1.png" alt="">
                             </div>
                         </div>
-                        <!-- single-brand -->
+                       
+                        
                         <div class="single-brand-item d-table">
                             <div class="d-table-cell">
                                 <img src="img/brand/2.png" alt="">
                             </div>
                         </div>
-                        <!-- single-brand -->
+                        
+                        
                         <div class="single-brand-item d-table">
                             <div class="d-table-cell">
                                 <img src="img/brand/3.png" alt="">
                             </div>
                         </div>
-                        <!-- single-brand -->
+                       
                         <div class="single-brand-item d-table">
                             <div class="d-table-cell">
                                 <img src="img/brand/4.png" alt="">
                             </div>
                         </div>
-                        <!-- single-brand -->
+                       
                         <div class="single-brand-item d-table">
                             <div class="d-table-cell">
                                 <img src="img/brand/5.png" alt="">
                             </div>
                         </div>
-                        <!-- single-brand -->
+                      
                         <div class="single-brand-item d-table">
                             <div class="d-table-cell">
                                 <img src="img/brand/3.png" alt="">
@@ -673,9 +650,9 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
             </div>
         </div>
     </section>
-    <!--================ End Brands Area =================-->
+   
 
-    <!-- start footer Area -->
+    
     <footer class="footer-area area-padding-top">
         <div class="container">
             <div class="row">
@@ -737,9 +714,9 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
         </div>
         <div class="row footer-bottom d-flex justify-content-between">
             <p class="col-lg-8 col-sm-12 footer-text m-0">
-                <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+                
 Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | This template is made with <i class="fa fa-heart" aria-hidden="true"></i> by <a href="https://colorlib.com" target="_blank">Colorlib</a>
-<!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+
             </p>
             <div class="col-lg-4 col-sm-12 footer-social">
                 <a href="#"><i class="fab fa-facebook-f"></i></a>
@@ -750,15 +727,6 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
         </div>
     </div>
 </footer>
-<!-- End footer Area -->
-
-
-
-
-
-
-<!-- Optional JavaScript -->
-<!-- jQuery first, then Popper.js, then Bootstrap JS -->
 <script src="js/jquery-2.2.4.min.js"></script>
 <script src="js/popper.js"></script>
 <script src="js/bootstrap.min.js"></script>

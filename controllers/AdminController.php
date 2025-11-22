@@ -10,7 +10,6 @@ class AdminController {
     }
 
     public function dashboard() {
-        // Vérifier les permissions admin
         if (!$this->isAdmin()) {
             header('Location: ../frontoffice/auth/sign-in.php');
             exit;
@@ -61,23 +60,20 @@ class AdminController {
         }
     }
 
-    /**
-     * Met à jour un utilisateur
-     */
+   
     public function updateUser($id, $data) {
         try {
-            // Vérifier si l'utilisateur existe
             $existingUser = $this->utilisateurController->getUserById($id);
             if (!$existingUser) {
                 return array("success" => false, "message" => "Utilisateur non trouvé");
             }
 
-            // Empêcher un admin de se modifier soi-même
+            
             if ($id == $_SESSION['user_id'] && isset($data['role']) && $data['role'] !== $_SESSION['user_role']) {
                 return array("success" => false, "message" => "Vous ne pouvez pas modifier votre propre rôle");
             }
 
-            // Préparer les données de mise à jour
+       
             $user = new Utilisateur();
             $user->setId($id);
             $user->setNom($data['nom'] ?? $existingUser['nom']);
@@ -88,7 +84,7 @@ class AdminController {
             $user->setRole($data['role'] ?? $existingUser['role']);
             $user->setStatut($data['statut'] ?? $existingUser['statut']);
 
-            // Mettre à jour le mot de passe si fourni
+           
             if (!empty($data['mot_de_passe'])) {
                 if ($data['mot_de_passe'] !== $data['confirm_mot_de_passe']) {
                     return array("success" => false, "message" => "Les mots de passe ne correspondent pas");
@@ -103,18 +99,15 @@ class AdminController {
         }
     }
 
-    /**
-     * Supprime un utilisateur
-     */
+   
     public function deleteUser($id) {
         try {
-            // Vérifier si l'utilisateur existe
             $existingUser = $this->utilisateurController->getUserById($id);
             if (!$existingUser) {
                 return array("success" => false, "message" => "Utilisateur non trouvé");
             }
 
-            // Empêcher l'auto-suppression
+            
             if ($id == $_SESSION['user_id']) {
                 return array("success" => false, "message" => "Vous ne pouvez pas supprimer votre propre compte");
             }
@@ -126,9 +119,7 @@ class AdminController {
         }
     }
 
-    /**
-     * Récupère un utilisateur spécifique
-     */
+    
     public function getUser($id) {
         try {
             $user = $this->utilisateurController->getUserById($id);
@@ -142,9 +133,7 @@ class AdminController {
         }
     }
 
-    /**
-     * Récupère tous les utilisateurs
-     */
+   
     public function getAllUsers() {
         try {
             $users = $this->utilisateurController->getAllUsers();

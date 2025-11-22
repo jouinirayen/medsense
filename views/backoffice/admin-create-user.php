@@ -1,5 +1,5 @@
 <?php
-// views/backoffice/admin-create-user.php
+
 session_start();
 if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
     header('Location: ../frontoffice/auth/sign-in.php');
@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
 require_once __DIR__ . '/../../controllers/AdminController.php';
 $adminController = new AdminController();
 
-// Traitement du formulaire
+
 $error_message = null;
 $success_message = null;
 
@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($result['success']) {
         $success_message = $result['message'];
-        // Réinitialiser le formulaire après succès
+    
         $_POST = [];
     } else {
         $error_message = $result['message'];
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </a>
                         </div>
                         <div class="card-body">
-                            <!-- Messages d'alerte -->
+                           
                             <?php if ($success_message): ?>
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                                     <i class="fas fa-check-circle me-2"></i><?= htmlspecialchars($success_message) ?>
@@ -157,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
                                 </div>
 
-                                <!-- Section mot de passe -->
+                                
                                 <div class="card mt-4">
                                     <div class="card-header bg-light">
                                         <h6 class="mb-0"><i class="fas fa-lock me-2"></i>Mot de passe <span class="text-danger">*</span></h6>
@@ -210,7 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const password = document.getElementById('mot_de_passe').value;
             const confirmPassword = document.getElementById('confirm_mot_de_passe').value;
             
-            // Validation des mots de passe
+            
             if (password !== confirmPassword) {
                 e.preventDefault();
                 alert('Les mots de passe ne correspondent pas !');
@@ -225,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 return false;
             }
 
-            // Validation de l'email
+            
             const email = document.getElementById('email').value;
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
@@ -236,7 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
 
-        // Réinitialiser les messages d'alerte après 5 secondes
+        
         setTimeout(() => {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {

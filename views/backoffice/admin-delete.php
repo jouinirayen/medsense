@@ -1,5 +1,5 @@
 <?php
-// views/backoffice/admin-delete.php
+
 require_once __DIR__ . '/../../controllers/AdminController.php';
 
 session_start();

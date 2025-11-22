@@ -10,19 +10,18 @@ class AuthController {
 
     public function register($userData) {
         try {
-            // Validation basique
+          
             if (empty($userData['nom']) || empty($userData['prenom']) || empty($userData['email']) || empty($userData['mot_de_passe'])) {
                 return ["success" => false, "message" => "Tous les champs sont obligatoires"];
             }
 
-            // Vérifier si email existe
+            
             $check = $this->pdo->prepare("SELECT id_utilisateur FROM utilisateur WHERE email = ?");
             $check->execute([$userData['email']]);
             if ($check->fetch()) {
                 return ["success" => false, "message" => "Cet email existe déjà"];
             }
 
-            // Créer l'utilisateur
             $stmt = $this->pdo->prepare("INSERT INTO utilisateur (nom, prenom, email, mot_de_passe, dateNaissance, adresse) VALUES (?, ?, ?, ?, ?, ?)");
             $hashedPassword = password_hash($userData['mot_de_passe'], PASSWORD_DEFAULT);
             
@@ -35,7 +34,7 @@ class AuthController {
                 $userData['adresse'] ?? null
             ]);
 
-            // Auto-login après inscription
+            
             return $this->login($userData['email'], $userData['mot_de_passe']);
 
         } catch (Exception $e) {
@@ -78,15 +77,15 @@ class AuthController {
     }
 
     public function handleLogout() {
-        // Démarrer la session si pas déjà fait
+        
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
         
-        // Vider toutes les variables de session
+      
         $_SESSION = array();
         
-        // Détruire la session
+
         if (ini_get("session.use_cookies")) {
             $params = session_get_cookie_params();
             setcookie(session_name(), '', time() - 42000,
@@ -97,13 +96,13 @@ class AuthController {
         
         session_destroy();
         
-        // Redirection
+       
         header("Location: ../../views/frontoffice/home/index.php");
         exit;
     }
 }
 
-// 🔥 CORRECTION : Gestion de la déconnexion - DOIT ÊTRE EN DEHORS DE LA CLASSE
+
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     $authController = new AuthController();
     $authController->handleLogout();

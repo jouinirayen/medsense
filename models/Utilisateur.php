@@ -28,7 +28,7 @@ class Utilisateur
  
 
 
-    // Getters
+    
     public function getId() { return $this->id_utilisateur; }
     public function getNom() { return $this->nom; }
     public function getPrenom() { return $this->prenom; }
@@ -40,7 +40,7 @@ class Utilisateur
     public function getRole() { return $this->role; }
     public function getStatut() { return $this->statut; }
 
-    // Setters
+    
     public function setId($id) { $this->id_utilisateur = $id; }
     public function setNom($nom) { $this->nom = $nom; }
     public function setPrenom($prenom) { $this->prenom = $prenom; }
@@ -52,7 +52,7 @@ class Utilisateur
     public function setRole($role) { $this->role = $role; }
     public function setStatut($statut) { $this->statut = $statut; }
 
-    // Méthodes utilitaires
+   
     public function hashMotDePasse($mot_de_passe) {
         return password_hash($mot_de_passe, PASSWORD_DEFAULT);
     }

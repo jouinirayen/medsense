@@ -167,7 +167,7 @@ if ($search || $role_filter || $statut_filter) {
                 </div>
             </div>
 
-            <!-- Tableau des utilisateurs -->
+            
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
@@ -263,7 +263,6 @@ if ($search || $role_filter || $statut_filter) {
                 </div>
             </div>
 
-            <!-- Pied de page -->
             <div class="mt-4 text-center text-muted">
                 <p>© <?= date('Y') ?> Administration - Tous droits réservés</p>
             </div>
@@ -272,7 +271,7 @@ if ($search || $role_filter || $statut_filter) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Auto-dismiss alerts after 5 seconds
+       
         setTimeout(() => {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {

@@ -10,7 +10,7 @@ $adminController = new AdminController();
 $usersResult = $adminController->manageUsers('list');
 $users = $usersResult['success'] ? $usersResult['users'] : [];
 
-// Gérer les messages de succès/erreur
+
 $success_message = $_SESSION['success_message'] ?? null;
 $error_message = $_SESSION['error_message'] ?? null;
 unset($_SESSION['success_message'], $_SESSION['error_message']);
@@ -35,7 +35,7 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
     <div class="container mt-4">
         <h1>Gestion des Utilisateurs</h1>
 
-        <!-- Messages d'alerte -->
+        
         <?php if ($success_message): ?>
             <div class="alert alert-success"><?= htmlspecialchars($success_message) ?></div>
         <?php endif; ?>
