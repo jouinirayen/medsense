@@ -4,106 +4,21 @@
  * Handles all form submissions, redirects, and database queries
  */
 
-include __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config/config.php';
+
+
 
 class ServiceController {
     
-    /**
-     * Handle add service form submission (kept for backward compatibility)
-     */
-    public function gererAjout() {
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $name = '';
-            if (isset($_POST['name'])) {
-                $name = $_POST['name'];
-            }
 
-            $description = '';
-            if (isset($_POST['description'])) {
-                $description = $_POST['description'];
-            }
 
-            $icon = '';
-            if (isset($_POST['icon'])) {
-                $icon = $_POST['icon'];
-            }
 
-            $link = '';
-            if (isset($_POST['link'])) {
-                $link = $_POST['link'];
-            }
-
-            $image = '';
-            if (isset($_POST['image'])) {
-                $image = $_POST['image'];
-            }
-            
-            if (!empty($name) && !empty($description) && !empty($icon) && !empty($link) && !empty($image)) {
-                $this->ajouterService($name, $description, $icon, $link, $image);
-                header('Location: ../views/dashboard.php?message=Service ajouté avec succès!');
-            } else {
-                header('Location: ../views/dashboard.php?error=Tous les champs sont requis!');
-            }
-            return;
-        }
-    }
     
-    /**
-     * Handle edit service form submission (kept for backward compatibility)
-     */
-    public function gererModification() {
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $id = '';
-            if (isset($_POST['id'])) {
-                $id = $_POST['id'];
-            }
 
-            $name = '';
-            if (isset($_POST['name'])) {
-                $name = $_POST['name'];
-            }
-
-            $description = '';
-            if (isset($_POST['description'])) {
-                $description = $_POST['description'];
-            }
-
-            $icon = '';
-            if (isset($_POST['icon'])) {
-                $icon = $_POST['icon'];
-            }
-
-            $link = '';
-            if (isset($_POST['link'])) {
-                $link = $_POST['link'];
-            }
-
-            $image = '';
-            if (isset($_POST['image'])) {
-                $image = $_POST['image'];
-            }
-            
-            if (!empty($id) && !empty($name) && !empty($description) && !empty($icon) && !empty($link) && !empty($image)) {
-                $this->modifierService($id, $name, $description, $icon, $link, $image);
-                header('Location: ../views/dashboard.php?message=Service modifié avec succès!');
-            } else {
-                header('Location: ../views/dashboard.php?error=Tous les champs sont requis!');
-            }
-            return;
-        }
-    }
     
-    /**
-     * Handle delete service (kept for backward compatibility)
-     */
-    public function gererSuppression() {
-        if (isset($_GET['delete_id'])) {
-            $id = $_GET['delete_id'];
-            $this->supprimerService($id);
-            header('Location: ../views/dashboard.php?message=Service supprimé avec succès!');
-            return;
-        }
-    }
+
+    
+
     
     // ============================================
     // Méthodes de requêtes SQL (Data Access)
@@ -148,7 +63,29 @@ class ServiceController {
             die("Erreur lors de l'ajout du service: " . $e->getMessage());
         }
     }
+
+    /**
+     * Add a new service using ServiceModel
+     */
+    public function addService(ServiceModel $service) {
+        try {
+            $pdo = (new config())->getConnexion();
+            $stmt = $pdo->prepare("INSERT INTO services (name, description, icon, link, image) VALUES (?, ?, ?, ?, ?)");
+            return $stmt->execute([
+                $service->getName(),
+                $service->getDescription(),
+                $service->getIcon(),
+                $service->getLink(),
+                $service->getImage()
+            ]);
+        } catch (PDOException $e) {
+            die("Erreur lors de l'ajout du service: " . $e->getMessage());
+        }
+    }
     
+    /**
+     * Update a service
+     */
     /**
      * Update a service
      */
@@ -157,6 +94,26 @@ class ServiceController {
             $pdo = (new config())->getConnexion();
             $stmt = $pdo->prepare("UPDATE services SET name = ?, description = ?, icon = ?, link = ?, image = ? WHERE id = ?");
             return $stmt->execute([$name, $description, $icon, $link, $image, $id]);
+        } catch (PDOException $e) {
+            die("Erreur lors de la mise à jour du service: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update a service using ServiceModel
+     */
+    public function updateService($id, ServiceModel $service) {
+        try {
+            $pdo = (new config())->getConnexion();
+            $stmt = $pdo->prepare("UPDATE services SET name = ?, description = ?, icon = ?, link = ?, image = ? WHERE id = ?");
+            return $stmt->execute([
+                $service->getName(),
+                $service->getDescription(),
+                $service->getIcon(),
+                $service->getLink(),
+                $service->getImage(),
+                $id
+            ]);
         } catch (PDOException $e) {
             die("Erreur lors de la mise à jour du service: " . $e->getMessage());
         }
@@ -194,6 +151,8 @@ class ServiceController {
             die("Erreur lors de la recherche de services: " . $e->getMessage());
         }
     }
+
+
     
 }
 ?>

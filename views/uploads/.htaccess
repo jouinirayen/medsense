@@ -1,0 +1,15 @@
+# Autoriser l'accès aux images uniquement
+<FilesMatch "\.(jpg|jpeg|png|gif|webp)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Bloquer l'exécution de scripts
+<FilesMatch "\.(php|php3|php4|php5|phtml|pl|py|jsp|asp|sh|cgi)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Désactiver l'affichage du contenu du répertoire
+Options -Indexes
+
