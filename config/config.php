@@ -25,7 +25,7 @@ if (!defined('SITE_URL')) {
     define('SITE_URL', $protocol . '://' . $host . $baseDir . '/');
 }
 
-define('SITE_NAME', 'Système de Réclamations et reponses');
+define('SITE_NAME', 'Système de Réclamations et réponses');
 
 // URL des assets (CSS, JS, images) - chemins relatifs depuis la racine
 define('CSS_URL', 'app/css/');

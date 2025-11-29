@@ -39,7 +39,7 @@ $cssPath = $rootPath . CSS_URL . 'style.css';
                 </a>
                 <div class="site-branding">
                     <h1><?php echo SITE_NAME; ?></h1>
-                    <p class="tagline">Gestion des réclamations & reponses</p>
+                    <p class="tagline">Gestion des réclamations & réponses</p>
                 </div>
             </div>
             <nav class="nav-menu">
