@@ -1,4 +1,5 @@
 <?php
+<<<<<<< HEAD
 /**
  * Configuration générale du site
  */
@@ -53,4 +54,38 @@ define('STATUS_OPEN', 'ouvert');
 define('STATUS_IN_PROGRESS', 'en cours');
 define('STATUS_CLOSED', 'fermé');
 
+=======
+
+class config
+{
+    private $pdo = null;
+
+    public function getConnexion()
+    {
+        if (!isset($this->pdo)) {
+            $servername = "localhost";
+            $username = "root";
+            $password = "";
+            $dbname = "projet2025";
+
+            try {
+                $this->pdo = new PDO(
+                    "mysql:host=$servername;dbname=$dbname",
+                    $username,
+                    $password,
+                    [
+                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+                    ]
+                );
+            } catch (Exception $e) {
+                die('Erreur: ' . $e->getMessage());
+            }
+        }
+
+        return $this->pdo;
+    }
+}
+
+>>>>>>> a8e85b4f51d50fb61dcfbe51898ccab61137e5f8
 ?>
