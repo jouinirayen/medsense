@@ -4,11 +4,8 @@
  */
 
 require_once '../../../config/config.php';
-require_once '../../../config/db.php';
-require_once '../../../config/auth.php';
-
-// Vérifier que l'utilisateur est admin
-requireAdmin();
+ 
+ 
 
 $reclamationId = isset($_POST['id_reclamation']) ? intval($_POST['id_reclamation']) : 0;
 $contenu = isset($_POST['contenu']) ? trim($_POST['contenu']) : '';

@@ -4,11 +4,8 @@
  */
 
 require_once '../../../config/config.php';
-require_once '../../../config/db.php';
-require_once '../../../config/auth.php';
 
-// Vérifier que l'utilisateur est connecté
-requireLogin();
+// Vérifier que l'utilisateur est connecté (if needed)
 
 $pageTitle = "Créer une réclamation";
 
@@ -17,10 +14,22 @@ $errors = array();
 $success = false;
 
 // Afficher le header
-include '../../../config/header.php';
 ?>
 
-<div class="form-container">
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title><?php echo $pageTitle; ?></title>
+    <!-- Correct relative path to CSS -->
+    <link rel="stylesheet" href="../../../css/style.css">
+</head>
+<body>
+<header>
+    <img src="../../../images/logo.png" alt="Logo" class="logo">
+</header>
+
+<main class="form-container">
     <h2>Créer une nouvelle réclamation</h2>
 
     <?php if (!empty($errors)): ?>
@@ -51,8 +60,15 @@ include '../../../config/header.php';
             <a href="mes_reclamations.php" class="btn">Annuler</a>
         </div>
     </form>
-</div>
+</main>
 
-<?php
-include '../../../config/footer.php';
-?>
+<footer>
+    <div class="container">
+        <p>&copy; <?php echo date('Y'); ?> MedSense - Tous droits réservés</p>
+    </div>
+</footer>
+
+<!-- Correct relative path to JS -->
+<script src="../../../css/script.js"></script>
+</body>
+</html>

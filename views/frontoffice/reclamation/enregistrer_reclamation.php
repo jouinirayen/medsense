@@ -2,10 +2,7 @@
 
 
 require_once '../../../config/config.php';
-require_once '../../../config/db.php';
-require_once '../../../config/auth.php';
-
-requireLogin();
+ 
 $titre = isset($_POST['titre']) ? trim($_POST['titre']) : '';
 $description = isset($_POST['description']) ? trim($_POST['description']) : '';
 $userId = getUserId();

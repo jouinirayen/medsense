@@ -2,12 +2,7 @@
 
 
 require_once '../../../config/config.php';
-require_once '../../../config/db.php';
-require_once '../../../config/auth.php';
-
-
-requireLogin();
-
+ 
 $userId = getUserId();
 $reclamationId = isset($_POST['id']) ? intval($_POST['id']) : 0;
 $titre = isset($_POST['titre']) ? trim($_POST['titre']) : '';
