@@ -9,6 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 $id = $_GET['id'] ?? null;
+$userId = 1; // Hardcoded user ID
 
 if (!$id) {
     $_SESSION['notification'] = [
@@ -16,15 +17,13 @@ if (!$id) {
         'message' => "ID réclamation manquant !",
         'show' => true
     ];
-    header('Location: admin_reclamations.php');
+    header('Location: index.php');
     exit;
 }
 
-// Use direct database connection to check if reclamation exists
-$pdo = (new config())->getConnexion();
-$stmt = $pdo->prepare("SELECT * FROM reclamation WHERE id = ?");
-$stmt->execute([$id]);
-$reclamation = $stmt->fetch();
+// Fetch reclamation to check if it exists
+$reclamationModel = new Reclamation();
+$reclamation = $reclamationModel->findForUser($id, $userId);
 
 if (!$reclamation) {
     $_SESSION['notification'] = [
@@ -32,18 +31,14 @@ if (!$reclamation) {
         'message' => "Réclamation introuvable !",
         'show' => true
     ];
-    header('Location: admin_reclamations.php');
+    header('Location: index.php');
     exit;
 }
 
-// Delete the reclamation and its responses using models
+// Delete the reclamation and its responses
 $responseModel = new Response();
 $responseModel->deleteForReclamation($id);
-
-$reclamationModel = new Reclamation();
-// Since deleteForUser requires user ID, we'll use direct query for admin
-$stmt = $pdo->prepare("DELETE FROM reclamation WHERE id = ?");
-$stmt->execute([$id]);
+$reclamationModel->deleteForUser($id, $userId);
 
 // Set success notification
 $_SESSION['notification'] = [
@@ -52,6 +47,5 @@ $_SESSION['notification'] = [
     'show' => true
 ];
 
-header('Location: admin_reclamations.php');
+header('Location: index.php');
 exit;
-?>

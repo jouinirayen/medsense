@@ -1,66 +1,212 @@
 <?php
-/**
- * Page d'ajout de réponse à une réclamation
- */
-
 require_once '../../../config/config.php';
- 
- 
+require_once '../../../models/Reclamation.php';
+require_once '../../../models/Response.php';
 
-$reclamationId = isset($_GET['id']) ? intval($_GET['id']) : 0;
-$adminId = getUserId();
-
-if ($reclamationId <= 0) {
-    header('Location: admin_reclamations.php');
-    exit();
+// Start session
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
-try {
-    $db = Database::getInstance();
-    
-    // Vérifier que la réclamation existe
-    $sql = "SELECT * FROM reclamation WHERE id = ?";
-    $reclamation = $db->fetch($sql, array($reclamationId), 'i');
+$id = $_GET['id'] ?? null;
 
-    if (!$reclamation) {
-        header('Location: admin_reclamations.php');
-        exit();
-    }
-
-    $pageTitle = "Répondre - " . htmlspecialchars($reclamation['titre']);
-
-} catch (Exception $e) {
-    $_SESSION['error_message'] = "Erreur lors de la récupération: " . $e->getMessage();
+if (!$id) {
     header('Location: admin_reclamations.php');
-    exit();
+    exit;
 }
 
-include '../../../config/header.php';
+// Fetch reclamation using direct database connection
+$pdo = (new config())->getConnexion();
+$stmt = $pdo->prepare("SELECT r.*, u.username FROM reclamation r LEFT JOIN user u ON r.id_user = u.id WHERE r.id = ?");
+$stmt->execute([$id]);
+$reclamation = $stmt->fetch();
+
+if (!$reclamation) {
+    header('Location: admin_reclamations.php');
+    exit;
+}
+
+// Get errors from session if any
+$errors = $_SESSION['errors'] ?? [];
+unset($_SESSION['errors']);
+
+$pageTitle = "Répondre à la Réclamation";
 ?>
 
-<h2>Répondre à la Réclamation</h2>
+<?php include '../../../admin_sidebar.php'; ?>
 
-<div class="card">
-    <h3><?php echo htmlspecialchars($reclamation['titre']); ?></h3>
-    <p><strong>Description :</strong> <?php echo nl2br(htmlspecialchars($reclamation['description'])); ?></p>
-    <p><strong>Date :</strong> <?php echo date('d/m/Y H:i', strtotime($reclamation['date'])); ?></p>
+<div class="admin-content">
+    <!-- Header Section -->
+    <div class="content-header" style="margin-bottom: 2rem;">
+        <h1 style="color: #1e293b; font-size: 2rem; margin-bottom: 0.5rem;">Répondre à la Réclamation</h1>
+        <p style="color: #64748b; font-size: 1.1rem;">Ajouter une réponse à cette réclamation</p>
+    </div>
+
+    <!-- Reclamation Details -->
+    <div class="card" style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <h3 style="margin-bottom: 1rem; color: #1f2937;"><?= htmlspecialchars($reclamation['titre']); ?></h3>
+        <div style="margin-bottom: 1rem;">
+            <span class="badge <?= $reclamation['type'] === 'urgence' ? 'badge-urgence' : 'badge-normal'; ?>" style="padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; margin-right: 0.5rem;">
+                <i class="fas <?= $reclamation['type'] === 'urgence' ? 'fa-exclamation-triangle' : 'fa-file-alt'; ?>"></i>
+                <?= htmlspecialchars($reclamation['type']); ?>
+            </span>
+            <span class="badge statut-<?= str_replace(' ', '-', $reclamation['statut']); ?>" style="padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
+                <i class="fas 
+                    <?= $reclamation['statut'] === 'fermé' ? 'fa-check-circle' : 
+                       ($reclamation['statut'] === 'en cours' ? 'fa-spinner' : 'fa-clock'); ?>">
+                </i>
+                <?= htmlspecialchars($reclamation['statut']); ?>
+            </span>
+        </div>
+        <p style="margin-bottom: 0.5rem;"><strong>Description :</strong></p>
+        <p style="color: #4b5563; line-height: 1.5;"><?= nl2br(htmlspecialchars($reclamation['description'])); ?></p>
+        <div style="margin-top: 1rem; color: #6b7280; font-size: 0.9rem;">
+            <p><strong>Date :</strong> <?= date('d/m/Y H:i', strtotime($reclamation['date'])); ?></p>
+            <p><strong>Utilisateur :</strong> <?= htmlspecialchars($reclamation['username'] ?? 'Utilisateur inconnu'); ?></p>
+        </div>
+    </div>
+
+    <!-- Response Form -->
+    <div class="card" style="background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <?php if (!empty($errors)): ?>
+            <div class="alert-error" style="background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <ul style="margin: 0; padding-left: 1.5rem;">
+                    <?php foreach ($errors as $error): ?>
+                        <li><?= htmlspecialchars($error); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST" action="enregistrer_reponse.php">
+            <input type="hidden" name="id_reclamation" value="<?= $reclamation['id']; ?>">
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="contenu" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Votre réponse *</label>
+                <textarea id="contenu" name="contenu" required minlength="5" maxlength="3000" rows="5"
+                          placeholder="Écrivez votre réponse à cette réclamation (minimum 5 caractères, maximum 3000)..."
+                          style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; font-family: inherit; resize: vertical;"></textarea>
+                <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                    <span id="contenuError" style="color: #ef4444; font-size: 0.85rem; display: none;"></span>
+                    <span id="contenuCount" style="color: #64748b; font-size: 0.85rem;">0 / 3000 caractères</span>
+                </div>
+            </div>
+
+            <div class="form-actions" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-paper-plane"></i>
+                    Envoyer la réponse
+                </button>
+                <a href="details_reclamation.php?id=<?= $reclamation['id']; ?>" class="btn btn-secondary">
+                    <i class="fas fa-times"></i>
+                    Annuler
+                </a>
+            </div>
+        </form>
+    </div>
 </div>
 
-<form action="enregistrer_reponse.php" method="POST">
-    <input type="hidden" name="id_reclamation" value="<?php echo htmlspecialchars($reclamationId); ?>">
+<script>
+const contenu = document.getElementById('contenu');
+const contenuError = document.getElementById('contenuError');
+const contenuCount = document.getElementById('contenuCount');
 
-    <div class="form-group">
-        <label for="contenu">Votre réponse *</label>
-        <textarea id="contenu" name="contenu" required 
-                  placeholder="Écrivez votre réponse à cette réclamation..."></textarea>
-    </div>
+contenu.addEventListener('input', function() {
+    const currentLength = this.value.length;
+    contenuCount.textContent = currentLength + ' / 3000 caractères';
+    
+    if (currentLength > 2800) {
+        contenuCount.style.color = '#ef4444';
+    } else {
+        contenuCount.style.color = '#64748b';
+    }
+    
+    if (this.value.trim().length < 5) {
+        contenuError.textContent = 'La réponse doit contenir au moins 5 caractères';
+        contenuError.style.display = 'block';
+    } else {
+        contenuError.style.display = 'none';
+    }
+});
 
-    <div class="form-group">
-        <button type="submit" class="btn btn-success">Envoyer la réponse</button>
-        <a href="details_reclamation.php?id=<?php echo $reclamationId; ?>" class="btn">Annuler</a>
-    </div>
-</form>
+document.querySelector('form').addEventListener('submit', function(e) {
+    const value = contenu.value.trim();
+    if (value.length < 5) {
+        e.preventDefault();
+        contenuError.textContent = 'La réponse doit contenir au moins 5 caractères';
+        contenuError.style.display = 'block';
+    }
+});
+</script>
 
-<?php
-include '../../../config/footer.php';
-?>
+<style>
+/* Button Styles */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.btn-success {
+    background: #10b981;
+    color: white;
+}
+
+.btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Badge Styles */
+.badge-normal {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-urgence {
+    background: #fecaca;
+    color: #dc2626;
+}
+
+.statut-ouvert {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.statut-en-cours {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.statut-fermé {
+    background: #dcfce7;
+    color: #166534;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<?php include '../../../admin_footer.php'; ?>
