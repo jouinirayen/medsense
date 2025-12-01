@@ -1,0 +1,118 @@
+.modifier-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.current-info {
+    background-color: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+    border-left: 4px solid #0ea5e9;
+}
+
+.slot-btn.current {
+    background-color: #0ea5e9;
+    color: white;
+    border-color: #0ea5e9;
+    cursor: default;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.back-btn {
+    color: #64748b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.back-btn:hover {
+    color: #334155;
+}
+
+/* Confirmation Styles */
+.confirmation-box {
+    max-width: 600px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    text-align: center;
+}
+
+.time-comparison {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+}
+
+.time-card {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    min-width: 150px;
+}
+
+.time-card.old {
+    border-left: 4px solid #64748b;
+}
+
+.time-card.new {
+    border-left: 4px solid #0ea5e9;
+    background: #f0f9ff;
+}
+
+.arrow-icon {
+    color: #94a3b8;
+    font-size: 1.5rem;
+}
+
+.time-label {
+    display: block;
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+}
+
+.time-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.btn-cancel {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    color: #64748b;
+    background: #f1f5f9;
+    font-weight: 500;
+}
+
+.btn-confirm {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    border: none;
+    background: #0ea5e9;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
