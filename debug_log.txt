@@ -1,4 +1,0 @@
-PDO Error: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'patientPrenom' cannot be null
-PDO Error: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`projet2025`.`rendezvous`, CONSTRAINT `fk_rdv_medecin` FOREIGN KEY (`idMedecin`) REFERENCES `utilisateur` (`id_utilisateur`) ON DELETE CASCADE ON UPDATE CASCADE)
-Slot taken: Doctor 7, Time 11:00
-PDO Error: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`projet2025`.`rendezvous`, CONSTRAINT `fk_rdv_medecin` FOREIGN KEY (`idMedecin`) REFERENCES `utilisateur` (`id_utilisateur`) ON DELETE CASCADE ON UPDATE CASCADE)
