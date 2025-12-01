@@ -1,15 +1,22 @@
 <?php
 session_start();
-require_once __DIR__ .'/../../../controllers/AuthController.php'; 
+require_once __DIR__ . '/../../../controllers/AuthController.php'; 
 
 $authController = new AuthController();
 $isLoggedIn = $authController->isLoggedIn();
-$currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
+
+if ($isLoggedIn) {
+    $currentUser = $authController->getCurrentUser();
+    // Si $currentUser est un objet, le convertir en tableau
+    $currentUserArray = $currentUser ? (method_exists($currentUser, 'toArray') ? $currentUser->toArray() : (array)$currentUser) : null;
+} else {
+    $currentUserArray = null;
+    $currentUser = null; // Ajouter cette ligne pour cohérence
+}
 ?>
 <!doctype html>
 <html lang="en">
 <head>
-  
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="icon" href="img/favicon.png" type="image/png">
@@ -26,16 +33,22 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
     <link rel="stylesheet" href="../../assets/css/responsive.css">
 </head>
 <body>
-     
 
 <header class="header_area">
+    <!-- 🔹 TOP BAR -->
     <div class="top_menu row m0">
         <div class="container">
             <div class="float-left">
-                <a class="dn_btn" href="mailto:medical@example.com"><i class="ti-email"></i>medical@example.com</a>
-                <span class="dn_btn"> <i class="ti-location-pin"></i>Find our Location</span>
+                <a class="dn_btn" href="mailto:medical@example.com">
+                    <i class="ti-email"></i> medical@example.com
+                </a>
+                <span class="dn_btn">
+                    <i class="ti-location-pin"></i> Find our Location
+                </span>
             </div>
-            <div class="float-right">
+
+            <div class="float-right d-flex align-items-center">
+                <!-- Social Media -->
                 <ul class="list header_social">
                     <li><a href="#"><i class="ti-facebook"></i></a></li>
                     <li><a href="#"><i class="ti-twitter-alt"></i></a></li>
@@ -43,19 +56,24 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
                     <li><a href="#"><i class="ti-skype"></i></a></li>
                     <li><a href="#"><i class="ti-vimeo-alt"></i></a></li>
                 </ul>
-                
-                <div class="auth-top" style="display: inline-block; margin-left: 20px;">
-                    <?php if ($isLoggedIn && $currentUser): ?>
+
+                <!-- Auth -->
+                <div class="auth-top ml-3">
+                    <?php if ($isLoggedIn && $currentUserArray): ?>
                         <span style="color: #fff; margin-right: 15px;">
-                            <i class="ti-user"></i> Bonjour, <?php echo htmlspecialchars($currentUser['prenom']); ?>
+                            <i class="ti-user"></i> Bonjour,
+                            <?= htmlspecialchars($currentUserArray['prenom'] ?? $currentUserArray['user_prenom'] ?? 'Utilisateur'); ?>
                         </span>
+
                         <a href="../../../controllers/logout.php" style="color: #fff; text-decoration: underline;">
                             <i class="ti-power-off"></i> Déconnexion
                         </a>
+
                     <?php else: ?>
                         <a href="../auth/sign-in.php" style="color: #fff; margin-right: 10px;">
                             <i class="ti-lock"></i> Connexion
                         </a>
+
                         <a href="../auth/sign-up.php" style="color: #fff;">
                             <i class="ti-user"></i> Inscription
                         </a>
@@ -64,44 +82,62 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
             </div>
         </div>
     </div>
+
+    <!-- 🔹 MAIN NAVBAR -->
     <div class="main_menu">
         <nav class="navbar navbar-expand-lg navbar-light">
             <div class="container">
-                
-                <a class="navbar-brand logo_h" href="index.php"><img src="../../assets/img/logo.png" alt=""></a>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <!-- LOGO -->
+                <a class="navbar-brand logo_h" href="#">
+                    <img src="../../assets/img/logo.png" alt="logo" style="height: 120px;">
+                </a>
+
+                <!-- MOBILE TOGGLER -->
+                <button class="navbar-toggler" type="button" data-toggle="collapse"
+                        data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                
+
+                <!-- NAVIGATION LINKS -->
                 <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
                     <ul class="nav navbar-nav menu_nav ml-auto">
                         <li class="nav-item active"><a class="nav-link" href="index.php">Home</a></li>
                         <li class="nav-item"><a class="nav-link" href="../templete/about-us.html">About</a></li>
                         <li class="nav-item"><a class="nav-link" href="../templete/department.html">Department</a></li>
                         <li class="nav-item"><a class="nav-link" href="../templete/doctors.html">Doctors</a></li>
+
+                        <!-- Blog menu -->
                         <li class="nav-item submenu dropdown">
-                            <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Blog</a>
+                            <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button"
+                               aria-haspopup="true" aria-expanded="false">Blog</a>
                             <ul class="dropdown-menu">
                                 <li class="nav-item"><a class="nav-link" href="../templete/blog.html">Blog</a></li>
                                 <li class="nav-item"><a class="nav-link" href="../templete/single-blog.html">Blog Details</a></li>
                                 <li class="nav-item"><a class="nav-link" href="../templete/element.html">Element</a></li>
                             </ul>
                         </li>
+
                         <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
-                        
-                     
-                        <?php if ($isLoggedIn && $currentUser): ?>
+
+                        <!-- COMPTE UTILISATEUR -->
+                        <?php if ($isLoggedIn && $currentUserArray): ?>
                             <li class="nav-item submenu dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button"
+                                   aria-haspopup="true" aria-expanded="false">
                                     <i class="ti-user"></i> Mon Compte
                                 </a>
+
                                 <ul class="dropdown-menu">
                                     <li class="nav-item"><a class="nav-link" href="../auth/profile.php">Mon Profil</a></li>
                                     <li class="nav-item"><a class="nav-link" href="../appointments/">Mes Rendez-vous</a></li>
-                                    <?php if ($currentUser['role'] === 'admin'): ?>
-                                        <li class="nav-item"><a class="nav-link" href="../../backoffice/admin-dashboard.php">Administration</a></li>
+
+                                    <?php if (($currentUserArray['role'] ?? $currentUserArray['user_role'] ?? '') === 'admin'): ?>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="../../backoffice/admin-dashboard.php">Administration</a>
+                                        </li>
                                     <?php endif; ?>
                                 </ul>
                             </li>
@@ -113,18 +149,17 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
     </div>
 </header>
 
-
 <section class="banner-area d-flex align-items-center">
     <div class="container">
         <div class="row">
             <div class="col-md-8 col-lg-6 col-xl-5">
-                <?php if ($isLoggedIn && $currentUser): ?>
+                <?php if ($isLoggedIn && $currentUserArray): ?>
                     <div class="user-welcome mb-4">
-                        <h1>Content de vous revoir, <?php echo htmlspecialchars($currentUser['prenom']); ?>!</h1>
+                        <h1>Content de vous revoir, <?php echo htmlspecialchars($currentUserArray['prenom'] ?? $currentUserArray['user_prenom'] ?? 'Utilisateur'); ?>!</h1>
                         <p>Bienvenue de retour sur Medcare Medical. Nous sommes heureux de vous revoir.</p>
                         <div class="cta-buttons mt-3">
                             <a href="../auth/profile.php" class="main_btn">Mon Profil</a>
-                            <?php if ($currentUser['role'] === 'admin'): ?>
+                            <?php if (($currentUserArray['role'] ?? $currentUserArray['user_role'] ?? '') === 'admin'): ?>
                                 <a href="../../backoffice/admin-dashboard.php" class="main_btn_light">Dashboard Admin</a>
                             <?php endif; ?>
                         </div>
@@ -164,20 +199,19 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
             <div class="row">
                 <div class="col-sm-12 col-lg-5 offset-lg-1">
                     <h3>Have Some Questions?</h3>
-                   
                 </div>
                 <div class="col-lg-5">
                     <div class="appointment-form">
                         <h3>Make an Appointment</h3>
-                        <?php if ($isLoggedIn): ?>
+                        <?php if ($isLoggedIn && $currentUserArray): ?>
                             <form action="#">
                                 <div class="form-group">
                                     <label>Full Name</label>
-                                    <input type="text" value="<?php echo htmlspecialchars($currentUser['prenom'] . ' ' . $currentUser['nom']); ?>" readonly>
+                                    <input type="text" value="<?php echo htmlspecialchars(($currentUserArray['prenom'] ?? $currentUserArray['user_prenom'] ?? '') . ' ' . ($currentUserArray['nom'] ?? $currentUserArray['user_nom'] ?? '')); ?>" readonly>
                                 </div>
                                 <div class="form-group">
                                     <label>Email</label>
-                                    <input type="email" value="<?php echo htmlspecialchars($currentUser['email']); ?>" readonly>
+                                    <input type="email" value="<?php echo htmlspecialchars($currentUserArray['email'] ?? $currentUserArray['user_email'] ?? ''); ?>" readonly>
                                 </div>
                                 <div class="form-group">
                                     <label>Message</label>
@@ -198,458 +232,6 @@ $currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
         </div>
     </div>
 </section>
-
-
-    <div class="service-area area-padding-top">
-        <div class="container">
-            <div class="area-heading row">
-                <div class="col-md-5 col-xl-4">
-                    <h3>Awesome<br>
-                    Health Service</h3>
-                </div>
-                <div class="col-md-7 col-xl-8">
-                    <p>Land meat winged called subdue without very light in all years sea appear midst forth image him third there set. Land meat winged called subdue without very light in all years sea appear</p>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6 col-lg-4">
-                    <div class="card-service text-center text-lg-left mb-4 mb-lg-0">
-                        <span class="card-service__icon">
-                            <i class="flaticon-brain"></i>
-                        </span>
-                        <h3 class="card-service__title">Neurology Service</h3>
-                        <p class="card-service__subtitle">Land meat winged called subdue without a very light in all years sea appear Lesser bring fly first land set female best perform.</p>
-                        <a class="card-service__link" href="#">Learn More</a>
-                    </div>
-                </div>
-
-                <div class="col-md-6 col-lg-4">
-                    <div class="card-service text-center text-lg-left mb-4 mb-lg-0">
-                        <span class="card-service__icon">
-                            <i class="flaticon-tooth"></i>
-                        </span>
-                        <h3 class="card-service__title">Dental Clinic</h3>
-                        <p class="card-service__subtitle">Land meat winged called subdue without a very light in all years sea appear Lesser bring fly first land set female best perform</p>
-                        <a class="card-service__link" href="#">Learn More</a>
-                    </div>
-                </div>
-
-                <div class="col-md-6 col-lg-4">
-                    <div class="card-service text-center text-lg-left mb-4 mb-lg-0">
-                        <span class="card-service__icon">
-                            <i class="flaticon-face"></i>
-                        </span>
-                        <h3 class="card-service__title">Plastic Surgery</h3>
-                        <p class="card-service__subtitle">Land meat winged called subdue without a very light in all years sea appear Lesser bring fly first land set female best perform</p>
-                        <a class="card-service__link" href="#">Learn More</a>
-                    </div>
-                </div>
-
-
-            </div>
-        </div>
-    </div>    
- 
-    <section class="about-area">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-10 offset-md-1 col-lg-6 offset-lg-6 offset-xl-7 col-xl-5">
-                    <div class="about-content">
-                        <h4>Second Abundantly<br>
-                            Move That Cattle Perform<br>
-                        Appen Land</h4>
-                        <h6>Give their their without moving were stars called so divide in female be moving night may fish him</h6>
-                        <p>Give their their without moving were stars called so divide female be moving night may fish him own male vreated great Give their their without moving were. Stars called so divide female moving night may fish him own male created great opportunity deal.</p>
-
-                        <a class="link_one" href="#">learn more</a>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
- 
-    <section class="team-area area-padding">
-        <div class="container">
-            <div class="area-heading row">
-                <div class="col-md-5 col-xl-4">
-                    <h3>Medcare<br>
-                    Experience Doctors</h3>
-                </div>
-                <div class="col-md-7 col-xl-8">
-                    <p>Land meat winged called subdue without very light in all years sea appear midst forth image him third there set. Land meat winged called subdue without very light in all years sea appear</p>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card card-team">
-                        <img class="card-img rounded-0" src="img/team/1.jpg" alt="">
-                        <div class="card-team__body text-center">
-                            <h3><a href="#">Dr Adam Brain</a></h3>
-                            <p>Cardiologist</p>
-                            <div class="team-footer d-flex justify-content-between">
-                                <a class="dn_btn" href=""><i class="ti-mobile"></i>+7 235 365 2365</a>
-                                <ul class="card-team__social">
-                                    <li><a href="#"><i class="ti-facebook"></i></a></li>
-                                    <li><a href="#"><i class="ti-twitter-alt"></i></a></li>
-                                    <li><a href="#"><i class="ti-instagram"></i></a></li>
-                                    <li><a href="#"><i class="ti-skype"></i></a></li>
-                                </ul> 
-                            </div> 
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card card-team">
-                        <img class="card-img rounded-0" src="img/team/2.jpg" alt="">
-                        <div class="card-team__body text-center">
-                            <h3><a href="#">Dr Blian Judge</a></h3>
-                            <p>Cardiologist</p>
-                            <div class="team-footer d-flex justify-content-between">
-                                <a class="dn_btn" href=""><i class="ti-mobile"></i>+7 235 365 2365</a>
-                                <ul class="card-team__social">
-                                    <li><a href="#"><i class="ti-facebook"></i></a></li>
-                                    <li><a href="#"><i class="ti-twitter-alt"></i></a></li>
-                                    <li><a href="#"><i class="ti-instagram"></i></a></li>
-                                    <li><a href="#"><i class="ti-skype"></i></a></li>
-                                </ul> 
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card card-team">
-                        <img class="card-img rounded-0" src="img/team/3.jpg" alt="">
-                        <div class="card-team__body text-center">
-                            <h3><a href="#">Dr Blian Judge</a></h3>
-                            <p>Cardiologist</p>
-                            <div class="team-footer d-flex justify-content-between">
-                                <a class="dn_btn" href=""><i class="ti-mobile"></i>+7 235 365 2365</a>
-                                <ul class="card-team__social">
-                                    <li><a href="#"><i class="ti-facebook"></i></a></li>
-                                    <li><a href="#"><i class="ti-twitter-alt"></i></a></li>
-                                    <li><a href="#"><i class="ti-instagram"></i></a></li>
-                                    <li><a href="#"><i class="ti-skype"></i></a></li>
-                                </ul> 
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-  
-    <section class="appointment-area">
-        <div class="container">
-
-            <div class="appointment-inner">
-                <div class="row">
-                    <div class="col-sm-12 col-lg-5 offset-lg-1">
-                        <h3>Have Some Questions?</h3>
-                        <div class="accordion" id="accordionExample">
-
-                            <div class="card">
-                                <div class="card-header" id="headingOne">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                            God male gathering them it female which green cattle?
-                                        </button>
-
-                                    </h5>
-                                </div>
-
-                                <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordionExample">
-                                    <div class="card-body">
-                                        Great day without sixth a lesser beginning. Their thing abundantly air moving saw fruitful lesser god. Sea abundantly blessed life set. Land. Lights divided man in deep in open upon.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card">
-                                <div class="card-header" id="headingTwo">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                                            Moving creepeth moved upon man grass two days?
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionExample">
-                                    <div class="card-body">
-                                        Great day without sixth a lesser beginning. Their thing abundantly air moving saw fruitful lesser god. Sea abundantly blessed life set. Land. Lights divided man in deep in open upon.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card">
-                                <div class="card-header" id="headingThree">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                                            God male gathering them it female which green cattle?
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordionExample">
-                                    <div class="card-body">
-                                        Great day without sixth a lesser beginning. Their thing abundantly air moving saw fruitful lesser god. Sea abundantly blessed life set. Land. Lights divided man in deep in open upon.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card">
-                                <div class="card-header" id="headingFour">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                                            Saw isn't likeness beginning yielding land days she?
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordionExample">
-                                    <div class="card-body">
-                                        Great day without sixth a lesser beginning. Their thing abundantly air moving saw fruitful lesser god. Sea abundantly blessed life set. Land. Lights divided man in deep in open upon.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card">
-                                <div class="card-header" id="headingFive">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
-                                            Saw isn't likeness beginning yielding land days she?
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapseFive" class="collapse" aria-labelledby="headingFive" data-parent="#accordionExample">
-                                    <div class="card-body">
-                                        Great day without sixth a lesser beginning. Their thing abundantly air moving saw fruitful lesser god. Sea abundantly blessed life set. Land. Lights divided man in deep in open upon.
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                    <div class="col-lg-5">
-                        <div class="appointment-form">
-                            <h3>Make an Appointment</h3>
-                            <form action="#">
-                                <div class="form-group">
-                                    <label>Full Name</label>
-                                    <input type="text" placeholder="Your Name" onfocus="this.placeholder = ''" onblur="this.placeholder = 'Your Name'" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Email</label>
-                                    <input type="email" placeholder="Your Email" onfocus="this.placeholder = ''" onblur="this.placeholder = 'Your Email'" required> 
-                                </div>
-                                <div class="form-group">
-                                    <label>Message</label>
-                                    <textarea name="message" cols="20" rows="7"  placeholder="Message" onfocus="this.placeholder = ''" onblur="this.placeholder = 'Message'" required></textarea>
-                                </div>
-                                <a href="#" class="main_btn">Make an Appointment</a>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-
-        </div>
-    </section>
-  
-    <section class="testimonial">
-        <div class="container">
-            <div class="testi_slider owl-carousel owl-theme">
-                <div class="item">
-                    <div class="testi_item">
-                        <div class="testimonial_image">
-                            <img src="img/elements/tes1.jpg" alt="">
-                        </div>
-                        <div class="testi_item_content">
-                            <p>
-                                “ Saw kind fruitful itself in man. All in life good wherein beginning their he air That, the saw very years created for seed have without. Can't him fowl his can not ready for game”
-                            </p>
-                            <h4>- Dr. Suzanne Holroyd -</h4>       
-                        </div>
-                    </div>
-                </div>
-                <div class="item">
-                    <div class="testi_item">
-                        <div class="testimonial_image">
-                            <img src="img/elements/tes1.jpg" alt="">
-                        </div>
-                        <div class="testi_item_content">
-                            <p>
-                                “ Saw kind fruitful itself in man. All in life good wherein beginning their he air That, the saw very years created for seed have without. Can't him fowl his can not ready for game”
-                            </p>
-                            <h4>- Dr. Suzanne Holroyd -</h4>         
-                        </div>
-                    </div>
-                </div>
-                <div class="item">
-                    <div class="testi_item">
-                        <div class="testimonial_image">
-                            <img src="img/elements/tes1.jpg" alt="">
-                        </div>
-                        <div class="testi_item_content">
-                            <p>
-                                “ Saw kind fruitful itself in man. All in life good wherein beginning their he air That, the saw very years created for seed have without. Can't him fowl his can not ready for game”
-                            </p>
-                            <h4>- Dr. Suzanne Holroyd -</h4>       
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
- 
-    <section class="hotline-area text-center area-padding">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <h2>Emergency hotline</h2>
-                    <span>(+01) – 256 567 550</span>
-                    <p class="pt-3">We provide 24/7 customer support. Please feel free to contact us <br>for emergency case.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="blog-area area-padding">
-        <div class="container">
-            <div class="area-heading row">
-                <div class="col-md-5 col-xl-4">
-                    <h3>Get Every<br>
-                    Single Update Here</h3>
-                </div>
-                <div class="col-md-7 col-xl-8">
-                    <p>Land meat winged called subdue without very light in all years sea appear midst forth image him third there set. Land meat winged called subdue without very light in all years sea appear</p>
-                </div>
-            </div>
-
-
-            <div class="row">
-                <div class="col-md-6 col-lg-4 col-md-4">
-                    <div class="single-blog">
-                        <div class="thumb">
-                            <img class="img-fluid" src="img/blog/1.jpg" alt="">
-                        </div>
-                        <div class="short_details">
-
-                            <div class="meta-top d-flex">
-                                <a href="#">medical, </a>
-                                <a href="#">dental, </a>
-                                <a href="#">health</a>
-                            </div>
-                            
-                            <a class="d-block" href="single-blog.html">
-                                <h4>Hath is gathering from hath greate gan
-                                man lights evening man.</h4>
-                            </a>
-                            <div class="meta-bottom d-flex">
-                                <a href="#"><i class="ti-comments"></i>08 comment</a>
-                                <a href="#"><i class="ti-heart"></i> 0 like</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4 col-md-4">
-                    <div class="single-blog">
-                        <div class="thumb">
-                            <img class="img-fluid" src="img/blog/2.jpg" alt="">
-                        </div>
-                        <div class="short_details">
-                            <div class="meta-top d-flex">
-                                <a href="#">medical, </a>
-                                <a href="#">dental, </a>
-                                <a href="#">health</a>
-                            </div>
-                            <a class="d-block" href="single-blog.html">
-                                <h4>Also good after there saying don third
-                                you be careful every man</h4>
-                            </a>
-                            <div class="meta-bottom d-flex">
-                                <a href="#"><i class="ti-comments"></i>05 comment</a>
-                                <a href="#"><i class="ti-heart"></i> 0 like</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4 col-md-4">
-                    <div class="single-blog">
-                        <div class="thumb">
-                            <img class="img-fluid" src="img/blog/3.jpg" alt="">
-                        </div>
-                        <div class="short_details">
-                            <div class="meta-top d-flex">
-                                <a href="#">medical, </a>
-                                <a href="#">dental, </a>
-                                <a href="#">health</a>
-                            </div>
-                            <a class="d-block" href="single-blog.html">
-                                <h4>Also good after there saying don third
-                                you be careful every man</h4>
-                            </a>
-                            <div class="meta-bottom d-flex">
-                                <a href="#"><i class="ti-comments"></i>05 comment</a>
-                                <a href="#"><i class="ti-heart"></i> 0 like</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="brands-area background_one">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-lg-10">
-                    <div class="owl-carousel brand-carousel">
-                       
-                        <div class="single-brand-item d-table">
-                            <div class="d-table-cell">
-                                <img src="img/brand/1.png" alt="">
-                            </div>
-                        </div>
-                       
-                        
-                        <div class="single-brand-item d-table">
-                            <div class="d-table-cell">
-                                <img src="img/brand/2.png" alt="">
-                            </div>
-                        </div>
-                        
-                        
-                        <div class="single-brand-item d-table">
-                            <div class="d-table-cell">
-                                <img src="img/brand/3.png" alt="">
-                            </div>
-                        </div>
-                       
-                        <div class="single-brand-item d-table">
-                            <div class="d-table-cell">
-                                <img src="img/brand/4.png" alt="">
-                            </div>
-                        </div>
-                       
-                        <div class="single-brand-item d-table">
-                            <div class="d-table-cell">
-                                <img src="img/brand/5.png" alt="">
-                            </div>
-                        </div>
-                      
-                        <div class="single-brand-item d-table">
-                            <div class="d-table-cell">
-                                <img src="img/brand/3.png" alt="">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
    
 
     

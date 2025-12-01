@@ -12,23 +12,24 @@ class Utilisateur
     private $date_inscription;
     private $role;
     private $statut;
+    private $reset_token;
+    private $reset_token_expires;
+    private $photo_profil;
 
     public function __construct($nom = "", $prenom = "", $email = "", $mot_de_passe = "", $dateNaissance = "", $adresse = "", $role = "utilisateur", $statut = "actif")
     {
         $this->nom = $nom;
         $this->prenom = $prenom;
-        $this->email = $email;
-        $this->mot_de_passe = $mot_de_passe;
-        $this->dateNaissance = $dateNaissance;
+        $this->setEmail($email);
+        $this->setMotDePasse($mot_de_passe);
+        $this->setDateNaissance($dateNaissance);
         $this->adresse = $adresse;
-        $this->role = $role;
-        $this->statut = $statut;
+        $this->setRole($role);
+        $this->setStatut($statut);
         $this->date_inscription = date('Y-m-d H:i:s');
     }
- 
 
-
-    
+    // Getters
     public function getId() { return $this->id_utilisateur; }
     public function getNom() { return $this->nom; }
     public function getPrenom() { return $this->prenom; }
@@ -39,24 +40,104 @@ class Utilisateur
     public function getDateInscription() { return $this->date_inscription; }
     public function getRole() { return $this->role; }
     public function getStatut() { return $this->statut; }
+    public function getResetToken() { return $this->reset_token; }
+    public function getResetTokenExpires() { return $this->reset_token_expires; }
+    public function getPhotoProfil() { return $this->photo_profil; }
 
+    // Setters avec validation
+    public function setId($id) { 
+        if ($id > 0) {
+            $this->id_utilisateur = $id;
+        }
+        return $this;
+    }
     
-    public function setId($id) { $this->id_utilisateur = $id; }
-    public function setNom($nom) { $this->nom = $nom; }
-    public function setPrenom($prenom) { $this->prenom = $prenom; }
-    public function setEmail($email) { $this->email = $email; }
-    public function setMotDePasse($mot_de_passe) { $this->mot_de_passe = $mot_de_passe; }
-    public function setDateNaissance($dateNaissance) { $this->dateNaissance = $dateNaissance; }
-    public function setAdresse($adresse) { $this->adresse = $adresse; }
-    public function setDateInscription($date) { $this->date_inscription = $date; }
-    public function setRole($role) { $this->role = $role; }
-    public function setStatut($statut) { $this->statut = $statut; }
-
-   
-    public function hashMotDePasse($mot_de_passe) {
-        return password_hash($mot_de_passe, PASSWORD_DEFAULT);
+    public function setNom($nom) { 
+        if (!empty(trim($nom))) {
+            $this->nom = htmlspecialchars(trim($nom));
+        }
+        return $this;
+    }
+    
+    public function setPrenom($prenom) { 
+        if (!empty(trim($prenom))) {
+            $this->prenom = htmlspecialchars(trim($prenom));
+        }
+        return $this;
+    }
+    
+    public function setEmail($email) {
+        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->email = $email;
+        } else {
+            throw new InvalidArgumentException("Email invalide");
+        }
+        return $this;
+    }
+    
+    public function setMotDePasse($mot_de_passe) {
+        if (!empty($mot_de_passe)) {
+            // Si le mot de passe n'est pas déjà hashé (longueur < 60)
+            if (strlen($mot_de_passe) < 60) {
+                $this->mot_de_passe = password_hash($mot_de_passe, PASSWORD_DEFAULT);
+            } else {
+                $this->mot_de_passe = $mot_de_passe;
+            }
+        }
+        return $this;
+    }
+    
+    public function setDateNaissance($dateNaissance) {
+        if ($this->validateDate($dateNaissance)) {
+            $this->dateNaissance = $dateNaissance;
+        }
+        return $this;
+    }
+    
+    public function setAdresse($adresse) { 
+        $this->adresse = htmlspecialchars(trim($adresse));
+        return $this;
+    }
+    
+    public function setDateInscription($date) { 
+        if ($this->validateDate($date, 'Y-m-d H:i:s')) {
+            $this->date_inscription = $date;
+        }
+        return $this;
+    }
+    
+    public function setRole($role) {
+        $rolesValides = ['utilisateur', 'admin', 'medecin'];
+        if (in_array($role, $rolesValides)) {
+            $this->role = $role;
+        }
+        return $this;
+    }
+    
+    public function setStatut($statut) {
+        $statutsValides = ['actif', 'inactif', 'suspendu'];
+        if (in_array($statut, $statutsValides)) {
+            $this->statut = $statut;
+        }
+        return $this;
     }
 
+    public function setResetToken($token) {
+        $this->reset_token = $token;
+        return $this;
+    }
+
+    public function setResetTokenExpires($expires) {
+        $this->reset_token_expires = $expires;
+        return $this;
+    }
+
+    public function setPhotoProfil($photo) {
+        $this->photo_profil = $photo;
+        return $this;
+    }
+
+    // Méthodes métier
     public function verifyMotDePasse($mot_de_passe) {
         return password_verify($mot_de_passe, $this->mot_de_passe);
     }
@@ -76,6 +157,53 @@ class Utilisateur
 
     public function estAdmin() {
         return $this->role === 'admin';
+    }
+
+    public function estMedicin() {
+        return $this->role === 'medecin';
+    }
+
+    public function genererResetToken() {
+        $token = bin2hex(random_bytes(32));
+        $this->reset_token = $token;
+        $this->reset_token_expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
+        return $token;
+    }
+
+    public function resetTokenEstValide() {
+        if (!$this->reset_token || !$this->reset_token_expires) {
+            return false;
+        }
+        return new DateTime() < new DateTime($this->reset_token_expires);
+    }
+
+    // Méthode utilitaire
+    private function validateDate($date, $format = 'Y-m-d') {
+        if (empty($date)) return true;
+        $d = DateTime::createFromFormat($format, $date);
+        return $d && $d->format($format) === $date;
+    }
+
+    public function toArray() {
+        return [
+            'id_utilisateur' => $this->id_utilisateur,
+            'nom' => $this->nom,
+            'prenom' => $this->prenom,
+            'email' => $this->email,
+            'dateNaissance' => $this->dateNaissance,
+            'adresse' => $this->adresse,
+            'date_inscription' => $this->date_inscription,
+            'role' => $this->role,
+            'statut' => $this->statut,
+            'reset_token' => $this->reset_token,
+            'reset_token_expires' => $this->reset_token_expires,
+            'photo_profil' => $this->photo_profil,
+            'age' => $this->getAge()
+        ];
+    }
+
+    public function __toString() {
+        return $this->prenom . ' ' . $this->nom . ' (' . $this->email . ')';
     }
 }
 ?>

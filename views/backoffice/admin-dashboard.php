@@ -17,15 +17,247 @@ $dashboardData = $adminController->dashboard();
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="icon" href="../assets/img/favicon.png" type="image/png">
     <title>Dashboard Admin - Medcare Medical</title>
+    
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="../assets/css/bootstrap.css">
     <link rel="stylesheet" href="../../assets/css/themify-icons.css">
     <link rel="stylesheet" href="../../assets/css/flaticon.css">
     <link rel="stylesheet" href="../assets/vendors/fontawesome/css/all.min.css">
+    
     <!-- main css -->
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/responsive.css">
+    
     <style>
+        :root {
+            --primary-color: #2c7be5;
+            --secondary-color: #6c757d;
+            --success-color: #00d97e;
+            --info-color: #39afd1;
+            --warning-color: #f6c343;
+            --danger-color: #e63757;
+            --light-color: #f9fafd;
+            --dark-color: #12263f;
+            --sidebar-width: 260px;
+            --medical-color: #17a2b8;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f6fa;
+            color: #333;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-color) 0%, #1a5bb8 100%);
+            color: white;
+            padding: 0;
+            z-index: 1000;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+        
+        .sidebar-menu .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-menu .nav-link:hover, 
+        .sidebar-menu .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid white;
+        }
+        
+        .sidebar-menu .nav-link i {
+            width: 24px;
+            margin-right: 10px;
+        }
+        
+        .sidebar-submenu {
+            padding-left: 40px;
+        }
+        
+        .sidebar-submenu .nav-link {
+            padding: 8px 20px;
+            font-size: 0.9rem;
+        }
+        
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+        }
+        
+        .top-bar {
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid #e3ebf6;
+            padding: 15px 20px;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        .doctor-card {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #e3ebf6;
+        }
+        
+        .doctor-card:last-child {
+            border-bottom: none;
+        }
+        
+        .doctor-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        .doctor-info h6 {
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        .doctor-stats {
+            display: flex;
+            font-size: 0.85rem;
+            color: var(--secondary-color);
+        }
+        
+        .doctor-stats span {
+            margin-right: 15px;
+        }
+        
+        .appointment-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #e3ebf6;
+        }
+        
+        .appointment-item:last-child {
+            border-bottom: none;
+        }
+        
+        .appointment-patient {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .appointment-details {
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .appointment-status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-terminé {
+            background-color: rgba(0, 217, 126, 0.1);
+            color: var(--success-color);
+        }
+        
+        .status-en-cours {
+            background-color: rgba(57, 175, 209, 0.1);
+            color: var(--info-color);
+        }
+        
+        .status-en-attente {
+            background-color: rgba(246, 195, 67, 0.1);
+            color: var(--warning-color);
+        }
+        
+        .specialty-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #e3ebf6;
+            display: flex;
+            align-items: center;
+        }
+        
+        .specialty-item:last-child {
+            border-bottom: none;
+        }
+        
+        .specialty-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .color-primary { background-color: var(--primary-color); }
+        .color-success { background-color: var(--success-color); }
+        .color-warning { background-color: var(--warning-color); }
+        .color-danger { background-color: var(--danger-color); }
+        .color-info { background-color: var(--info-color); }
+        
+        .btn-view-all {
+            color: var(--primary-color);
+            font-weight: 500;
+            text-decoration: none;
+        }
+        
+        .btn-view-all:hover {
+            text-decoration: underline;
+        }
+        
+        .footer-card {
+            background-color: rgba(44, 123, 229, 0.05);
+            border-radius: 0 0 10px 10px;
+            padding: 15px 20px;
+            text-align: center;
+        }
+        
+        /* Dashboard Stats Styles */
         .dashboard-area {
             padding: 120px 0 80px;
             background: #f8f9fa;
@@ -214,230 +446,420 @@ $dashboardData = $adminController->dashboard();
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
+        
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+                overflow: hidden;
+            }
+            
+            .sidebar .nav-link span {
+                display: none;
+            }
+            
+            .sidebar .sidebar-header h3 {
+                display: none;
+            }
+            
+            .sidebar .nav-link i {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <!--================Header Menu Area =================-->
-    <header class="header_area">
-        <div class="top_menu row m0">
-            <div class="container">
-                <div class="float-left">
-                    <a class="dn_btn" href="mailto:medical@example.com"><i class="ti-email"></i>medical@example.com</a>
-                    <span class="dn_btn"> <i class="ti-location-pin"></i>Find our Location</span>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+           <<a class="navbar-brand logo_h" href="../home/index.php">
+                    <img src="../assets/img/logo.png" alt="logo" style="height: 200px;">
+                </a>
+        </div>
+        <div class="sidebar-menu">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Tableau de Bord</span>
+                    </a>
+                </li>
+                <li class="nav-item mt-3">
+                    <small class="text-uppercase text-muted ms-3">Gestion Médicale</small>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#appointmentsMenu">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Rendez-vous</span>
+                        <i class="fas fa-chevron-down float-end mt-1"></i>
+                    </a>
+                    <div class="collapse show" id="appointmentsMenu">
+                        <ul class="nav flex-column sidebar-submenu">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <span>Tous les rendez-vous</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <span>Nouveau rendez-vous</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">
+                                    <span>Calendrier</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-user-injured"></i>
+                        <span>Patients</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-user-md"></i>
+                        <span>Médecins</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="admin-users.php">
+                        <i class="fas fa-users"></i>
+                        <span>Utilisateurs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-prescription"></i>
+                        <span>Ordonnances</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <span>Facturation</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-cog"></i>
+                        <span>Paramètres</span>
+                    </a>
+                </li>
+                <li class="nav-item mt-3">
+                    <small class="text-uppercase text-muted ms-3">Rapports</small>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Rapports statistiques</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Audit médical</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Tableau de Bord Administrateur</h4>
+            <div class="d-flex align-items-center">
+                <div class="input-group me-3" style="width: 300px;">
+                    <span class="input-group-text bg-light border-0"><i class="fas fa-search text-muted"></i></span>
+                    <input type="text" class="form-control border-0 bg-light" placeholder="Rechercher...">
                 </div>
-                <div class="float-right">
-                    <ul class="list header_social">
-                        <li><a href="#"><i class="ti-facebook"></i></a></li>
-                        <li><a href="#"><i class="ti-twitter-alt"></i></a></li>
-                        <li><a href="#"><i class="ti-linkedin"></i></a></li>
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown">
+                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px;">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        <span class="ms-2">Admin</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="../frontoffice/auth/profile.php"><i class="fas fa-user me-2"></i> Mon profil</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Paramètres</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="../../../controllers/logout.php" 
+                               onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?')">
+                                <i class="fas fa-sign-out-alt me-2"></i> Déconnexion
+                            </a>
+                        </li>
                     </ul>
-                    <!-- Section authentification -->
-                    <div class="auth-top" style="display: inline-block; margin-left: 20px;">
-                        <span style="color: #fff; margin-right: 15px;">
-                            <i class="ti-shield"></i> Admin Dashboard
-                        </span>
-                        <a href="../../../controllers/logout.php" style="color: #fff; text-decoration: underline;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <section class="dashboard-area">
+            <div class="container">
+                <div class="animate-fade-in-up">
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-number"><?php echo $dashboardData['stats']['total']; ?></div>
+                            <div class="stat-label">Utilisateurs Total</div>
+                        </div>
+                        
+                        <div class="stat-card new">
+                            <div class="stat-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="stat-number"><?php echo $dashboardData['stats']['new_this_month']; ?></div>
+                            <div class="stat-label">Nouveaux ce mois</div>
+                        </div>
+                        
+                        <?php foreach ($dashboardData['stats']['by_role'] as $role): ?>
+                        <div class="stat-card <?php echo $role['role'] === 'admin' ? 'admin' : 'user'; ?>">
+                            <div class="stat-icon">
+                                <i class="fas <?php echo $role['role'] === 'admin' ? 'fa-shield-alt' : 'fa-user'; ?>"></i>
+                            </div>
+                            <div class="stat-number"><?php echo $role['count']; ?></div>
+                            <div class="stat-label"><?php echo ucfirst($role['role']); ?>s</div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <!-- Content Row -->
+                    <div class="row">
+                        <!-- Médecins les plus actifs -->
+                        <div class="col-lg-4">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0">Médecins les plus actifs</h5>
+                                    <a href="#" class="btn-view-all">Voir tout</a>
+                                </div>
+                                <div class="card-body">
+                                    <div class="doctor-card">
+                                        <div class="doctor-avatar">LM</div>
+                                        <div class="doctor-info flex-grow-1">
+                                            <h6>Dr. Laurent Martin</h6>
+                                            <div class="doctor-stats">
+                                                <span><i class="fas fa-user-injured me-1"></i> 42 patients</span>
+                                                <span><i class="fas fa-star me-1 text-warning"></i> 4.8/5.0</span>
+                                            </div>
+                                        </div>
+                                        <a href="#" class="btn btn-sm btn-outline-primary">Profil</a>
+                                    </div>
+                                    
+                                    <div class="doctor-card">
+                                        <div class="doctor-avatar">SB</div>
+                                        <div class="doctor-info flex-grow-1">
+                                            <h6>Dr. Sophie Bernard</h6>
+                                            <div class="doctor-stats">
+                                                <span><i class="fas fa-user-injured me-1"></i> 38 patients</span>
+                                                <span><i class="fas fa-star me-1 text-warning"></i> 4.9/5.0</span>
+                                            </div>
+                                        </div>
+                                        <a href="#" class="btn btn-sm btn-outline-primary">Profil</a>
+                                    </div>
+                                    
+                                    <div class="doctor-card">
+                                        <div class="doctor-avatar">PD</div>
+                                        <div class="doctor-info flex-grow-1">
+                                            <h6>Dr. Pierre Dubois</h6>
+                                            <div class="doctor-stats">
+                                                <span><i class="fas fa-user-injured me-1"></i> 35 patients</span>
+                                                <span><i class="fas fa-star me-1 text-warning"></i> 4.7/5.0</span>
+                                            </div>
+                                        </div>
+                                        <a href="#" class="btn btn-sm btn-outline-primary">Profil</a>
+                                    </div>
+                                    
+                                    <div class="doctor-card">
+                                        <div class="doctor-avatar">ML</div>
+                                        <div class="doctor-info flex-grow-1">
+                                            <h6>Dr. Marie Leroy</h6>
+                                            <div class="doctor-stats">
+                                                <span><i class="fas fa-user-injured me-1"></i> 31 patients</span>
+                                                <span><i class="fas fa-star me-1 text-warning"></i> 4.8/5.0</span>
+                                            </div>
+                                        </div>
+                                        <a href="#" class="btn btn-sm btn-outline-primary">Profil</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Rendez-vous récents -->
+                        <div class="col-lg-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Rendez-vous récents</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="appointment-item">
+                                        <div class="appointment-patient">M. Jean Dupont</div>
+                                        <div class="appointment-details">Consultation générale - Dr. Martin</div>
+                                        <div>
+                                            <span class="appointment-status status-terminé">Terminé</span>
+                                            <span class="text-muted ms-2">10:30</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="appointment-item">
+                                        <div class="appointment-patient">Mme. Sophie Laurent</div>
+                                        <div class="appointment-details">Suivi cardiologie - Dr. Bernard</div>
+                                        <div>
+                                            <span class="appointment-status status-en-cours">En cours</span>
+                                            <span class="text-muted ms-2">11:15</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="appointment-item">
+                                        <div class="appointment-patient">M. Robert Petit</div>
+                                        <div class="appointment-details">Consultation dermatologie - Dr. Leroy</div>
+                                        <div>
+                                            <span class="appointment-status status-en-attente">En attente</span>
+                                            <span class="text-muted ms-2">14:00</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="appointment-item">
+                                        <div class="appointment-patient">Mme. Claire Moreau</div>
+                                        <div class="appointment-details">Bilan annuel - Dr. Dubois</div>
+                                        <div>
+                                            <span class="appointment-status status-en-attente">Programmé</span>
+                                            <span class="text-muted ms-2">15:30</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="footer-card">
+                                    <span class="text-muted">12 autres rendez-vous aujourd'hui</span>
+                                    <a href="#" class="btn btn-sm btn-primary ms-2">Voir calendrier</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Répartition par spécialité -->
+                        <div class="col-lg-4">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0">Répartition par spécialité</h5>
+                                    <a href="#" class="btn-view-all">Voir tout</a>
+                                </div>
+                                <div class="card-body">
+                                    <div class="specialty-item">
+                                        <div class="specialty-color color-primary"></div>
+                                        <div>Médecine générale</div>
+                                    </div>
+                                    
+                                    <div class="specialty-item">
+                                        <div class="specialty-color color-success"></div>
+                                        <div>Cardiologie</div>
+                                    </div>
+                                    
+                                    <div class="specialty-item">
+                                        <div class="specialty-color color-warning"></div>
+                                        <div>Dermatologie</div>
+                                    </div>
+                                    
+                                    <div class="specialty-item">
+                                        <div class="specialty-color color-danger"></div>
+                                        <div>Pédiatrie</div>
+                                    </div>
+                                    
+                                    <div class="specialty-item">
+                                        <div class="specialty-color color-info"></div>
+                                        <div>Gynécologie</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Users Table -->
+                    <div class="recent-users">
+                        <h3 class="section-title">Utilisateurs Récents</h3>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Email</th>
+                                        <th>Date d'inscription</th>
+                                        <th>Rôle</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($dashboardData['recentUsers'] as $user): ?>
+                                    <tr>
+                                        <td>
+                                            <strong><?php echo htmlspecialchars($user['prenom'] . ' ' . $user['nom']); ?></strong>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                        <td><?php echo date('d/m/Y', strtotime($user['date_inscription'])); ?></td>
+                                        <td>
+                                            <span class="role-badge <?php echo $user['role']; ?>">
+                                                <?php echo ucfirst($user['role']); ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="edit-user.php?id=<?php echo $user['id']; ?>" class="btn-dashboard btn-secondary" style="padding: 6px 12px; font-size: 12px;">
+                                                <i class="ti-pencil"></i> Modifier
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Actions -->
+                    <div class="dashboard-actions">
+                        <a href="admin-edit.php" class="btn-dashboard btn-primary">
+                            <i class="ti-user"></i> Gérer les utilisateurs
+                        </a>
+                        <a href="gestion-rendezvous.php" class="btn-dashboard btn-primary">
+                            <i class="ti-calendar"></i> Gérer les rendez-vous
+                        </a>
+                        <a href="../frontoffice/home/index.php" class="btn-dashboard btn-secondary">
+                            <i class="ti-home"></i> Retour au site
+                        </a>
+                        <a href="../../../controllers/logout.php" 
+                           class="btn-dashboard btn-secondary" 
+                           onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?')">
                             <i class="ti-power-off"></i> Déconnexion
                         </a>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="main_menu">
-            <nav class="navbar navbar-expand-lg navbar-light">
-                <div class="container">
-                    <!-- Brand and toggle get grouped for better mobile display -->
-                    <a class="navbar-brand logo_h" href="../frontoffice/home/index.php">
-                        <img src="../../assets/img/logo.png" alt="Medcare Medical">
-                    </a>
-                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <!-- Collect the nav links, forms, and other content for toggling -->
-                    <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
-                        <ul class="nav navbar-nav menu_nav ml-auto">
-                            <li class="nav-item"><a class="nav-link" href="../frontoffice/home/index.php">Home</a></li>
-                            <li class="nav-item active"><a class="nav-link" href="admin-dashboard.php">Dashboard</a></li>
-                            <li class="nav-item"><a class="nav-link" href="gestion-utilisateurs.php">Utilisateurs</a></li>
-                            <li class="nav-item"><a class="nav-link" href="gestion-rendezvous.php">Rendez-vous</a></li>
-                            <li class="nav-item"><a class="nav-link" href="../frontoffice/templete/contact.html">Contact</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-        </div>
-    </header>
-    <!--================Header Menu Area =================-->
+        </section>
+    </div>
 
-    <!--================Banner Area =================-->
-    <section class="banner_area">
-        <div class="banner_inner d-flex align-items-center">
-            <div class="container">
-                <div class="banner_content d-md-flex justify-content-between align-items-center">
-                    <div class="mb-3 mb-md-0">
-                        <h2>Dashboard Administrateur</h2>
-                        <p>Gestion du système Medcare Medical</p>
-                    </div>
-                    <div class="page_link">
-                        <a href="../frontoffice/home/index.php">Home</a>
-                        <a href="admin-dashboard.php">Dashboard Admin</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
     
-
-  
-    <section class="dashboard-area">
-        <div class="container">
-            <div class="animate-fade-in-up">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="stat-number"><?php echo $dashboardData['stats']['total']; ?></div>
-                        <div class="stat-label">Utilisateurs Total</div>
-                    </div>
-                    
-                    <div class="stat-card new">
-                        <div class="stat-icon">
-                            <i class="fas fa-user-plus"></i>
-                        </div>
-                        <div class="stat-number"><?php echo $dashboardData['stats']['new_this_month']; ?></div>
-                        <div class="stat-label">Nouveaux ce mois</div>
-                    </div>
-                    
-                    <?php foreach ($dashboardData['stats']['by_role'] as $role): ?>
-                    <div class="stat-card <?php echo $role['role'] === 'admin' ? 'admin' : 'user'; ?>">
-                        <div class="stat-icon">
-                            <i class="fas <?php echo $role['role'] === 'admin' ? 'fa-shield-alt' : 'fa-user'; ?>"></i>
-                        </div>
-                        <div class="stat-number"><?php echo $role['count']; ?></div>
-                        <div class="stat-label"><?php echo ucfirst($role['role']); ?>s</div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-
-                
-                <div class="recent-users">
-                    <h3 class="section-title">Utilisateurs Récents</h3>
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Nom</th>
-                                    <th>Email</th>
-                                    <th>Date d'inscription</th>
-                                    <th>Rôle</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($dashboardData['recentUsers'] as $user): ?>
-                                <tr>
-                                    <td>
-                                        <strong><?php echo htmlspecialchars($user['prenom'] . ' ' . $user['nom']); ?></strong>
-                                    </td>
-                                    <td><?php echo htmlspecialchars($user['email']); ?></td>
-                                    <td><?php echo date('d/m/Y', strtotime($user['date_inscription'])); ?></td>
-                                    <td>
-                                        <span class="role-badge <?php echo $user['role']; ?>">
-                                            <?php echo ucfirst($user['role']); ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <a href="edit-user.php?id=<?php echo $user['id']; ?>" class="btn-dashboard btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                                            <i class="ti-pencil"></i> Modifier
-                                        </a>
-                                    </td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                
-                <div class="dashboard-actions">
-                    <a href="admin-edit.php" class="btn-dashboard btn-primary">
-                        <i class="ti-user"></i> Gérer les utilisateurs
-                    </a>
-                    <a href="gestion-rendezvous.php" class="btn-dashboard btn-primary">
-                        <i class="ti-calendar"></i> Gérer les rendez-vous
-                    </a>
-                    <a href="../frontoffice/home/index.php" class="btn-dashboard btn-secondary">
-                        <i class="ti-home"></i> Retour au site
-                    </a>
-                    <a href="../../../controllers/logout.php" 
-                       class="btn-dashboard btn-secondary" 
-                       onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?')">
-                        <i class="ti-power-off"></i> Déconnexion
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
    
 
-    
-    <footer class="footer-area area-padding-top">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-3 col-sm-6 single-footer-widget">
-                    <h4>Medcare Medical</h4>
-                    <ul>
-                        <li><a href="../frontoffice/home/index.php">Accueil</a></li>
-                        <li><a href="../frontoffice/templete/about-us.html">À propos</a></li>
-                        <li><a href="../frontoffice/templete/department.html">Services</a></li>
-                        <li><a href="../frontoffice/templete/contact.html">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-3 col-sm-6 single-footer-widget">
-                    <h4>Administration</h4>
-                    <ul>
-                        <li><a href="admin-dashboard.php">Dashboard</a></li>
-                        <li><a href="admin-list.php">Utilisateurs</a></li>
-                        <li><a href="gestion-rendezvous.php">Rendez-vous</a></li>
-                        <li><a href="#">Rapports</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-3 col-sm-6 single-footer-widget">
-                    <h4>Support</h4>
-                    <ul>
-                        <li><a href="#">Documentation</a></li>
-                        <li><a href="#">Aide</a></li>
-                        <li><a href="#">Contact Support</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-3 col-sm-6 single-footer-widget">
-                    <h4>Contact</h4>
-                    <ul>
-                        <li><i class="ti-email"></i> medical@example.com</li>
-                        <li><i class="ti-mobile"></i> +33 1 23 45 67 89</li>
-                        <li><i class="ti-location-pin"></i> Paris, France</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="row footer-bottom d-flex justify-content-between">
-                <p class="col-lg-8 col-sm-12 footer-text m-0">
-                    &copy; <?php echo date('Y'); ?> Medcare Medical. Tous droits réservés.
-                </p>
-                <div class="col-lg-4 col-sm-12 footer-social">
-                    <a href="#"><i class="ti-facebook"></i></a>
-                    <a href="#"><i class="ti-twitter"></i></a>
-                    <a href="#"><i class="ti-linkedin"></i></a>
-                </div>
-            </div>
-        </div>
-    </footer>
-    
-
-   
+    <!-- Scripts -->
     <script src="../assets/js/jquery-2.2.4.min.js"></script>
     <script src="../assets/js/popper.js"></script>
     <script src="../assets/js/bootstrap.min.js"></script>
@@ -445,7 +867,24 @@ $dashboardData = $adminController->dashboard();
     <script src="../assets/js/theme.js"></script>
     
     <script>
+        // Activer les dropdowns de Bootstrap
+        var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'))
+        var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl)
+        });
         
+        // Gérer le menu déroulant des rendez-vous
+        document.getElementById('appointmentsMenu').addEventListener('show.bs.collapse', function () {
+            this.previousElementSibling.querySelector('.fa-chevron-down').classList.add('fa-chevron-up');
+            this.previousElementSibling.querySelector('.fa-chevron-down').classList.remove('fa-chevron-down');
+        });
+        
+        document.getElementById('appointmentsMenu').addEventListener('hide.bs.collapse', function () {
+            this.previousElementSibling.querySelector('.fa-chevron-up').classList.add('fa-chevron-down');
+            this.previousElementSibling.querySelector('.fa-chevron-up').classList.remove('fa-chevron-up');
+        });
+        
+        // Confirmation de déconnexion
         document.querySelectorAll('a[href*="logout"]').forEach(link => {
             link.addEventListener('click', function(e) {
                 if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
@@ -454,7 +893,7 @@ $dashboardData = $adminController->dashboard();
             });
         });
 
-       
+        // Animation des cartes de statistiques
         document.addEventListener('DOMContentLoaded', function() {
             const statCards = document.querySelectorAll('.stat-card');
             statCards.forEach((card, index) => {
