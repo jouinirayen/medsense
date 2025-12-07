@@ -1,0 +1,145 @@
+/* Calendar Container */
+.calendar-wrapper {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    margin-top: 1.5rem;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.calendar-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Nav Buttons */
+.calendar-nav {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.nav-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nav-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+.nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f8fafc;
+}
+
+/* Day Columns */
+.calendar-days {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    /* Smooth scroll for mobile */
+    -webkit-overflow-scrolling: touch;
+}
+
+.day-column {
+    min-width: 100px;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    flex: 1;
+}
+
+.day-header {
+    text-align: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 0.5rem;
+    width: 100%;
+}
+
+.day-name {
+    display: block;
+    font-size: 0.85rem;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.day-date {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* Time Slot Chips */
+.time-slot {
+    display: block;
+    width: 90%;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0;
+    text-align: center;
+    background-color: white;
+    color: #0ea5e9;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    text-decoration: none;
+    border: 1px solid #bae6fd;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.time-slot:hover {
+    background-color: #0ea5e9;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(14, 165, 233, 0.2);
+}
+
+.time-slot.booked {
+    background-color: #e2e8f0;
+    color: #94a3b8;
+    border-color: #cbd5e1;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .calendar-days {
+        justify-content: flex-start;
+    }
+
+    .day-column {
+        min-width: 120px;
+    }
+}

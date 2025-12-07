@@ -9,6 +9,7 @@ class Reservation
     private $patientPrenom;
     private $statut;
     private $idPatient;
+    private $date; // Added date property
 
     // Properties for joined data
     private $medecinNom;
@@ -16,7 +17,7 @@ class Reservation
     private $serviceNom;
     private $patientEmail;
 
-    public function __construct($idRDV = null, $idMedecin = null, $heureRdv = null, $patientNom = null, $patientPrenom = null, $statut = null, $idPatient = null)
+    public function __construct($idRDV = null, $idMedecin = null, $heureRdv = null, $patientNom = null, $patientPrenom = null, $statut = null, $idPatient = null, $date = null)
     {
         $this->idRDV = $idRDV;
         $this->idMedecin = $idMedecin;
@@ -25,9 +26,20 @@ class Reservation
         $this->patientPrenom = $patientPrenom;
         $this->statut = $statut;
         $this->idPatient = $idPatient;
+        $this->date = $date;
     }
 
     // Getters
+    public function getDate()
+    {
+        return $this->date;
+    }
+
+    public function setDate($date)
+    {
+        $this->date = $date;
+    }
+
     public function getIdRDV()
     {
         return $this->idRDV;
@@ -131,5 +143,28 @@ class Reservation
     public function setPatientEmail($patientEmail)
     {
         $this->patientEmail = $patientEmail;
+    }
+    private $note;
+
+    public function getNote()
+    {
+        return $this->note;
+    }
+
+    public function setNote($note)
+    {
+        $this->note = $note;
+    }
+
+    private $idService;
+
+    public function getIdService()
+    {
+        return $this->idService;
+    }
+
+    public function setIdService($idService)
+    {
+        $this->idService = $idService;
     }
 }

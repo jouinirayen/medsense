@@ -1,0 +1,253 @@
+/* Global Styles */
+body {
+    background-color: #f8fafc;
+    font-family: 'Inter', sans-serif;
+    color: #0f172a;
+    margin: 0;
+    padding: 0;
+}
+
+.profile-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+/* Header/Hero Card */
+.profile-header-card {
+    background: white;
+    border-radius: 24px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.doctor-main-info {
+    flex: 1;
+    padding-right: 2rem;
+}
+
+.profile-rating-badge {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.5rem 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.star-icon {
+    color: #fbbf24;
+}
+
+.doctor-name-large {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem 0;
+    color: #0f172a;
+}
+
+.doctor-specialty-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: #eff6ff;
+    color: #3b82f6;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+}
+
+.doctor-bio {
+    color: #64748b;
+    line-height: 1.6;
+    max-width: 600px;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+}
+
+.actions-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.btn-share {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-share:hover {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.btn-primary-action {
+    background-color: #0ea5e9;
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    border: none;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-decoration: none;
+}
+
+.btn-primary-action:hover {
+    background-color: #0284c7;
+}
+
+.doctor-image-container {
+    position: relative;
+    width: 250px;
+}
+
+.doctor-profile-image {
+    width: 100%;
+    height: auto;
+    border-radius: 20px;
+    object-fit: cover;
+}
+
+.verified-badge {
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #0f172a;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.verified-icon {
+    color: #3b82f6;
+}
+
+/* Navigation Tabs */
+.profile-tabs {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.tab-link {
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    text-decoration: none;
+    color: #64748b;
+    font-weight: 600;
+    transition: all 0.2s;
+    background: transparent;
+}
+
+.tab-link.active {
+    background-color: #2563eb;
+    color: white;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.tab-link:hover:not(.active) {
+    background-color: #e2e8f0;
+}
+
+/* Info Grid */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.info-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.info-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.icon-yellow {
+    background: #fef9c3;
+    color: #ca8a04;
+}
+
+.icon-green {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.icon-purple {
+    background: #f3e8ff;
+    color: #7e22ce;
+}
+
+.info-label {
+    font-size: 0.875rem;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.info-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* Slots Section (reused/adapted) */
+.slots-overlay {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px dashed #cbd5e1;
+    text-align: center;
+}

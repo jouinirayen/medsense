@@ -29,18 +29,18 @@
 
                     // Gestion de l'image de fond
                     $bgStyle = '';
-                    if (!empty($service->getImage())) {
-                        $bgStyle = "background-image: url('../" . $service->getImage() . "'); background-size: cover; background-position: center; background-repeat: no-repeat;";
+                    if (!empty($service['image'])) {
+                        $bgStyle = "background-image: url('../" . $service['image'] . "'); background-size: cover; background-position: center; background-repeat: no-repeat;";
                     }
                     ?>
 
                     <div class="service-card" style="<?php echo $bgStyle; ?>">
                         <div class="service-icon">
-                            <i class="<?php echo $service->getIcon(); ?>"></i>
+                            <i class="<?php echo $service['icon']; ?>"></i>
                         </div>
 
-                        <h3 class="service-title"><?php echo $service->getName(); ?></h3>
-                        <p class="service-description"><?php echo $service->getDescription(); ?></p>
+                        <h3 class="service-title"><?php echo $service['name']; ?></h3>
+                        <p class="service-description"><?php echo $service['description']; ?></p>
 
                         <div class="service-footer">
                             <?php if ($link): ?>

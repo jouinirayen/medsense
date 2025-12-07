@@ -24,7 +24,7 @@ $userController->requireRole('admin');
 <body>
     <header class="header">
         <div class="logo-section">
-            <img src="../uploads/logo.jpeg" alt="Logo Medsense" style="height: 125px; width: auto;">
+            <img src="../images/logo.jpeg" alt="Logo Medsense" style="height: 50px; width: auto;">
         </div>
         <nav class="nav-links">
             <a href="dashboard.php" class="nav-link active">

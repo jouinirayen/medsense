@@ -1,118 +1,97 @@
-.modifier-container {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+.slots-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 10px;
 }
 
-.current-info {
-    background-color: #f8fafc;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    margin-bottom: 2rem;
-    border-left: 4px solid #0ea5e9;
+.date-picker-container {
+    margin-bottom: 20px;
+    padding: 0 10px;
 }
 
-.slot-btn.current {
-    background-color: #0ea5e9;
-    color: white;
-    border-color: #0ea5e9;
-    cursor: default;
-}
-
-.page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 2rem;
-}
-
-.back-btn {
-    color: #64748b;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: 500;
-}
-
-.back-btn:hover {
+.date-picker-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: "Inter", sans-serif;
     color: #334155;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.2s;
 }
 
-/* Confirmation Styles */
-.confirmation-box {
-    max-width: 600px;
-    margin: 3rem auto;
-    padding: 2rem;
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    text-align: center;
+.date-picker-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.time-comparison {
+.slot-btn-modern {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 2rem;
-    margin: 2rem 0;
-    flex-wrap: wrap;
-}
-
-.time-card {
-    background: #f8fafc;
-    padding: 1.5rem;
-    border-radius: 0.75rem;
-    border: 1px solid #e2e8f0;
-    min-width: 150px;
-}
-
-.time-card.old {
-    border-left: 4px solid #64748b;
-}
-
-.time-card.new {
-    border-left: 4px solid #0ea5e9;
-    background: #f0f9ff;
-}
-
-.arrow-icon {
-    color: #94a3b8;
-    font-size: 1.5rem;
-}
-
-.time-label {
-    display: block;
-    font-size: 0.875rem;
-    color: #64748b;
-    margin-bottom: 0.5rem;
-}
-
-.time-value {
-    display: block;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1e293b;
-}
-
-.btn-cancel {
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    color: #64748b;
-    background: #f1f5f9;
-    font-weight: 500;
-}
-
-.btn-confirm {
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    border: none;
-    background: #0ea5e9;
-    color: white;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-family: "Plus Jakarta Sans", sans-serif;
     font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    outline: none;
+    width: 100%;
+}
+
+/* Available State */
+.slot-btn-available {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     cursor: pointer;
+}
+
+.slot-btn-available:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background-color: #eff6ff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+}
+
+/* Current State */
+.slot-btn-current {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border: none;
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+    cursor: default;
+}
+
+.current-badge {
+    background-color: rgba(255, 255, 255, 0.2);
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+}
+
+/* Booked State */
+.slot-btn-booked {
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.no-slots {
+    grid-column: span 2;
+    padding: 2rem;
+    text-align: center;
+    color: #64748b;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px dashed #cbd5e1;
 }

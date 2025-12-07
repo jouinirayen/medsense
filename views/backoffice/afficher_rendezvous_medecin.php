@@ -11,18 +11,9 @@ $reservationController = new ReservationController();
 // Get User Info
 $currentUser = $userController->getUserById($userId);
 
-// Handle Flash Messages
-$message = "";
-$messageType = "";
-if (isset($_SESSION['flash_message'])) {
-    $message = $_SESSION['flash_message'];
-    $messageType = $_SESSION['flash_type'];
-    unset($_SESSION['flash_message']);
-    unset($_SESSION['flash_type']);
-}
-
 // Get Appointments for Doctor
-$appointments = $reservationController->getAppointmentsByDoctor($userId);
+$filterDate = isset($_GET['date']) && !empty($_GET['date']) ? $_GET['date'] : null;
+$appointments = $reservationController->getAppointmentsByDoctor($userId, $filterDate);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -36,6 +27,8 @@ $appointments = $reservationController->getAppointmentsByDoctor($userId);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="../css/appointments.css?v=<?php echo time(); ?>">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </head>
 
 <body>
@@ -61,8 +54,28 @@ $appointments = $reservationController->getAppointmentsByDoctor($userId);
         <div class="page-header">
             <div class="page-title">
                 <h1>Mes Consultations</h1>
-                <p>Gérez vos rendez-vous avec les patients</p>
+                <p>Gérez vos rendez-vous et patients</p>
             </div>
+
+            <!-- Date Filter Form -->
+            <form method="GET" action="" class="date-filter-form"
+                style="display: flex; gap: 10px; align-items: center;">
+                <label for="filter-date" style="font-weight: 500; color: #64748b;">Filtrer par date :</label>
+                <input type="date" id="filter-date" name="date"
+                    value="<?php echo isset($_GET['date']) ? htmlspecialchars($_GET['date']) : ''; ?>"
+                    style="padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; outline: none; transition: border-color 0.2s;">
+                <button type="submit"
+                    style="background-color: #0ea5e9; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                    <i class="fas fa-filter"></i>
+                </button>
+                <?php if (isset($_GET['date']) && !empty($_GET['date'])): ?>
+                    <a href="afficher_rendezvous_medecin.php"
+                        style="color: #64748b; text-decoration: none; font-size: 0.9em;">
+                        <i class="fas fa-times"></i> Effacer
+                    </a>
+                <?php endif; ?>
+            </form>
+
             <div class="user-badge">
                 <div class="user-avatar-small">
                     <i class="fas fa-user-md"></i>
@@ -94,8 +107,17 @@ $appointments = $reservationController->getAppointmentsByDoctor($userId);
                                     <p class="specialty">Patient</p>
                                 </div>
                             </div>
-                            <span class="status-badge status-<?php echo htmlspecialchars($appt['statut']); ?>">
-                                <?php echo htmlspecialchars($appt['statut'] === 'pris' ? 'Confirmé' : $appt['statut']); ?>
+                            <span
+                                class="status-badge status-<?php echo htmlspecialchars(str_replace(' ', '-', $appt['statut'])); ?>">
+                                <?php
+                                $statusText = $appt['statut'];
+                                if ($appt['statut'] === 'pris' || $appt['statut'] === 'confirme') {
+                                    $statusText = 'Confirmé';
+                                } elseif ($appt['statut'] === 'en attente') {
+                                    $statusText = 'En attente';
+                                }
+                                echo htmlspecialchars($statusText);
+                                ?>
                             </span>
                         </div>
 
@@ -106,42 +128,107 @@ $appointments = $reservationController->getAppointmentsByDoctor($userId);
                             <div class="time-display">
                                 <span class="time-label">Heure du rendez-vous</span>
                                 <span class="time-value"><?php echo htmlspecialchars(substr($appt['heureRdv'], 0, 5)); ?></span>
+                                <div style="font-size: 0.9em; color: #64748b; margin-top: 2px;">
+                                    <?php echo htmlspecialchars(date('d/m/Y', strtotime($appt['date']))); ?>
+                                </div>
                             </div>
                         </div>
+
+                        <?php if ($appt['statut'] === 'en attente'): ?>
+                            <div class="card-footer"
+                                style="display: flex; gap: 0.5rem; margin-top: 1rem; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
+                                <button onclick="updateStatus(<?php echo $appt['idRDV']; ?>, 'accept')" class="btn-accept"
+                                    style="flex: 1; padding: 0.5rem; background-color: #22c55e; color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                                    <i class="fas fa-check"></i> Accepter
+                                </button>
+                                <button onclick="updateStatus(<?php echo $appt['idRDV']; ?>, 'refuse')" class="btn-refuse"
+                                    style="flex: 1; padding: 0.5rem; background-color: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                                    <i class="fas fa-times"></i> Refuser
+                                </button>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
     </main>
 
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <audio id="successSound" src="../son/suc.mp3" preload="auto"></audio>
+    <!-- Hidden Scanner Modal Structure (Injected via Swal but useful to have definition logic) -->
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            <?php if (!empty($message) && $messageType === 'success'): ?>
-                const audio = document.getElementById('successSound');
-                // Try to play audio
-                audio.play().catch(e => console.log("Audio play failed:", e));
 
+    <!-- Logic to handle URL parameters for alerts -->
+    <?php if (isset($_GET['success']) && $_GET['success'] == 1): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
                 Swal.fire({
-                    title: 'Succès!',
-                    text: '<?php echo addslashes($message); ?>',
+                    title: 'Succès',
+                    text: 'Statut mis à jour avec succès.',
                     icon: 'success',
-                    confirmButtonColor: '#0ea5e9',
-                    confirmButtonText: 'OK'
+                    timer: 3000,
+                    showConfirmButton: false
                 });
-            <?php elseif (!empty($message) && $messageType === 'error'): ?>
+                // Optional: Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            });
+        </script>
+    <?php endif; ?>
+
+    <?php if (isset($_GET['error'])): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                let errorMsg = 'Une erreur est survenue.';
+                const code = "<?php echo htmlspecialchars($_GET['error']); ?>";
+                if (code === 'missing_params') errorMsg = 'Paramètres manquants.';
+                if (code === 'update_failed') errorMsg = 'La mise à jour a échoué.';
+                if (code === 'invalid_status') errorMsg = 'Statut invalide.';
+
                 Swal.fire({
                     title: 'Erreur',
-                    text: '<?php echo addslashes($message); ?>',
-                    icon: 'error',
-                    confirmButtonColor: '#ef4444',
-                    confirmButtonText: 'OK'
+                    text: errorMsg,
+                    icon: 'error'
                 });
-            <?php endif; ?>
-        });
+                window.history.replaceState({}, document.title, window.location.pathname);
+            });
+        </script>
+    <?php endif; ?>
+
+    <script>
+        function updateStatus(id, action) {
+            let title = action === 'accept' ? 'Accepter le rendez-vous ?' : 'Refuser le rendez-vous ?';
+            let confirmBtnColor = action === 'accept' ? '#22c55e' : '#ef4444';
+
+            Swal.fire({
+                title: title,
+                text: "Cette action mettra à jour le statut.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: confirmBtnColor,
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Oui, continuer'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Remove JSON fetch, use standard Form POST to follow redirects
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = 'update_status.php';
+
+                    const hiddenId = document.createElement('input');
+                    hiddenId.type = 'hidden';
+                    hiddenId.name = 'id';
+                    hiddenId.value = id;
+                    form.appendChild(hiddenId);
+
+                    const hiddenStatus = document.createElement('input');
+                    hiddenStatus.type = 'hidden';
+                    hiddenStatus.name = 'status';
+                    hiddenStatus.value = action;
+                    form.appendChild(hiddenStatus);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
     </script>
 </body>
 

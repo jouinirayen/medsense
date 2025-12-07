@@ -10,44 +10,20 @@ require_once __DIR__ . '/../models/ServiceModel.php';
 
 class ServiceController
 {
-
-
-
-
-
-
-
-
-
-
-
     // ============================================
     // Méthodes de requêtes SQL (Data Access)
     // ============================================
 
     /**
      * Get all services from the database
-     * @return ServiceModel[]
+     * @return array
      */
     public function obtenirTousLesServices()
     {
         try {
             $pdo = (new config())->getConnexion();
             $stmt = $pdo->query("SELECT * FROM services ORDER BY id DESC");
-            $servicesData = $stmt->fetchAll();
-
-            $services = [];
-            foreach ($servicesData as $data) {
-                $services[] = new ServiceModel(
-                    $data['id'],
-                    $data['name'],
-                    $data['description'],
-                    $data['icon'],
-                    $data['link'],
-                    $data['image']
-                );
-            }
-            return $services;
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             die("Erreur lors de la récupération des services: " . $e->getMessage());
         }
@@ -55,7 +31,7 @@ class ServiceController
 
     /**
      * Get a service by ID
-     * @return ServiceModel|false
+     * @return array|false
      */
     public function obtenirServiceParId($id)
     {
@@ -63,19 +39,7 @@ class ServiceController
             $pdo = (new config())->getConnexion();
             $stmt = $pdo->prepare("SELECT * FROM services WHERE id = ?");
             $stmt->execute([$id]);
-            $data = $stmt->fetch();
-
-            if ($data) {
-                return new ServiceModel(
-                    $data['id'],
-                    $data['name'],
-                    $data['description'],
-                    $data['icon'],
-                    $data['link'],
-                    $data['image']
-                );
-            }
-            return false;
+            return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             die("Erreur lors de la récupération du service: " . $e->getMessage());
         }
@@ -83,18 +47,19 @@ class ServiceController
 
     /**
      * Add a new service
+     * @param array $service
      */
-    public function addService(ServiceModel $service)
+    public function addService($service)
     {
         try {
             $pdo = (new config())->getConnexion();
             $stmt = $pdo->prepare("INSERT INTO services (name, description, icon, link, image) VALUES (?, ?, ?, ?, ?)");
             return $stmt->execute([
-                $service->getName(),
-                $service->getDescription(),
-                $service->getIcon(),
-                $service->getLink(),
-                $service->getImage()
+                $service['name'],
+                $service['description'],
+                $service['icon'],
+                $service['link'] ?? '',
+                $service['image']
             ]);
         } catch (PDOException $e) {
             die("Erreur lors de l'ajout du service: " . $e->getMessage());
@@ -103,18 +68,20 @@ class ServiceController
 
     /**
      * Update a service
+     * @param int $id
+     * @param array $service
      */
-    public function updateService($id, ServiceModel $service)
+    public function updateService($id, $service)
     {
         try {
             $pdo = (new config())->getConnexion();
             $stmt = $pdo->prepare("UPDATE services SET name = ?, description = ?, icon = ?, link = ?, image = ? WHERE id = ?");
             return $stmt->execute([
-                $service->getName(),
-                $service->getDescription(),
-                $service->getIcon(),
-                $service->getLink(),
-                $service->getImage(),
+                $service['name'],
+                $service['description'],
+                $service['icon'],
+                $service['link'] ?? '',
+                $service['image'],
                 $id
             ]);
         } catch (PDOException $e) {
@@ -138,7 +105,7 @@ class ServiceController
 
     /**
      * Search services by name
-     * @return ServiceModel[]
+     * @return array
      */
     public function rechercherServices($searchTerm)
     {
@@ -149,23 +116,10 @@ class ServiceController
                 return $this->obtenirTousLesServices();
             }
 
-            // Recherche exacte sur le nom (sans utiliser de caractère special LIKE)
+            // Recherche exacte sur le nom
             $stmt = $pdo->prepare("SELECT * FROM services WHERE name = ? ORDER BY id DESC");
             $stmt->execute([$searchTerm]);
-            $servicesData = $stmt->fetchAll();
-
-            $services = [];
-            foreach ($servicesData as $data) {
-                $services[] = new ServiceModel(
-                    $data['id'],
-                    $data['name'],
-                    $data['description'],
-                    $data['icon'],
-                    $data['link'],
-                    $data['image']
-                );
-            }
-            return $services;
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             die("Erreur lors de la recherche de services: " . $e->getMessage());
         }

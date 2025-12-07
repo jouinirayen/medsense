@@ -17,6 +17,7 @@ class User
     private $heure3_fin;
     private $heure4_debut;
     private $heure4_fin;
+    private $image;
 
     // Getters
     public function getIdUtilisateur()
@@ -154,5 +155,92 @@ class User
     public function setHeure4_fin($heure4_fin)
     {
         $this->heure4_fin = $heure4_fin;
+    }
+
+    public function getImage()
+    {
+        return $this->image;
+    }
+
+    public function setImage($image)
+    {
+        $this->image = $image;
+    }
+    private $note_globale;
+    private $nb_avis;
+
+    public function getNoteGlobale()
+    {
+        return $this->note_globale;
+    }
+
+    public function setNoteGlobale($note_globale)
+    {
+        $this->note_globale = $note_globale;
+    }
+
+    public function getNbAvis()
+    {
+        return $this->nb_avis;
+    }
+
+    public function setNbAvis($nb_avis)
+    {
+        $this->nb_avis = $nb_avis;
+    }
+    private $bio;
+
+    public function getBio()
+    {
+        return $this->bio;
+    }
+
+    public function setBio($bio)
+    {
+        $this->bio = $bio;
+    }
+    private $langues;
+    private $prix_consultation;
+    private $experience;
+
+    public function getLangues()
+    {
+        return $this->langues;
+    }
+
+    public function setLangues($langues)
+    {
+        $this->langues = $langues;
+    }
+
+    public function getPrixConsultation()
+    {
+        return $this->prix_consultation;
+    }
+
+    public function setPrixConsultation($prix_consultation)
+    {
+        $this->prix_consultation = $prix_consultation;
+    }
+
+    public function getExperience()
+    {
+        return $this->experience;
+    }
+
+    public function setExperience($experience)
+    {
+        $this->experience = $experience;
+    }
+    private $adresse;
+
+    public function getAdresse()
+    {
+        return $this->adresse;
+    }
+
+    public function setAdresse($adresse)
+    {
+        $this->adresse = $adresse;
     }
 }

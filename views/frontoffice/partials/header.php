@@ -8,6 +8,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
+    <?php if (isset($extraCss) && is_array($extraCss)): ?>
+        <?php foreach ($extraCss as $cssFile): ?>
+            <link rel="stylesheet" href="<?php echo $cssFile; ?>?v=<?php echo time(); ?>">
+        <?php endforeach; ?>
+    <?php endif; ?>
     <style>
         /* User Info Bar Styles */
         .header {

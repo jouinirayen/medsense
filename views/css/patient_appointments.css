@@ -1,0 +1,74 @@
+/* User Info Bar Styles */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.user-info-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #f8fafc;
+    padding: 0.5rem 1.5rem;
+    border-radius: 9999px;
+    border: 1px solid #e2e8f0;
+    margin: 0 2rem;
+    flex-grow: 1;
+    max-width: 600px;
+}
+
+.user-info-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-info-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.user-greeting {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 0.95rem;
+}
+
+.user-status {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+/* History Clear Button Styles */
+.btn-clear-history {
+    background-color: white;
+    color: #ef4444;
+    border: 1px solid #ef4444;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-clear-history:hover {
+    background-color: #fef2f2;
+}
+
+.page-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}

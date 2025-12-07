@@ -63,7 +63,7 @@ if ($totalServicesCount > 3 && empty($searchTerm)) {
 function generateBookingLink($service)
 {
     // Always link to the doctors list for the service
-    return 'doctors_list.php?service_id=' . $service->getId();
+    return 'doctors_list.php?service_id=' . $service['id'];
 }
 
 ?>

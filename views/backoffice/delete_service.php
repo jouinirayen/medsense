@@ -30,7 +30,7 @@ $services = $serviceController->obtenirTousLesServices();
 <body>
     <header class="header">
         <div class="logo-section">
-            <img src="../uploads/logo.jpeg" alt="Logo Medsense" style="height: 125px; width: auto;">
+            <img src="../images/logo.jpeg" alt="Logo Medsense" style="height: 50px; width: auto;">
         </div>
         <nav class="nav-links">
 
@@ -55,41 +55,49 @@ $services = $serviceController->obtenirTousLesServices();
         </section>
 
         <section class="table-section">
+            <!-- Search Bar -->
+            <div class="search-container" style="max-width: 400px; margin-bottom: 20px;">
+                <div class="search-box-wrapper" style="background: white; border: 1px solid #e2e8f0;">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="serviceSearch" class="search-input" placeholder="Rechercher un service..."
+                        onkeyup="filterServices()">
+                    <a href="#" class="search-clear" onclick="clearSearch()" style="display: none;" id="clearSearchBtn">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>
+            </div>
+
             <div class="table-container">
                 <?php if (empty($services)): ?>
                     <p>Aucun service disponible à supprimer.</p>
                 <?php else: ?>
-                    <table>
+                    <table class="services-edit-table" id="servicesTable">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>Image</th>
                                 <th>Name</th>
                                 <th>Description</th>
                                 <th>Icon</th>
-                                <th>Link</th>
-                                <th>Image</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($services as $service): ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($service->getId()); ?></td>
-                                    <td><?php echo htmlspecialchars($service->getName()); ?></td>
-                                    <td><?php echo htmlspecialchars(substr($service->getDescription(), 0, 50)) . '...'; ?></td>
-                                    <td><i class="<?php echo htmlspecialchars($service->getIcon()); ?>"></i></td>
-                                    <td><?php echo htmlspecialchars($service->getLink()); ?></td>
                                     <td>
-                                        <?php if (!empty($service->getImage())): ?>
-                                            <img src="../<?php echo htmlspecialchars($service->getImage()); ?>" alt="Image"
-                                                style="max-width: 80px; max-height: 60px; border-radius: 4px; object-fit: cover;">
+                                        <?php if (!empty($service['image'])): ?>
+                                            <img src="../<?php echo htmlspecialchars($service['image']); ?>" alt="Image"
+                                                class="service-thumbnail">
                                         <?php else: ?>
-                                            <span style="color: #999;">Aucune image</span>
+                                            <span class="no-image"><i class="fas fa-image"></i></span>
                                         <?php endif; ?>
                                     </td>
+                                    <td><?php echo htmlspecialchars($service['name']); ?></td>
+                                    <td><?php echo htmlspecialchars(substr($service['description'], 0, 50)) . '...'; ?></td>
+                                    <td><i class="<?php echo htmlspecialchars($service['icon']); ?>"></i></td>
                                     <td>
-                                        <a href="confirm_delete.php?id=<?php echo htmlspecialchars($service->getId()); ?>"
-                                            class="btn-delete">
+                                        <a href="confirm_delete.php?id=<?php echo htmlspecialchars($service['id']); ?>"
+                                            class="btn-delete-modern">
                                             <i class="fas fa-trash"></i> Delete
                                         </a>
                                     </td>
@@ -97,10 +105,62 @@ $services = $serviceController->obtenirTousLesServices();
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    <div id="noResults" style="display: none; text-align: center; padding: 20px; color: #64748b;">
+                        Aucun service trouvé.
+                    </div>
                 <?php endif; ?>
             </div>
         </section>
     </main>
+
+    <script>
+        function filterServices() {
+            const input = document.getElementById('serviceSearch');
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('servicesTable');
+            if (!table) return;
+            const tr = table.getElementsByTagName('tr');
+            const clearBtn = document.getElementById('clearSearchBtn');
+            const noResults = document.getElementById('noResults');
+            let visibleCount = 0;
+
+            if (filter.length > 0) {
+                clearBtn.style.display = 'flex';
+            } else {
+                clearBtn.style.display = 'none';
+            }
+
+            for (let i = 1; i < tr.length; i++) {
+                const tdName = tr[i].getElementsByTagName('td')[1]; // Name column (index 1 because Image is 0)
+                const tdDesc = tr[i].getElementsByTagName('td')[2]; // Desc column
+
+                if (tdName || tdDesc) {
+                    const txtValueName = tdName.textContent || tdName.innerText;
+                    const txtValueDesc = tdDesc.textContent || tdDesc.innerText;
+
+                    if (txtValueName.toLowerCase().indexOf(filter) > -1 || txtValueDesc.toLowerCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                        visibleCount++;
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+
+            if (visibleCount === 0 && filter.length > 0) {
+                if (noResults) noResults.style.display = 'block';
+            } else {
+                if (noResults) noResults.style.display = 'none';
+            }
+        }
+
+        function clearSearch() {
+            const input = document.getElementById('serviceSearch');
+            input.value = '';
+            filterServices();
+            input.focus();
+        }
+    </script>
 
 </body>
 

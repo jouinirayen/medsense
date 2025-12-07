@@ -33,7 +33,7 @@ $pageTitle = 'Liste des Services';
 <body>
     <header class="header">
         <div class="logo-section">
-            <img src="../uploads/logo.jpeg" alt="Logo Medsense" style="height: 125px; width: auto;">
+            <img src="../images/logo.jpeg" alt="Logo Medsense" style="height: 50px; width: auto;">
         </div>
         <nav class="nav-links">
 
@@ -85,51 +85,37 @@ $pageTitle = 'Liste des Services';
                             service<?php echo count($services) > 1 ? 's' : ''; ?>
                         </p>
                     </div>
-                    <table>
+                    <table class="services-edit-table" id="servicesTable">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Service</th>
                                 <th>Image</th>
-                                <th>Actions</th>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Icon</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($services as $service): ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($service->getId()); ?></td>
                                     <td>
-                                        <div class="service-info">
-                                            <div class="service-icon">
-                                                <i class="<?php echo htmlspecialchars($service->getIcon()); ?>"></i>
-                                            </div>
-                                            <div>
-                                                <div class="service-name"><?php echo htmlspecialchars($service->getName()); ?>
-                                                </div>
-                                                <div class="service-desc">
-                                                    <?php echo htmlspecialchars(substr($service->getDescription(), 0, 50)) . '...'; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <?php if ($service->getImage()): ?>
-                                            <img src="../../images/<?php echo htmlspecialchars($service->getImage()); ?>"
-                                                alt="Service" class="service-img">
+                                        <?php if ($service['image']): ?>
+                                            <img src="../<?php echo htmlspecialchars($service['image']); ?>" alt="Service"
+                                                class="service-thumbnail">
                                         <?php else: ?>
-                                            <span class="no-img">Aucune image</span>
+                                            <span class="no-image"><i class="fas fa-image"></i></span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <div class="actions">
-                                            <a href="edit_service.php?id=<?php echo $service->getId(); ?>" class="btn-edit"
-                                                title="Modifier">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="delete_service.php?id=<?php echo $service->getId(); ?>" class="btn-delete"
-                                                title="Supprimer">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </a>
+                                        <div class="service-name"><?php echo htmlspecialchars($service['name']); ?></div>
+                                    </td>
+                                    <td>
+                                        <div class="service-desc">
+                                            <?php echo htmlspecialchars(substr($service['description'], 0, 50)) . '...'; ?>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="service-icon-cell">
+                                            <i class="<?php echo htmlspecialchars($service['icon']); ?>"></i>
                                         </div>
                                     </td>
                                 </tr>

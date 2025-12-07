@@ -17,6 +17,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $userController->login($email, $password);
 
         if ($user) {
+            if (!empty($_POST['redirect'])) {
+                header('Location: ' . $_POST['redirect']);
+                exit;
+            }
             $userController->redirectBasedOnRole($user['role']);
         } else {
             $error = 'Email ou mot de passe incorrect.';
@@ -149,6 +153,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <form method="POST" action="login.php">
+            <?php if (isset($_GET['redirect']) || isset($_POST['redirect'])): ?>
+                <input type="hidden" name="redirect"
+                    value="<?php echo htmlspecialchars($_POST['redirect'] ?? $_GET['redirect']); ?>">
+            <?php endif; ?>
+
             <div class="form-group">
                 <label for="email" class="form-label">Adresse Email</label>
                 <input type="text" id="email" name="email" class="form-input" placeholder="exemple@email.com"

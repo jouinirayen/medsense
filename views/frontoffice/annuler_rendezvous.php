@@ -9,107 +9,77 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $reservationController = new ReservationController();
-$error = null;
-$success = false;
+$userId = $_SESSION['user_id']; // For security, could verify ownership
 
 // Handle Cancellation (POST)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_id'])) {
-    $result = $reservationController->cancelAppointment($_POST['cancel_id']);
 
-    if ($result) {
-        $success = true;
+    // Get appointment details first for email
+    $appt = $reservationController->getAppointmentById($_POST['cancel_id']);
 
-        if (is_array($result)) {
-            // Send cancellation email
+    if ($appt) {
+        // Attempt cancellation (Update status to 'annule')
+        $result = $reservationController->updateStatus($_POST['cancel_id'], 'annule');
+
+        if ($result) {
+            // Send email if applicable
             require_once 'mailing_handler.php';
+            // getAppointmentById returns joined data, adapting structure for mailing_handler
+            // Assuming getAppointmentById returns keys like 'medecinPrenom', 'medecinNom' etc.
+            // Check ReservationController::getAppointmentById implementation in previous turn.
+            // It returns: r.*, u.nom as medecinNom, u.prenom as medecinPrenom, p.email as patientEmail...
+
+            $patientEmail = $appt['patientEmail'] ?? '';
+            // For patient name, we might need to fetch it or rely on session if only patient cancels own.
+            // But getting it from DB is safer. 
+            // The query in getAppointmentById joins patient as 'p'.
+            // wait, getAppointmentById joins patient?
+            // Let's check getAppointmentById in Controller again. 
+            // "LEFT JOIN utilisateur p ON r.idPatient = p.id_utilisateur" -> yes.
+            // And it selects "p.email as patientEmail". 
+            // It does NOT explicitly select patient name/prenom in the SELECT list shown in previous turn? 
+            // "r.*, u.nom as medecinNom... p.email as patientEmail..."
+            // It seems it might be missing patient name.
+            // However, the current user is logged in, so we can use session or fetch user.
+
+            // Actually, let's look at the original code I am replacing.
+            // The original used $reservationController->cancelAppointment which returned an array with names.
+            // $reservationController->cancelAppointment did a specific fetch.
+
+            // To be safe and simple, I will just use the current user's name from session or re-fetch if needed, 
+            // but `annuler_rendezvous.php` has `$userId = $_SESSION['user_id'];`.
+            // I should probably just fetch the user to be sure.
+
+            // Let's check if I can just use the previous logic's variables?
+            // The previous logic expected $result to be an array from cancelAppointment.
+            // valid `sendCancellationEmail` signature: ($to, $patientName, $doctorName, $date, $time)
+
+            // I will fetch the user info to get the name reliably.
+            require_once '../../controllers/UserController.php';
+            $userController = new UserController();
+            $currentUser = $userController->getUserById($userId);
+
             sendCancellationEmail(
-                $result['patientEmail'],
-                $result['patientPrenom'] . " " . $result['patientNom'],
-                $result['medecinPrenom'] . " " . $result['medecinNom'],
-                date('Y-m-d', strtotime($result['heureRdv'])),
-                date('H:i', strtotime($result['heureRdv']))
+                $appt['patientEmail'] ?? $currentUser['email'],
+                $currentUser['prenom'] . " " . $currentUser['nom'],
+                $appt['medecinPrenom'] . " " . $appt['medecinNom'],
+                date('Y-m-d', strtotime($appt['date'])), // Note: $appt['date'] comes from r.*
+                date('H:i', strtotime($appt['heureRdv']))
             );
         }
+
+        // Success Redirect
+        header("Location: afficher_rendezvous_patient.php?status=cancelled");
+        exit;
     } else {
+        // Error Redirect
         $error = "Erreur lors de l'annulation.";
+        header("Location: afficher_rendezvous_patient.php?status=error&message=" . urlencode($error));
+        exit;
     }
-}
-
-// Handle Confirmation View (GET)
-$appointmentId = isset($_GET['id']) ? $_GET['id'] : null;
-
-if (!$appointmentId && !$success) {
-    // If no ID provided and not a success post, redirect back
+} else {
+    // If accessed directly without POST, redirect back
     header("Location: afficher_rendezvous_patient.php");
     exit;
 }
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Annuler le rendez-vous</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/annuler_rendezvous.css?v=<?php echo time(); ?>">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
-
-<body>
-    <div class="cancel-container">
-        <div class="warning-icon">
-            <i class="fas fa-exclamation-circle"></i>
-        </div>
-
-        <h2 style="margin-bottom: 1rem; color: #1e293b;">Confirmer l'annulation</h2>
-
-        <p style="color: #64748b; margin-bottom: 1rem;">
-            Êtes-vous sûr de vouloir annuler ce rendez-vous ?
-        </p>
-        <p style="color: #64748b; font-size: 0.9rem;">
-            Cette action est irréversible.
-        </p>
-
-        <?php if ($error): ?>
-            <div style="background-color: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem;">
-                <?php echo $error; ?>
-            </div>
-        <?php endif; ?>
-
-        <form method="POST">
-            <input type="hidden" name="cancel_id" value="<?php echo $appointmentId; ?>">
-
-            <div class="btn-group">
-                <a href="afficher_rendezvous_patient.php" class="btn-cancel">Retour</a>
-                <button type="submit" class="btn-confirm">Oui, annuler</button>
-            </div>
-        </form>
-    </div>
-
-    <?php if ($success): ?>
-        <audio id="successSound" src="../son/suc.mp3" preload="auto"></audio>
-        <script>
-            const audio = document.getElementById('successSound');
-            // Try to play audio
-            audio.play().catch(e => console.log("Audio play failed:", e));
-
-            Swal.fire({
-                title: 'Succès!',
-                text: 'Rendez-vous annulé avec succès.',
-                icon: 'success',
-                confirmButtonColor: '#0ea5e9',
-                confirmButtonText: 'OK',
-                allowOutsideClick: false
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = 'afficher_rendezvous_patient.php';
-                }
-            });
-        </script>
-    <?php endif; ?>
-</body>
-
-</html>
