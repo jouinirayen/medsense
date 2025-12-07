@@ -72,232 +72,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- main css -->
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/responsive.css">
+    <link rel="stylesheet" href="../../assets/css/auth.css">
+    <link rel="stylesheet" href="../../assets/css/login.css">
+    <link rel="stylesheet" href="../../assets/css/animations.css">
     <style>
-        .login-area {
-            padding: 120px 0 80px;
-            background: #f8f9fa;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-        }
-        
-        .appointment-form {
-            background: white;
-            padding: 3rem;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            margin-top: 0;
-        }
-        
-        .login-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        
-        .login-header h3 {
-            color: #2d3748;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-        
-        .login-header p {
-            color: #718096;
-            margin-bottom: 0;
-        }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #2d3748;
-            font-weight: 500;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #e2e8f0;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: all 0.3s;
-            background: #f8f9fa;
-        }
-        
-        .form-control:focus {
-            border-color: #3f51b5;
-            box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
-            outline: none;
-            background: white;
-        }
-        
-        .form-control.error {
-            border-color: #e53e3e;
-            box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.2);
-        }
-        
-        .form-control.success {
-            border-color: #38a169;
-            box-shadow: 0 0 0 2px rgba(56, 161, 105, 0.2);
-        }
-        
-        .main_btn {
-            width: 100%;
-            padding: 14px;
-            background: #3f51b5;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .main_btn:hover:not(:disabled) {
-            background: #303f9f;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(63, 81, 181, 0.3);
-        }
-        
-        .main_btn:disabled {
-            background: #a0aec0;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .login-links {
-            text-align: center;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid #e2e8f0;
-        }
-        
-        .login-links a {
-            color: #3f51b5;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-        
-        .login-links a:hover {
-            color: #303f9f;
-            text-decoration: underline;
-        }
-        
-        .alert-error {
-            background: #fff5f5;
-            color: #c53030;
-            padding: 12px 15px;
-            border-radius: 5px;
-            margin-bottom: 1.5rem;
-            border-left: 4px solid #c53030;
-            font-size: 14px;
-            display: flex;
-            align-items: flex-start;
-        }
-        
-        .alert-error i {
-            margin-top: 2px;
-            margin-right: 10px;
-        }
-        
-        .back-home {
-            display: inline-flex;
-            align-items: center;
-            color: #3f51b5;
-            text-decoration: none;
-            margin-top: 1rem;
-            font-weight: 500;
-        }
-        
-        .back-home:hover {
-            color: #303f9f;
-            text-decoration: underline;
-        }
-        
-        .page_link {
-            margin-bottom: 2rem;
-        }
-        
-        .forgot-password-link {
-            display: block;
-            text-align: right;
-            margin-bottom: 1rem;
-            font-size: 14px;
-        }
-        
-        .field-error {
-            color: #e53e3e;
-            font-size: 12px;
-            margin-top: 5px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-        }
-        
-        .field-error i {
-            margin-right: 5px;
-            font-size: 11px;
-        }
-        
-        .global-error-alert {
-            background: #fff5f5;
-            color: #c53030;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 1.5rem;
-            border-left: 4px solid #c53030;
-            font-size: 14px;
-        }
-        
-        .global-error-alert ul {
-            margin: 8px 0 0 0;
-            padding-left: 20px;
-        }
-        
-        .global-error-alert li {
-            margin-bottom: 3px;
-        }
-        
-        /* Animation */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* Styles d'animation spécifiques */
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
         }
         
         .animate-fade-in-up {
-            animation: fadeInUp 0.6s ease-out;
+            animation: fadeInUp 0.8s ease-out forwards;
         }
         
-        .loading-spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 8px;
+        .animate-shake {
+            animation: loginShake 0.5s ease-out;
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .animate-pulse {
+            animation: loginPulse 0.5s ease-out;
+        }
+        
+        .btn-loading-active {
+            animation: buttonPulse 1.5s infinite;
         }
     </style>
 </head>
@@ -325,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="container">
                     <!-- Brand and toggle get grouped for better mobile display -->
                     <a class="navbar-brand logo_h" href="../home/index.php">
-                    <img src="../../assets/img/logo.png" alt="logo" style="height: 200px;">
+                    <img src="../../assets/img/logo.png" alt="logo" style="height: 120px;">
                     </a>
                     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="icon-bar"></span>
@@ -380,7 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
 
                         <?php if ($error): ?>
-                            <div class="alert-error">
+                            <div class="alert-error animate-fade-in animate-shake">
                                 <i class="fas fa-exclamation-circle"></i>
                                 <div><?php echo $error; ?></div>
                             </div>
@@ -417,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </form>
 
                         <div class="login-links">
-                            <p>Vous n'avez pas de compte ? <a href="sign-up.php">Créer un compte</a></p>
+                            <p>Vous n'avez pas de compte ? <a href="select-role.php">Créer un compte</a></p>
                             <a href="../home/index.php" class="back-home">
                                 <i class="ti-arrow-left mr-2"></i> Retour à l'accueil
                             </a>
@@ -488,236 +285,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="../../../assets/js/bootstrap.min.js"></script>
     <script src="../../../assets/js/stellar.js"></script>
     <script src="../../../assets/js/theme.js"></script>
+    <!-- Scripts d'authentification -->
+    <script src="js/auth.js"></script>
+    <script src="js/login.js"></script>
     
     <script>
-        // Validation du formulaire de connexion
+        // Script d'initialisation
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialiser les animations
+            if (window.loginAnimations) {
+                window.loginAnimations.init();
+            }
+            
+            // Validation avancée
             const form = document.getElementById('loginForm');
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('mot_de_passe');
-            const submitBtn = document.getElementById('submitBtn');
-
-            // Fonctions de validation
-            function isValidEmail(email) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                return emailRegex.test(email);
-            }
-
-            function validateEmailField(field) {
-                const value = field.value.trim();
-                const parent = field.parentNode;
-                
-                // Supprimer les messages d'erreur existants
-                const existingError = parent.querySelector('.field-error');
-                if (existingError) {
-                    existingError.remove();
-                }
-
-                // Supprimer les classes existantes
-                field.classList.remove('error', 'success');
-
-                if (!value) {
-                    showFieldError(field, 'L\'email est obligatoire');
-                    return false;
-                } else if (!isValidEmail(value)) {
-                    showFieldError(field, 'Format d\'email invalide (ex: user@example.com)');
-                    return false;
-                } else if (value.length > 255) {
-                    showFieldError(field, 'L\'email est trop long (max 255 caractères)');
-                    return false;
-                } else {
-                    showFieldSuccess(field);
-                    return true;
-                }
-            }
-
-            function validatePasswordField(field) {
-                const value = field.value;
-                const parent = field.parentNode;
-                
-                const existingError = parent.querySelector('.field-error');
-                if (existingError) {
-                    existingError.remove();
-                }
-
-                // Supprimer les classes existantes
-                field.classList.remove('error', 'success');
-
-                if (!value) {
-                    showFieldError(field, 'Le mot de passe est obligatoire');
-                    return false;
-                } else if (value.length < 6) {
-                    showFieldError(field, 'Le mot de passe doit contenir au moins 6 caractères');
-                    return false;
-                } else if (value.length > 255) {
-                    showFieldError(field, 'Le mot de passe est trop long (max 255 caractères)');
-                    return false;
-                } else {
-                    showFieldSuccess(field);
-                    return true;
-                }
-            }
-
-            function showFieldError(field, message) {
-                field.classList.add('error');
-                
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'field-error';
-                errorDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i>' + message;
-                field.parentNode.appendChild(errorDiv);
-            }
-
-            function showFieldSuccess(field) {
-                field.classList.add('success');
-            }
-
-            function clearFieldStatus(field) {
-                field.classList.remove('error', 'success');
-                
-                const existingError = field.parentNode.querySelector('.field-error');
-                if (existingError) {
-                    existingError.remove();
-                }
-            }
-
-            // Validation en temps réel
-            if (emailInput) {
-                emailInput.addEventListener('blur', function() {
-                    validateEmailField(this);
-                });
-                
-                emailInput.addEventListener('input', function() {
-                    if (this.value.trim() === '') {
-                        clearFieldStatus(this);
-                    } else {
-                        validateEmailField(this);
-                    }
-                });
-            }
-
-            if (passwordInput) {
-                passwordInput.addEventListener('blur', function() {
-                    validatePasswordField(this);
-                });
-                
-                passwordInput.addEventListener('input', function() {
-                    if (this.value === '') {
-                        clearFieldStatus(this);
-                    } else {
-                        validatePasswordField(this);
-                    }
-                });
-            }
-
-            // Validation à la soumission
             if (form) {
                 form.addEventListener('submit', function(e) {
-                    let isValid = true;
+                    const email = document.getElementById('email').value.trim();
+                    const password = document.getElementById('mot_de_passe').value;
                     const errors = [];
-
-                    // Valider email
-                    if (!validateEmailField(emailInput)) {
-                        isValid = false;
-                        errors.push('Adresse email invalide');
-                        if (!emailInput.value.trim()) {
-                            emailInput.focus();
-                        }
+                    
+                    // Validation email
+                    if (!email) {
+                        errors.push('L\'email est obligatoire');
+                    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                        errors.push('Format d\'email invalide (ex: user@example.com)');
+                    } else if (email.length > 255) {
+                        errors.push('L\'email est trop long (max 255 caractères)');
                     }
-
-                    // Valider mot de passe
-                    if (!validatePasswordField(passwordInput)) {
-                        isValid = false;
-                        errors.push('Mot de passe invalide');
-                        if (isValid && !passwordInput.value) {
-                            passwordInput.focus();
-                        }
+                    
+                    // Validation mot de passe
+                    if (!password) {
+                        errors.push('Le mot de passe est obligatoire');
+                    } else if (password.length < 6) {
+                        errors.push('Le mot de passe doit contenir au moins 6 caractères');
+                    } else if (password.length > 255) {
+                        errors.push('Le mot de passe est trop long (max 255 caractères)');
                     }
-
-                    if (!isValid) {
+                    
+                    // Si erreurs, afficher et empêcher la soumission
+                    if (errors.length > 0) {
                         e.preventDefault();
-                        showGlobalErrors(errors);
+                        if (window.loginAnimations) {
+                            window.loginAnimations.showGlobalError(errors);
+                        }
                         return false;
                     }
-
-                    // Désactiver le bouton pour éviter les doubles soumissions
-                    if (submitBtn) {
-                        submitBtn.disabled = true;
-                        submitBtn.innerHTML = '<span class="loading-spinner"></span>Connexion en cours...';
-                    }
-                });
-            }
-
-            function showGlobalErrors(errors) {
-                // Supprimer les anciennes erreurs globales
-                const existingGlobalError = document.querySelector('.global-error-alert');
-                if (existingGlobalError) {
-                    existingGlobalError.remove();
-                }
-
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'global-error-alert alert-error';
-                
-                let errorHtml = '<div class="d-flex align-items-center"><i class="fas fa-exclamation-circle mr-2"></i>';
-                errorHtml += '<strong>Veuillez corriger les erreurs suivantes :</strong></div>';
-                errorHtml += '<ul style="margin: 0.5rem 0 0 1.5rem;">';
-                errors.forEach(error => {
-                    errorHtml += '<li>' + error + '</li>';
-                });
-                errorHtml += '</ul>';
-                
-                errorDiv.innerHTML = errorHtml;
-                
-                const form = document.querySelector('form');
-                if (form) {
-                    form.parentNode.insertBefore(errorDiv, form);
                     
-                    // Faire défiler jusqu'aux erreurs
-                    errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-
-                // Auto-suppression après 8 secondes
-                setTimeout(() => {
-                    if (errorDiv.parentNode) {
-                        errorDiv.style.opacity = '0';
-                        errorDiv.style.transition = 'opacity 0.5s ease';
-                        setTimeout(() => {
-                            if (errorDiv.parentNode) {
-                                errorDiv.parentNode.removeChild(errorDiv);
-                            }
-                        }, 500);
-                    }
-                }, 8000);
-            }
-
-            // Entrée rapide - appuyer sur Entrée dans le champ mot de passe pour soumettre
-            if (passwordInput) {
-                passwordInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        form.dispatchEvent(new Event('submit'));
-                    }
+                    return true;
                 });
             }
-
-            // Focus automatique sur l'email
-            if (emailInput) {
-                setTimeout(() => {
-                    emailInput.focus();
-                }, 500);
-            }
-
-            // Auto-suppression des messages d'erreur existants après 5 secondes
-            setTimeout(() => {
-                const alertError = document.querySelector('.alert-error');
-                if (alertError && !alertError.classList.contains('global-error-alert')) {
-                    alertError.style.opacity = '0';
-                    alertError.style.transition = 'opacity 0.5s ease';
-                    setTimeout(() => {
-                        if (alertError.parentNode) {
-                            alertError.parentNode.removeChild(alertError);
-                        }
-                    }, 500);
+            
+            // Navigation rapide avec la touche Entrée
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.target.type !== 'submit') {
+                    const submitBtn = document.getElementById('submitBtn');
+                    if (submitBtn && document.activeElement.type !== 'textarea') {
+                        e.preventDefault();
+                        submitBtn.click();
+                    }
                 }
-            }, 5000);
+            });
+            
+            // Animation pour les liens du footer
+            const footerLinks = document.querySelectorAll('.footer-area a');
+            footerLinks.forEach(link => {
+                link.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.transition = 'transform 0.3s ease';
+                });
+                
+                link.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
         });
     </script>
 </body>

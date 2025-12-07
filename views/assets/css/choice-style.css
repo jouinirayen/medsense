@@ -1,0 +1,292 @@
+/* select-role.css - Style pour la page de sélection de rôle */
+
+:root {
+    --primary-blue: #2563eb;
+    --doctor-blue: #1e40af;
+    --medical-teal: #0d9488;
+    --medical-green: #10b981;
+    --medical-purple: #7c3aed;
+    --secondary-blue: #3b82f6;
+    --secondary-teal: #14b8a6;
+    --danger-red: #ef4444;
+    --warning-orange: #f59e0b;
+    --dark-gray: #1f2937;
+    --medium-gray: #6b7280;
+    --light-gray: #f3f4f6;
+    --pure-white: #ffffff;
+    --medical-bg: linear-gradient(135deg, #f0f9ff 0%, #f0fdfa 100%);
+    --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --hover-shadow: 0 20px 40px -10px rgba(30, 64, 175, 0.15);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: var(--medical-bg);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1200px;
+    width: 100%;
+    z-index: 1;
+}
+
+/* En-tête */
+.header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.logo {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--doctor-blue);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    color: var(--doctor-blue);
+    font-size: 40px;
+}
+
+.subtitle {
+    color: var(--dark-gray);
+    font-size: 18px;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* Cartes de sélection */
+.cards-container {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+}
+
+.card {
+    background: var(--pure-white);
+    border-radius: 16px;
+    padding: 40px 30px;
+    text-align: center;
+    flex: 1;
+    min-width: 320px;
+    max-width: 350px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, var(--doctor-blue), var(--medical-teal));
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--hover-shadow);
+}
+
+.icon-wrapper {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 25px;
+    background: linear-gradient(135deg, var(--light-gray), var(--pure-white));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s ease;
+    border: 2px solid var(--secondary-blue);
+}
+
+.icon {
+    font-size: 42px;
+    color: var(--doctor-blue);
+    background: linear-gradient(135deg, var(--doctor-blue), var(--medical-teal));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.card h3 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 15px 0;
+    color: var(--dark-gray);
+}
+
+.card p {
+    color: var(--medium-gray);
+    line-height: 1.6;
+    margin-bottom: 25px;
+    font-size: 15px;
+}
+
+.features {
+    text-align: left;
+    margin-bottom: 30px;
+    padding-left: 0;
+}
+
+.feature {
+    list-style: none;
+    margin-bottom: 12px;
+    padding-left: 25px;
+    position: relative;
+    color: var(--dark-gray);
+    font-size: 14px;
+}
+
+.feature::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--medical-teal);
+    font-weight: bold;
+}
+
+/* Boutons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 35px;
+    background: linear-gradient(135deg, var(--doctor-blue), var(--medical-teal));
+    color: var(--pure-white);
+    text-decoration: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 280px;
+    margin-top: 10px;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.7s ease;
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(13, 148, 136, 0.3);
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 2px solid var(--doctor-blue);
+    color: var(--doctor-blue);
+}
+
+.btn-secondary:hover {
+    background: rgba(30, 64, 175, 0.1);
+}
+
+/* Pied de page */
+.footer {
+    text-align: center;
+    padding-top: 30px;
+    border-top: 1px solid rgba(203, 213, 225, 0.5);
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.footer-links a {
+    color: var(--doctor-blue);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    background: rgba(30, 64, 175, 0.05);
+}
+
+.footer-links a:hover {
+    background: rgba(30, 64, 175, 0.1);
+    transform: translateY(-2px);
+}
+
+.login-prompt {
+    margin-top: 15px;
+    color: var(--dark-gray);
+    font-size: 14px;
+}
+
+.login-prompt a {
+    color: var(--doctor-blue);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .cards-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .card {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .logo {
+        font-size: 28px;
+    }
+    
+    .footer-links {
+        flex-direction: column;
+        gap: 15px;
+    }
+}

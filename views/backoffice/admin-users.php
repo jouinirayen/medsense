@@ -614,114 +614,285 @@ if ($search || $role_filter || $statut_filter) {
         <i class="fas fa-bars"></i>
     </button>
 
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <a class="navbar-brand logo_h" href="../home/index.php">
-                <img src="../assets/img/logo.png" alt="logo" style="height: 200px;">
-            </a>
-        </div>
-        <div class="sidebar-menu">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="admin-dashboard.php">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>Tableau de Bord</span>
-                    </a>
-                </li>
-                <li class="nav-item mt-3">
-                    <small class="text-uppercase text-muted ms-3">Gestion Médicale</small>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#appointmentsMenu">
-                        <i class="fas fa-calendar-check"></i>
-                        <span>Rendez-vous</span>
-                        <i class="fas fa-chevron-down float-end mt-1"></i>
-                    </a>
-                    <div class="collapse" id="appointmentsMenu">
-                        <ul class="nav flex-column sidebar-submenu">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <span>Tous les rendez-vous</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <span>Nouveau rendez-vous</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <span>Calendrier</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-user-injured"></i>
-                        <span>Patients</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-user-md"></i>
-                        <span>Médecins</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="admin-users.php">
-                        <i class="fas fa-users"></i>
-                        <span>Utilisateurs</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-prescription"></i>
-                        <span>Ordonnances</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                        <span>Facturation</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-cog"></i>
-                        <span>Paramètres</span>
-                    </a>
-                </li>
-                <li class="nav-item mt-3">
-                    <small class="text-uppercase text-muted ms-3">Rapports</small>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>Rapports statistiques</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-clipboard-list"></i>
-                        <span>Audit médical</span>
-                    </a>
-                </li>
-                <li class="nav-item mt-3">
-                    <small class="text-uppercase text-muted ms-3">Compte</small>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="../../../controllers/logout.php" 
-                       onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?')">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Déconnexion</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
+   <!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <a class="navbar-brand logo_h" href="../home/index.php">
+            <img src="../assets/img/logo.png" alt="logo" style="height: 200px;">
+        </a>
     </div>
+    <div class="sidebar-menu">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="admin-dashboard.php">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Tableau de Bord</span>
+                </a>
+            </li>
+            
+            <li class="nav-item mt-3">
+                <small class="text-uppercase text-muted ms-3">Gestion Médicale</small>
+            </li>
+            
+            <!-- Menu Rendez-vous avec sous-menu -->
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#appointmentsMenu">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Rendez-vous</span>
+                    <i class="fas fa-chevron-down float-end mt-1"></i>
+                </a>
+                <div class="collapse" id="appointmentsMenu">
+                    <ul class="nav flex-column sidebar-submenu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-appointments.php">
+                                <i class="fas fa-list"></i>
+                                <span>Tous les rendez-vous</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-patient-appointments.php">
+                                <i class="fas fa-user-injured"></i>
+                                <span>Rendez-vous patients</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-new-appointment.php">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Nouveau rendez-vous</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-calendar.php">
+                                <i class="fas fa-calendar"></i>
+                                <span>Calendrier</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="admin-patients.php">
+                    <i class="fas fa-user-injured"></i>
+                    <span>Patients</span>
+                </a>
+            </li>
+            
+            <!-- Menu Médecins avec sous-menu COMPLET -->
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#doctorsMenu">
+                    <i class="fas fa-user-md"></i>
+                    <span>Médecins</span>
+                    <i class="fas fa-chevron-down float-end mt-1"></i>
+                </a>
+                <div class="collapse" id="doctorsMenu">
+                    <ul class="nav flex-column sidebar-submenu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-doctors.php">
+                                <i class="fas fa-list"></i>
+                                <span>Tous les médecins</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-doctor-availability.php">
+                                <i class="fas fa-clock"></i>
+                                <span>Disponibilité</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-doctor-reviews.php">
+                                <i class="fas fa-star"></i>
+                                <span>Notes & Avis</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-doctor-ratings.php">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Évaluations</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link active" href="admin-users.php">
+                    <i class="fas fa-users"></i>
+                    <span>Utilisateurs</span>
+                </a>
+            </li>
+            
+            <!-- Menu Réclamations -->
+            <li class="nav-item">
+                <a class="nav-link" href="admin-complaints.php">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Réclamations</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="admin-prescriptions.php">
+                    <i class="fas fa-prescription"></i>
+                    <span>Ordonnances</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="admin-billing.php">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Facturation</span>
+                </a>
+            </li>
+            
+            <li class="nav-item mt-3">
+                <small class="text-uppercase text-muted ms-3">Gestion du Blog</small>
+            </li>
+            
+            <!-- Menu Blog avec sous-menu -->
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#blogMenu">
+                    <i class="fas fa-blog"></i>
+                    <span>Blog</span>
+                    <i class="fas fa-chevron-down float-end mt-1"></i>
+                </a>
+                <div class="collapse" id="blogMenu">
+                    <ul class="nav flex-column sidebar-submenu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-blog-categories.php">
+                                <i class="fas fa-tags"></i>
+                                <span>Catégories</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-blog-articles.php">
+                                <i class="fas fa-file-alt"></i>
+                                <span>Articles</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-blog-comments.php">
+                                <i class="fas fa-comments"></i>
+                                <span>Commentaires</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-blog-activity.php">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Activité du blog</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            
+            <li class="nav-item mt-3">
+                <small class="text-uppercase text-muted ms-3">Avis & Évaluations</small>
+            </li>
+            
+            <!-- Menu Reviews avec sous-menu -->
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#reviewsMenu">
+                    <i class="fas fa-star"></i>
+                    <span>Reviews & Avis</span>
+                    <i class="fas fa-chevron-down float-end mt-1"></i>
+                </a>
+                <div class="collapse" id="reviewsMenu">
+                    <ul class="nav flex-column sidebar-submenu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-reviews.php">
+                                <i class="fas fa-star-half-alt"></i>
+                                <span>Tous les avis</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-doctor-reviews.php">
+                                <i class="fas fa-user-md"></i>
+                                <span>Avis médecins</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-patient-reviews.php">
+                                <i class="fas fa-user-injured"></i>
+                                <span>Avis patients</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="admin-feedback.php">
+                    <i class="fas fa-comment-medical"></i>
+                    <span>Feedback</span>
+                </a>
+            </li>
+            
+            <li class="nav-item mt-3">
+                <small class="text-uppercase text-muted ms-3">Configuration</small>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="admin-settings.php">
+                    <i class="fas fa-cog"></i>
+                    <span>Paramètres</span>
+                </a>
+            </li>
+            
+            <li class="nav-item mt-3">
+                <small class="text-uppercase text-muted ms-3">Rapports</small>
+            </li>
+            
+            <!-- Menu Rapports avec sous-menu -->
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#reportsMenu">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Rapports</span>
+                    <i class="fas fa-chevron-down float-end mt-1"></i>
+                </a>
+                <div class="collapse" id="reportsMenu">
+                    <ul class="nav flex-column sidebar-submenu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-reports-statistics.php">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>Statistiques</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-reports-financial.php">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>Financiers</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-reports-medical.php">
+                                <i class="fas fa-stethoscope"></i>
+                                <span>Médicaux</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="admin-audit.php">
+                                <i class="fas fa-clipboard-list"></i>
+                                <span>Audit médical</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            
+            <li class="nav-item mt-3">
+                <small class="text-uppercase text-muted ms-3">Compte</small>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="../../../controllers/logout.php" 
+                   onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?')">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Déconnexion</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
 
     <!-- Main Content -->
     <div class="main-content" id="mainContent">
@@ -803,6 +974,23 @@ if ($search || $role_filter || $statut_filter) {
                     <i class="fas fa-user-plus me-1"></i> Nouvel Utilisateur
                 </a>
             </div>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">
+        <i class="fas fa-users me-2"></i>Gestion des Utilisateurs
+    </h1>
+    <div class="d-flex gap-2">
+        <a href="admin-export-excel.php?<?= http_build_query([
+            'search' => $search,
+            'role' => $role_filter,
+            'statut' => $statut_filter
+        ]) ?>" class="btn btn-success">
+            <i class="fas fa-file-excel me-1"></i> Exporter Excel
+        </a>
+        <a href="admin-create-user.php" class="btn btn-primary">
+            <i class="fas fa-user-plus me-1"></i> Nouvel Utilisateur
+        </a>
+    </div>
+</div>
 
             <!-- Messages d'alerte -->
             <?php if ($success_message): ?>

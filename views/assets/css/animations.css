@@ -1,0 +1,180 @@
+/* assets/css/animations.css */
+
+/* Animation du ripple */
+@keyframes ripple-animation {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* Animation d'email qui vole */
+@keyframes emailFly {
+    0% {
+        transform: translateX(0) rotate(0deg);
+    }
+    25% {
+        transform: translateX(10px) rotate(10deg);
+    }
+    50% {
+        transform: translateX(0) rotate(0deg);
+    }
+    75% {
+        transform: translateX(-10px) rotate(-10deg);
+    }
+    100% {
+        transform: translateX(0) rotate(0deg);
+    }
+}
+
+/* Animation pour le badge de sécurité */
+@keyframes securityPulse {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(40, 167, 69, 0.6);
+    }
+}
+
+/* Animation pour le glissement des champs d'entrée */
+@keyframes inputGlow {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(74, 144, 226, 0.3), 0 0 0 0.25rem rgba(74, 144, 226, 0.25);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(74, 144, 226, 0.5), 0 0 0 0.25rem rgba(74, 144, 226, 0.25);
+    }
+}
+
+/* Animation pour le placeholder */
+@keyframes placeholderPulse {
+    0%, 100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Animation pour le bouton */
+@keyframes buttonPulse {
+    0% {
+        box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+    }
+    50% {
+        box-shadow: 0 8px 25px rgba(74, 144, 226, 0.6);
+    }
+    100% {
+        box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+    }
+}
+
+/* Animation pour la force du mot de passe */
+@keyframes strengthPulse {
+    0%, 100% {
+        box-shadow: 0 0 5px currentColor;
+    }
+    50% {
+        box-shadow: 0 0 15px currentColor;
+    }
+}
+
+/* Animation pour les champs de mot de passe */
+@keyframes passwordInputGlow {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(40, 167, 69, 0.3), 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(40, 167, 69, 0.5), 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+    }
+}
+
+/* Animation pour le placeholder du mot de passe */
+@keyframes passwordPlaceholderPulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Animation pour le fade out */
+.animate-fade-out {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* Animation pour les alertes */
+.alert-animation {
+    animation: slideInUp 0.5s ease-out, fadeIn 0.5s ease-out;
+}
+
+.alert-animation.exit {
+    animation: slideInUp 0.5s ease-out reverse, fadeIn 0.5s ease-out reverse;
+}
+
+/* Classes utilitaires d'animation */
+.animate-ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.animate-ripple::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.7);
+    transform: scale(0);
+    animation: ripple-animation 0.6s linear;
+    pointer-events: none;
+}
+
+.animate-email-fly {
+    animation: emailFly 2s ease-in-out infinite;
+}
+
+.animate-security-pulse {
+    animation: securityPulse 2s infinite;
+}
+
+.animate-input-glow:focus {
+    animation: inputGlow 2s infinite;
+}
+
+.animate-button-pulse:hover {
+    animation: buttonPulse 1.5s infinite;
+}
+
+.animate-strength-pulse {
+    animation: strengthPulse 2s infinite;
+}
+
+.animate-password-glow:focus {
+    animation: passwordInputGlow 2s infinite;
+}
+
+/* Désactiver les animations pour ceux qui les préfèrent réduites */
+@media (prefers-reduced-motion: reduce) {
+    .animate-ripple::after,
+    .animate-email-fly,
+    .animate-security-pulse,
+    .animate-input-glow:focus,
+    .animate-button-pulse:hover,
+    .animate-strength-pulse,
+    .animate-password-glow:focus,
+    .animate-fade-out,
+    .alert-animation,
+    .alert-animation.exit {
+        animation: none !important;
+    }
+}

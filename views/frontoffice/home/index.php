@@ -7,11 +7,10 @@ $isLoggedIn = $authController->isLoggedIn();
 
 if ($isLoggedIn) {
     $currentUser = $authController->getCurrentUser();
-    // Si $currentUser est un objet, le convertir en tableau
     $currentUserArray = $currentUser ? (method_exists($currentUser, 'toArray') ? $currentUser->toArray() : (array)$currentUser) : null;
 } else {
     $currentUserArray = null;
-    $currentUser = null; // Ajouter cette ligne pour cohérence
+    $currentUser = null; 
 }
 ?>
 <!doctype html>
@@ -35,7 +34,7 @@ if ($isLoggedIn) {
 <body>
 
 <header class="header_area">
-    <!-- 🔹 TOP BAR -->
+   
     <div class="top_menu row m0">
         <div class="container">
             <div class="float-left">
@@ -48,7 +47,7 @@ if ($isLoggedIn) {
             </div>
 
             <div class="float-right d-flex align-items-center">
-                <!-- Social Media -->
+               
                 <ul class="list header_social">
                     <li><a href="#"><i class="ti-facebook"></i></a></li>
                     <li><a href="#"><i class="ti-twitter-alt"></i></a></li>
@@ -57,7 +56,7 @@ if ($isLoggedIn) {
                     <li><a href="#"><i class="ti-vimeo-alt"></i></a></li>
                 </ul>
 
-                <!-- Auth -->
+               
                 <div class="auth-top ml-3">
                     <?php if ($isLoggedIn && $currentUserArray): ?>
                         <span style="color: #fff; margin-right: 15px;">
@@ -83,16 +82,15 @@ if ($isLoggedIn) {
         </div>
     </div>
 
-    <!-- 🔹 MAIN NAVBAR -->
     <div class="main_menu">
         <nav class="navbar navbar-expand-lg navbar-light">
             <div class="container">
-                <!-- LOGO -->
+              
                 <a class="navbar-brand logo_h" href="#">
                     <img src="../../assets/img/logo.png" alt="logo" style="height: 120px;">
                 </a>
 
-                <!-- MOBILE TOGGLER -->
+               
                 <button class="navbar-toggler" type="button" data-toggle="collapse"
                         data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
@@ -101,7 +99,6 @@ if ($isLoggedIn) {
                     <span class="icon-bar"></span>
                 </button>
 
-                <!-- NAVIGATION LINKS -->
                 <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
                     <ul class="nav navbar-nav menu_nav ml-auto">
                         <li class="nav-item active"><a class="nav-link" href="index.php">Home</a></li>
@@ -109,7 +106,6 @@ if ($isLoggedIn) {
                         <li class="nav-item"><a class="nav-link" href="../templete/department.html">Department</a></li>
                         <li class="nav-item"><a class="nav-link" href="../templete/doctors.html">Doctors</a></li>
 
-                        <!-- Blog menu -->
                         <li class="nav-item submenu dropdown">
                             <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button"
                                aria-haspopup="true" aria-expanded="false">Blog</a>
@@ -122,7 +118,7 @@ if ($isLoggedIn) {
 
                         <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
 
-                        <!-- COMPTE UTILISATEUR -->
+                        
                         <?php if ($isLoggedIn && $currentUserArray): ?>
                             <li class="nav-item submenu dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button"
@@ -223,7 +219,7 @@ if ($isLoggedIn) {
                             <div class="text-center">
                                 <p>Vous devez être connecté pour prendre rendez-vous</p>
                                 <a href="../auth/sign-in.php" class="main_btn">Se connecter</a>
-                                <a href="../auth/sign-up.php" class="main_btn_light">S'inscrire</a>
+                                <a href="../auth/select-role.php" class="main_btn_light">S'inscrire</a>
                             </div>
                         <?php endif; ?>
                     </div>
