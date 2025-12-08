@@ -2,6 +2,7 @@
 require_once '../../../config/config.php';
 require_once '../../../models/Reclamation.php';
 require_once '../../../models/Response.php';
+require_once '../../../controllers/ReclamationController.php';
 
 // Start session
 if (session_status() === PHP_SESSION_NONE) {
@@ -96,7 +97,7 @@ $pageTitle = "Répondre à la Réclamation";
 
             <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label for="contenu" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Votre réponse *</label>
-                <textarea id="contenu" name="contenu" required minlength="5" maxlength="3000" rows="5"
+                <textarea id="contenu" name="contenu" rows="5"
                           placeholder="Écrivez votre réponse à cette réclamation (minimum 5 caractères, maximum 3000)..."
                           style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; font-family: inherit; resize: vertical;"></textarea>
                 <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
