@@ -17,28 +17,31 @@ if ($notification) {
 // Filter by type
 $filter = $_GET['filter'] ?? '';
 
-// Fetch all reclamations using direct database connection
+// Use Reclamation model to fetch reclamations
+$reclamationModel = new Reclamation();
+
+// Get all reclamations (using direct query for admin since model is user-specific)
 $pdo = (new config())->getConnexion();
 
 if ($filter === 'urgence') {
-    $sql = "SELECT r.*, u.username FROM reclamation r 
-            LEFT JOIN user u ON r.id_user = u.id 
-            WHERE r.type = 'urgence'
-            ORDER BY r.date DESC";
+    $sql = "SELECT * FROM reclamation WHERE type = 'urgence' ORDER BY date DESC";
 } elseif ($filter === 'normal') {
-    $sql = "SELECT r.*, u.username FROM reclamation r 
-            LEFT JOIN user u ON r.id_user = u.id 
-            WHERE r.type = 'normal'
-            ORDER BY r.date DESC";
+    $sql = "SELECT * FROM reclamation WHERE type = 'normal' ORDER BY date DESC";
 } else {
-    $sql = "SELECT r.*, u.username FROM reclamation r 
-            LEFT JOIN user u ON r.id_user = u.id 
-            ORDER BY r.date DESC";
+    $sql = "SELECT * FROM reclamation ORDER BY date DESC";
 }
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute();
-$reclamations = $stmt->fetchAll();
+$results = $stmt->fetchAll();
+
+// Convert to Reclamation objects
+$reclamations = [];
+foreach ($results as $data) {
+    $reclamation = new Reclamation();
+    $reclamation->hydrate($data);
+    $reclamations[] = $reclamation;
+}
 
 $pageTitle = "Gestion des Réclamations - Admin";
 ?>
@@ -76,47 +79,53 @@ $pageTitle = "Gestion des Réclamations - Admin";
         </div>
     <?php else: ?>
         <div class="reclamations-grid">
-            <?php foreach ($reclamations as $rec): ?>
+            <?php foreach ($reclamations as $reclamation): ?>
                 <?php 
+                    // Get username for this reclamation
+                    $stmt = $pdo->prepare("SELECT username FROM user WHERE id = ?");
+                    $stmt->execute([$reclamation->getUserId()]);
+                    $user = $stmt->fetch();
+                    $username = $user['username'] ?? 'Utilisateur inconnu';
+                    
                     // Count responses for this reclamation
                     $responseModel = new Response();
-                    $responses = $responseModel->forReclamation($rec['id']);
+                    $responses = $responseModel->forReclamation($reclamation->getId());
                     $responseCount = count($responses);
                 ?>
-                <div class="reclamation-card" style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 1.5rem; border-left: 4px solid <?= $rec['type'] === 'urgence' ? '#ef4444' : '#3b82f6'; ?>">
+                <div class="reclamation-card" style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 1.5rem; border-left: 4px solid <?= $reclamation->getType() === 'urgence' ? '#ef4444' : '#3b82f6'; ?>">
                     <div class="reclamation-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
                         <div class="reclamation-title" style="flex: 1;">
                             <h3 style="margin: 0; color: #1f2937; font-size: 1.2rem;">
-                                <?= htmlspecialchars($rec['titre']); ?>
+                                <?= htmlspecialchars($reclamation->getTitre()); ?>
                             </h3>
                             <p style="margin: 0.25rem 0 0 0; color: #6b7280; font-size: 0.9rem;">
-                                <i class="fas fa-user"></i> Par <?= htmlspecialchars($rec['username'] ?? 'Utilisateur inconnu'); ?>
+                                <i class="fas fa-user"></i> Par <?= htmlspecialchars($username); ?>
                             </p>
                         </div>
                         <div class="reclamation-meta" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <span class="badge <?= $rec['type'] === 'urgence' ? 'badge-urgence' : 'badge-normal'; ?>" style="padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
-                                <i class="fas <?= $rec['type'] === 'urgence' ? 'fa-exclamation-triangle' : 'fa-file-alt'; ?>"></i>
-                                <?= htmlspecialchars($rec['type']); ?>
+                            <span class="badge <?= $reclamation->getType() === 'urgence' ? 'badge-urgence' : 'badge-normal'; ?>" style="padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
+                                <i class="fas <?= $reclamation->getType() === 'urgence' ? 'fa-exclamation-triangle' : 'fa-file-alt'; ?>"></i>
+                                <?= htmlspecialchars($reclamation->getType()); ?>
                             </span>
-                            <span class="badge statut-<?= str_replace(' ', '-', $rec['statut']); ?>" style="padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
+                            <span class="badge statut-<?= str_replace(' ', '-', $reclamation->getStatut()); ?>" style="padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">
                                 <i class="fas 
-                                    <?= $rec['statut'] === 'fermé' ? 'fa-check-circle' : 
-                                       ($rec['statut'] === 'en cours' ? 'fa-spinner' : 'fa-clock'); ?>">
+                                    <?= $reclamation->getStatut() === 'fermé' ? 'fa-check-circle' : 
+                                       ($reclamation->getStatut() === 'en cours' ? 'fa-spinner' : 'fa-clock'); ?>">
                                 </i>
-                                <?= htmlspecialchars($rec['statut']); ?>
+                                <?= htmlspecialchars($reclamation->getStatut()); ?>
                             </span>
                         </div>
                     </div>
 
                     <p class="reclamation-description" style="color: #4b5563; margin-bottom: 1rem; line-height: 1.5;">
-                        <?= htmlspecialchars(substr($rec['description'], 0, 150)) . (strlen($rec['description']) > 150 ? '...' : ''); ?>
+                        <?= htmlspecialchars(substr($reclamation->getDescription(), 0, 150)) . (strlen($reclamation->getDescription()) > 150 ? '...' : ''); ?>
                     </p>
 
                     <div class="reclamation-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                         <div class="reclamation-info" style="display: flex; gap: 1rem; color: #6b7280; font-size: 0.9rem;">
                             <span>
                                 <i class="far fa-calendar"></i>
-                                <?= date('d/m/Y H:i', strtotime($rec['date'])); ?>
+                                <?= date('d/m/Y H:i', strtotime($reclamation->getDate())); ?>
                             </span>
                             <span>
                                 <i class="far fa-comments"></i>
@@ -124,15 +133,15 @@ $pageTitle = "Gestion des Réclamations - Admin";
                             </span>
                         </div>
                         <div class="reclamation-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <a href="details_reclamation.php?id=<?= $rec['id']; ?>" class="btn btn-primary btn-small">
+                            <a href="details_reclamation.php?id=<?= $reclamation->getId(); ?>" class="btn btn-primary btn-small">
                                 <i class="fas fa-eye"></i>
                                 Détails
                             </a>
-                            <a href="ajouter_reponse.php?id=<?= $rec['id']; ?>" class="btn btn-success btn-small">
+                            <a href="ajouter_reponse.php?id=<?= $reclamation->getId(); ?>" class="btn btn-success btn-small">
                                 <i class="fas fa-reply"></i>
                                 Répondre
                             </a>
-                            <a href="admin_supprimer_reclamation.php?id=<?= $rec['id']; ?>" class="btn btn-danger btn-small" 
+                            <a href="admin_supprimer_reclamation.php?id=<?= $reclamation->getId(); ?>" class="btn btn-danger btn-small" 
                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette réclamation ? Cette action est irréversible.')">
                                 <i class="fas fa-trash"></i>
                                 Supprimer

@@ -37,13 +37,13 @@ if (!empty($errors)) {
     exit;
 }
 
-// Check if reclamation exists using direct database connection
+// Check if reclamation exists using Reclamation model
 $pdo = (new config())->getConnexion();
 $stmt = $pdo->prepare("SELECT * FROM reclamation WHERE id = ?");
 $stmt->execute([$reclamationId]);
-$reclamation = $stmt->fetch();
+$reclamationData = $stmt->fetch();
 
-if (!$reclamation) {
+if (!$reclamationData) {
     $_SESSION['notification'] = [
         'type' => 'error',
         'message' => "Réclamation introuvable !",
@@ -53,21 +53,59 @@ if (!$reclamation) {
     exit;
 }
 
-// Add response using direct database query
+// Create Reclamation object to check current status
+$reclamation = new Reclamation();
+$reclamation->hydrate($reclamationData);
+
+// Add response using Response model
 try {
-    $date = date('Y-m-d H:i:s');
-    $stmt = $pdo->prepare("INSERT INTO reponse (contenu, date, id_reclamation, id_user) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$contenu, $date, $reclamationId, $adminId]);
+    $responseModel = new Response();
+    $responseModel->setContenu($contenu)
+                  ->setDate(date('Y-m-d H:i:s'))
+                  ->setReclamationId($reclamationId)
+                  ->setUserId($adminId);
     
-    // Set success notification
-    $_SESSION['notification'] = [
-        'type' => 'success',
-        'message' => "Réponse envoyée avec succès !",
-        'show' => true
-    ];
-    
-    header("Location: details_reclamation.php?id=$reclamationId");
-    exit;
+    if ($responseModel->create()) {
+        // FONCTIONNALITÉ: Changer automatiquement le statut de la réclamation
+        $currentStatut = $reclamation->getStatut();
+        $newStatut = null;
+        $statutMessage = "";
+        
+        // Logique de changement de statut
+        if ($currentStatut === Reclamation::STATUS_OPEN) {
+            // Si "ouvert" → passer à "en cours"
+            $newStatut = Reclamation::STATUS_IN_PROGRESS;
+            $statutMessage = " et le statut a été changé de 'ouvert' à 'en cours'";
+        } elseif ($currentStatut === Reclamation::STATUS_IN_PROGRESS) {
+            // Si "en cours" → passer à "fermé"
+            $newStatut = Reclamation::STATUS_CLOSED;
+            $statutMessage = " et le statut a été changé de 'en cours' à 'fermé'";
+        }
+        // Si déjà "fermé", on ne change rien
+        
+        // Mettre à jour le statut si nécessaire
+        if ($newStatut !== null) {
+            $reclamation->setStatut($newStatut);
+            // Utiliser updateStatut() pour admin (ne vérifie pas id_user)
+            if (!$reclamation->updateStatut()) {
+                // Si la mise à jour du statut échoue, on continue quand même
+                // car la réponse a été créée avec succès
+                error_log("Erreur lors de la mise à jour du statut de la réclamation #$reclamationId");
+            }
+        }
+        
+        // Set success notification
+        $_SESSION['notification'] = [
+            'type' => 'success',
+            'message' => "Réponse envoyée avec succès !" . $statutMessage,
+            'show' => true
+        ];
+        
+        header("Location: details_reclamation.php?id=$reclamationId");
+        exit;
+    } else {
+        throw new Exception("Échec de la création de la réponse.");
+    }
     
 } catch (Exception $e) {
     $_SESSION['errors'] = ["Erreur lors de l'enregistrement de la réponse: " . $e->getMessage()];

@@ -24,9 +24,9 @@ if (!$id) {
 $pdo = (new config())->getConnexion();
 $stmt = $pdo->prepare("SELECT * FROM reclamation WHERE id = ?");
 $stmt->execute([$id]);
-$reclamation = $stmt->fetch();
+$reclamationData = $stmt->fetch();
 
-if (!$reclamation) {
+if (!$reclamationData) {
     $_SESSION['notification'] = [
         'type' => 'error',
         'message' => "Réclamation introuvable !",
@@ -37,20 +37,28 @@ if (!$reclamation) {
 }
 
 // Delete the reclamation and its responses using models
-$responseModel = new Response();
-$responseModel->deleteForReclamation($id);
+try {
+    $responseModel = new Response();
+    $responseModel->deleteForReclamation($id);
+    
+    // Delete reclamation
+    $stmt = $pdo->prepare("DELETE FROM reclamation WHERE id = ?");
+    $stmt->execute([$id]);
 
-$reclamationModel = new Reclamation();
-// Since deleteForUser requires user ID, we'll use direct query for admin
-$stmt = $pdo->prepare("DELETE FROM reclamation WHERE id = ?");
-$stmt->execute([$id]);
-
-// Set success notification
-$_SESSION['notification'] = [
-    'type' => 'success',
-    'message' => "Réclamation supprimée avec succès !",
-    'show' => true
-];
+    // Set success notification
+    $_SESSION['notification'] = [
+        'type' => 'success',
+        'message' => "Réclamation supprimée avec succès !",
+        'show' => true
+    ];
+    
+} catch (Exception $e) {
+    $_SESSION['notification'] = [
+        'type' => 'error',
+        'message' => "Erreur lors de la suppression : " . $e->getMessage(),
+        'show' => true
+    ];
+}
 
 header('Location: admin_reclamations.php');
 exit;

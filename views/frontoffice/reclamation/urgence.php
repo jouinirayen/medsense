@@ -9,25 +9,31 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $reclamationModel = new Reclamation();
-    $reclamationModel->create([
-        'titre' => "🚨 Urgence - " . date('H:i:s'),
-        'description' => "Alerte urgence envoyée par l'utilisateur. Intervention immédiate requise.",
-        'date' => date('Y-m-d H:i:s'),
-        'id_user' => 1,
-        'type' => 'urgence',
-        'statut' => 'ouvert'
-    ]);
-
-    // Set success notification
-    $_SESSION['notification'] = [
-        'type' => 'success',
-        'message' => "Alerte urgence envoyée avec succès ! L'équipe a été notifiée.",
-        'show' => true
-    ];
-
-    header('Location: index.php');
-    exit;
+    // Create reclamation using the new model with setters
+    $reclamation = new Reclamation();
+    $reclamation->setTitre("🚨 Urgence - " . date('H:i:s'))
+                ->setDescription("Alerte urgence envoyée par l'utilisateur. Intervention immédiate requise.")
+                ->setDate(date('Y-m-d H:i:s'))
+                ->setUserId(1)
+                ->setType(Reclamation::TYPE_URGENCE)
+                ->setStatut(Reclamation::STATUS_OPEN);
+    
+    if ($reclamation->create()) {
+        // Set success notification
+        $_SESSION['notification'] = [
+            'type' => 'success',
+            'message' => "Alerte urgence envoyée avec succès ! L'équipe a été notifiée.",
+            'show' => true
+        ];
+        header('Location: index.php');
+        exit;
+    } else {
+        $_SESSION['notification'] = [
+            'type' => 'error',
+            'message' => "Erreur lors de l'envoi de l'alerte urgence !",
+            'show' => true
+        ];
+    }
 }
 
 $pageTitle = "Alerte Urgence";

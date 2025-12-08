@@ -14,6 +14,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = trim($_POST['description'] ?? '');
     $defaultUserId = 1; // Hardcoded user ID
     
+    // FONCTIONNALITÉ 2: Détection de mauvais mots
+    $reclamation = new Reclamation();
+    $badWords = $reclamation->detectBadWords($titre, $description);
+    if ($badWords !== null) {
+        $_SESSION['errors'] = [
+            "⚠️ ATTENTION : Votre réclamation contient des mots inappropriés.",
+            "Veuillez reformuler votre message de manière respectueuse.",
+            "Mots détectés : " . implode(', ', $badWords)
+        ];
+        $_SESSION['old_titre'] = $titre;
+        $_SESSION['old_description'] = $description;
+        // Redirect to stay on the same page to show errors
+        header('Location: create.php');
+        exit;
+    }
+    
     // Validation
     $errors = [];
     if (empty($titre)) {
@@ -33,27 +49,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (empty($errors)) {
-        // Create reclamation using the model directly
-        $reclamation = new Reclamation();
-        $reclamation->create([
-            'titre' => $titre,
-            'description' => $description,
-            'date' => date('Y-m-d H:i:s'),
-            'id_user' => $defaultUserId,
-            'type' => 'normal',
-            'statut' => 'ouvert'
-        ]);
+        // FONCTIONNALITÉ 1: Génération automatique de description détaillée
+        $detailedDescription = $reclamation->generateDetailedDescription($titre, $description);
         
-        // Set success notification in session
-        $_SESSION['notification'] = [
-            'type' => 'success',
-            'message' => "Réclamation créée avec succès !",
-            'show' => true
-        ];
+        // Create reclamation using the new model with setters
+        $reclamation->setTitre($titre)
+                    ->setDescription($detailedDescription)
+                    ->setDate(date('Y-m-d H:i:s'))
+                    ->setUserId($defaultUserId)
+                    ->setType(Reclamation::TYPE_NORMAL)
+                    ->setStatut(Reclamation::STATUS_OPEN);
         
-        // Redirect to index page
-        header('Location: index.php');
-        exit;
+        if ($reclamation->create()) {
+            // Set success notification in session
+            $_SESSION['notification'] = [
+                'type' => 'success',
+                'message' => "Réclamation créée avec succès ! Description enrichie automatiquement.",
+                'show' => true
+            ];
+            
+            // Redirect to index page
+            header('Location: index.php');
+            exit;
+        } else {
+            $errors[] = "Erreur lors de la création de la réclamation.";
+        }
     } else {
         $_SESSION['errors'] = $errors;
         $_SESSION['old_titre'] = $titre;
@@ -71,6 +91,12 @@ $descriptionValue = $_SESSION['old_description'] ?? '';
 
 // Clear session data
 unset($_SESSION['errors'], $_SESSION['old_titre'], $_SESSION['old_description']);
+
+// Check for success notification from redirect
+$successNotification = $_SESSION['notification'] ?? null;
+if ($successNotification && $successNotification['type'] === 'success') {
+    unset($_SESSION['notification']);
+}
 ?>
 
 <!DOCTYPE html>
@@ -80,9 +106,8 @@ unset($_SESSION['errors'], $_SESSION['old_titre'], $_SESSION['old_description'])
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle) ?></title>
     <link rel="stylesheet" href="../../../css/style.css">
+    <script src="../../../js/reclamation-utils.js"></script>
     <style>
-       
-        
         .form-container {
             max-width: 800px;
             margin: 0 auto;
@@ -247,7 +272,7 @@ unset($_SESSION['errors'], $_SESSION['old_titre'], $_SESSION['old_description'])
     <header class="header">
         <div class="header-content">
             <div class="logo-section">
-                <a href="../../index.php" class="logo-link">
+                <a href="../../../index.php" class="logo-link">
                     <img src="../../../images/logo.svg" alt="MedSense Logo" class="logo">
                     <div class="site-branding">
                         <h1 class="site-title">MedSense</h1>
@@ -288,12 +313,12 @@ unset($_SESSION['errors'], $_SESSION['old_titre'], $_SESSION['old_description'])
                         </div>
                     <?php endif; ?>
 
-                    <form action="" method="POST" id="reclamationForm" onsubmit="return validateForm()">
+                    <form action="" method="POST" id="reclamationForm" onsubmit="return handleFormSubmit(event)">
                         <!-- Title Field -->
                         <div class="form-group">
                             <label for="titre">Titre de la réclamation *</label>
-                            <input type="text" id="titre" name="titre" required minlength="3" maxlength="255"
-                                   placeholder="Ex: Problème avec mon compte, Bug dans l'application..."
+                            <input type="text" id="titre" name="titre" 
+                                   placeholder="Ex: Problème avec mon corps, Mal aux genoux..."
                                    value="<?= htmlspecialchars($titreValue) ?>">
                             <span id="titreError" class="error-message"></span>
                         </div>
@@ -301,7 +326,7 @@ unset($_SESSION['errors'], $_SESSION['old_titre'], $_SESSION['old_description'])
                         <!-- Description Field -->
                         <div class="form-group">
                             <label for="description">Description détaillée *</label>
-                            <textarea id="description" name="description" required minlength="10" maxlength="5000" rows="6"
+                            <textarea id="description" name="description"  rows="6"
                                       placeholder="Veuillez décrire votre problème de manière précise. Incluez toutes les informations qui pourraient nous aider à résoudre votre situation rapidement..."><?= htmlspecialchars($descriptionValue) ?></textarea>
                             <div class="char-counter">
                                 <span id="charCount"><?= mb_strlen($descriptionValue) ?> / 5000 caractères</span>
@@ -328,6 +353,13 @@ unset($_SESSION['errors'], $_SESSION['old_titre'], $_SESSION['old_description'])
     <?php include '../../../footer.php'; ?>
 
     <script>
+        // Liste de mots inappropriés (côté client pour validation en temps réel)
+        const badWords = ['merde', 'putain', 'con', 'connard', 'salope', 'enculé', 'enculer',
+            'foutre', 'bordel', 'chier', 'chié', 'nique', 'niquer',
+            'bite', 'couilles', 'cul', 'pute', 'putes', 'salaud', 'salauds',
+            'crétin', 'idiot', 'imbécile', 'débile', 'stupide', 'conne', 'connasse',
+            'fdp', 'pd', 'tg', 'ntm', 'ptn'];
+
         // Form validation functions
         const titre = document.getElementById('titre');
         const description = document.getElementById('description');
@@ -337,6 +369,10 @@ unset($_SESSION['errors'], $_SESSION['old_titre'], $_SESSION['old_description'])
 
         titre.addEventListener('input', validateTitre);
         description.addEventListener('input', validateDescription);
+        
+        // Détection de mauvais mots en temps réel
+        titre.addEventListener('input', checkBadWords);
+        description.addEventListener('input', checkBadWords);
 
         function validateTitre() {
             const value = titre.value.trim();
@@ -387,24 +423,96 @@ unset($_SESSION['errors'], $_SESSION['old_titre'], $_SESSION['old_description'])
             return true;
         }
 
+        // Fonction de détection de mauvais mots
+        function checkBadWords() {
+            const text = (titre.value + ' ' + description.value).toLowerCase();
+            const detectedWords = [];
+            
+            badWords.forEach(word => {
+                if (text.includes(word)) {
+                    detectedWords.push(word);
+                }
+            });
+            
+            if (detectedWords.length > 0) {
+                // Afficher un avertissement
+                const warningDiv = document.getElementById('badWordsWarning');
+                if (!warningDiv) {
+                    const warning = document.createElement('div');
+                    warning.id = 'badWordsWarning';
+                    warning.className = 'alert-error';
+                    warning.style.marginTop = '1rem';
+                    warning.style.backgroundColor = '#fef2f2';
+                    warning.style.border = '2px solid #ef4444';
+                    warning.innerHTML = `
+                        <strong>⚠️ ATTENTION :</strong> Votre message contient des mots inappropriés.
+                        Veuillez reformuler votre message de manière respectueuse.
+                        <br><small>Mots détectés : ${detectedWords.join(', ')}</small>
+                    `;
+                    description.parentElement.appendChild(warning);
+                } else {
+                    warningDiv.innerHTML = `
+                        <strong>⚠️ ATTENTION :</strong> Votre message contient des mots inappropriés.
+                        Veuillez reformuler votre message de manière respectueuse.
+                        <br><small>Mots détectés : ${detectedWords.join(', ')}</small>
+                    `;
+                }
+                return false;
+            } else {
+                // Supprimer l'avertissement s'il existe
+                const warningDiv = document.getElementById('badWordsWarning');
+                if (warningDiv) {
+                    warningDiv.remove();
+                }
+                return true;
+            }
+        }
+
         function validateForm() {
             const isTitreValid = validateTitre();
             const isDescriptionValid = validateDescription();
+            const hasNoBadWords = checkBadWords();
             
             if (!isTitreValid) {
                 titre.focus();
             } else if (!isDescriptionValid) {
                 description.focus();
+            } else if (!hasNoBadWords) {
+                showAlert('⚠️ Votre réclamation contient des mots inappropriés. Veuillez reformuler votre message de manière respectueuse.', 'error');
+                return false;
             }
             
-            return isTitreValid && isDescriptionValid;
+            return isTitreValid && isDescriptionValid && hasNoBadWords;
+        }
+
+        // Gestionnaire de soumission du formulaire avec validation
+        function handleFormSubmit(event) {
+            if (!validateForm()) {
+                event.preventDefault();
+                return false;
+            }
+            // Si validation OK, le formulaire sera soumis normalement
+            return true;
         }
 
         // Initialize validation on page load
         document.addEventListener('DOMContentLoaded', function() {
             validateTitre();
             validateDescription();
+            checkBadWords();
+            // Initialiser la validation en temps réel
+            const form = document.getElementById('reclamationForm');
+            if (form) {
+                initRealtimeValidation(form);
+            }
         });
+
+        // Afficher l'alerte de succès si la réclamation a été créée
+        <?php if ($successNotification && $successNotification['type'] === 'success'): ?>
+            document.addEventListener('DOMContentLoaded', function() {
+                showAlert('Réclamation a été créée avec succès !', 'success');
+            });
+        <?php endif; ?>
     </script>
 </body>
 </html>

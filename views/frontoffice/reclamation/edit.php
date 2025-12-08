@@ -35,29 +35,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (empty($errors)) {
-        // Update reclamation
+        // Fetch the reclamation first
         $reclamationModel = new Reclamation();
-        $reclamationModel->update($id, $userId, [
-            'titre' => $titre,
-            'description' => $description
-        ]);
+        $reclamation = $reclamationModel->findForUser($id, $userId);
         
-        // Set success notification
-        $_SESSION['notification'] = [
-            'type' => 'success',
-            'message' => "Réclamation mise à jour avec succès !",
-            'show' => true
-        ];
+        if (!$reclamation) {
+            $_SESSION['notification'] = [
+                'type' => 'error',
+                'message' => "Réclamation introuvable !",
+                'show' => true
+            ];
+            header('Location: index.php');
+            exit;
+        }
         
-        header('Location: index.php');
-        exit;
+        // Update reclamation using setters
+        $reclamation->setTitre($titre)
+                    ->setDescription($description);
+        
+        if ($reclamation->update()) {
+            // Set success notification
+            $_SESSION['notification'] = [
+                'type' => 'success',
+                'message' => "Réclamation mise à jour avec succès !",
+                'show' => true
+            ];
+            header('Location: index.php');
+            exit;
+        } else {
+            $errors[] = "Erreur lors de la mise à jour de la réclamation.";
+        }
     } else {
-        // If validation errors, get reclamation data from POST
-        $reclamation = [
-            'id' => $id,
-            'titre' => $titre,
-            'description' => $description
-        ];
+        // If validation errors, create a temporary reclamation object
+        $reclamation = new Reclamation();
+        $reclamation->setId($id)
+                    ->setTitre($titre)
+                    ->setDescription($description);
     }
 } else {
     // GET request - show edit form
@@ -73,6 +86,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $reclamation = $reclamationModel->findForUser($id, $userId);
     
     if (!$reclamation) {
+        $_SESSION['notification'] = [
+            'type' => 'error',
+            'message' => "Réclamation introuvable !",
+            'show' => true
+        ];
         header('Location: index.php');
         exit;
     }
@@ -88,6 +106,7 @@ $pageTitle = "Modifier Réclamation";
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle); ?></title>
     <link rel="stylesheet" href="../../../css/style.css">
+    <script src="../../../js/reclamation-utils.js"></script>
 </head>
 <body>
 <?php include '../../../navbar.php'; ?>
@@ -100,7 +119,7 @@ $pageTitle = "Modifier Réclamation";
         </div>
 
         <div class="form-card">
-            <h2>Modifier la réclamation #<?= $reclamation['id']; ?></h2>
+            <h2>Modifier la réclamation #<?= $reclamation->getId(); ?></h2>
 
             <?php if (!empty($errors)): ?>
                 <div class="alert alert-error">
@@ -112,13 +131,13 @@ $pageTitle = "Modifier Réclamation";
                 </div>
             <?php endif; ?>
 
-            <form method="POST" action="" class="reclamation-form">
-                <input type="hidden" name="id" value="<?= $reclamation['id']; ?>">
+            <form method="POST" action="" class="reclamation-form" id="editForm" onsubmit="return handleEditFormSubmit(event)">
+                <input type="hidden" name="id" value="<?= $reclamation->getId(); ?>">
 
                 <div class="form-group">
                     <label for="titre">Titre *</label>
                     <input type="text" id="titre" name="titre" 
-                           value="<?= htmlspecialchars($reclamation['titre']); ?>" 
+                           value="<?= htmlspecialchars($reclamation->getTitre()); ?>" 
                            required minlength="3" maxlength="255"
                            placeholder="Résumé de votre réclamation">
                 </div>
@@ -127,9 +146,9 @@ $pageTitle = "Modifier Réclamation";
                     <label for="description">Description *</label>
                     <textarea id="description" name="description" rows="5" 
                               required minlength="10" maxlength="5000"
-                              placeholder="Expliquez votre problème en détail..."><?= htmlspecialchars($reclamation['description']); ?></textarea>
+                              placeholder="Expliquez votre problème en détail..."><?= htmlspecialchars($reclamation->getDescription()); ?></textarea>
                     <div class="form-help">
-                        <span id="charCount"><?= mb_strlen($reclamation['description']) ?> / 5000 caractères</span>
+                        <span id="charCount"><?= mb_strlen($reclamation->getDescription()) ?> / 5000 caractères</span>
                     </div>
                 </div>
 
@@ -153,10 +172,40 @@ description.addEventListener('input', function() {
     
     if (currentLength > 4500) {
         charCount.style.color = '#ef4444';
+        charCount.style.fontWeight = 'bold';
+    } else if (currentLength > 4000) {
+        charCount.style.color = '#f59e0b';
     } else {
         charCount.style.color = '#64748b';
+        charCount.style.fontWeight = 'normal';
     }
 });
+
+// Gestionnaire de soumission avec validation
+function handleEditFormSubmit(event) {
+    const form = document.getElementById('editForm');
+    if (!validateReclamationForm(form)) {
+        event.preventDefault();
+        return false;
+    }
+    // Si validation OK, le formulaire sera soumis normalement
+    return true;
+}
+
+// Initialiser la validation en temps réel
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('editForm');
+    if (form) {
+        initRealtimeValidation(form);
+    }
+});
+
+// Afficher l'alerte de succès si la réclamation a été modifiée
+<?php if (isset($_SESSION['notification']) && $_SESSION['notification']['type'] === 'success'): ?>
+    document.addEventListener('DOMContentLoaded', function() {
+        showAlert('Réclamation a été modifiée avec succès !', 'success');
+    });
+<?php endif; ?>
 </script>
 
 <?php include '../../../footer.php'; ?>

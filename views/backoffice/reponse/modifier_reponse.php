@@ -8,20 +8,32 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$id = $_GET['id'] ?? null;
+$responseId = $_GET['id'] ?? null;
+$reclamationId = $_GET['reclamation_id'] ?? null;
 
-if (!$id) {
+if (!$responseId || !$reclamationId) {
     header('Location: admin_reclamations.php');
     exit;
 }
 
-// Fetch reclamation using Reclamation model
-$reclamationModel = new Reclamation();
+// Fetch response using Response model
+$responseModel = new Response();
+$response = $responseModel->findById((int)$responseId);
 
-// Since findForUser requires user ID, we need to get the reclamation differently for admin
+if (!$response) {
+    $_SESSION['notification'] = [
+        'type' => 'error',
+        'message' => "Réponse introuvable !",
+        'show' => true
+    ];
+    header("Location: details_reclamation.php?id=$reclamationId");
+    exit;
+}
+
+// Fetch reclamation
 $pdo = (new config())->getConnexion();
 $stmt = $pdo->prepare("SELECT * FROM reclamation WHERE id = ?");
-$stmt->execute([$id]);
+$stmt->execute([$reclamationId]);
 $reclamationData = $stmt->fetch();
 
 if (!$reclamationData) {
@@ -29,21 +41,18 @@ if (!$reclamationData) {
     exit;
 }
 
-// Create Reclamation object
 $reclamation = new Reclamation();
 $reclamation->hydrate($reclamationData);
-
-// Get username
-$stmt = $pdo->prepare("SELECT username FROM user WHERE id = ?");
-$stmt->execute([$reclamation->getUserId()]);
-$user = $stmt->fetch();
-$username = $user['username'] ?? 'Utilisateur inconnu';
 
 // Get errors from session if any
 $errors = $_SESSION['errors'] ?? [];
 unset($_SESSION['errors']);
 
-$pageTitle = "Répondre à la Réclamation";
+// Get old content if exists (for form repopulation)
+$oldContenu = $_SESSION['old_contenu'] ?? $response->getContenu();
+unset($_SESSION['old_contenu']);
+
+$pageTitle = "Modifier la Réponse";
 ?>
 
 <?php include '../../../admin_sidebar.php'; ?>
@@ -51,13 +60,15 @@ $pageTitle = "Répondre à la Réclamation";
 <div class="admin-content">
     <!-- Header Section -->
     <div class="content-header" style="margin-bottom: 2rem;">
-        <h1 style="color: #1e293b; font-size: 2rem; margin-bottom: 0.5rem;">Répondre à la Réclamation</h1>
-        <p style="color: #64748b; font-size: 1.1rem;">Ajouter une réponse à cette réclamation</p>
+        <h1 style="color: #1e293b; font-size: 2rem; margin-bottom: 0.5rem;">
+            <i class="fas fa-edit"></i> Modifier la Réponse
+        </h1>
+        <p style="color: #64748b; font-size: 1.1rem;">Modifiez le contenu de votre réponse</p>
     </div>
 
     <!-- Reclamation Details -->
     <div class="card" style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-        <h3 style="margin-bottom: 1rem; color: #1f2937;"><?= htmlspecialchars($reclamation->getTitre()); ?></h3>
+        <h3 style="margin-bottom: 1rem; color: #1f2937;">Réclamation : <?= htmlspecialchars($reclamation->getTitre()); ?></h3>
         <div style="margin-bottom: 1rem;">
             <span class="badge <?= $reclamation->getType() === 'urgence' ? 'badge-urgence' : 'badge-normal'; ?>" style="padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; margin-right: 0.5rem;">
                 <i class="fas <?= $reclamation->getType() === 'urgence' ? 'fa-exclamation-triangle' : 'fa-file-alt'; ?>"></i>
@@ -71,16 +82,10 @@ $pageTitle = "Répondre à la Réclamation";
                 <?= htmlspecialchars($reclamation->getStatut()); ?>
             </span>
         </div>
-        <p style="margin-bottom: 0.5rem;"><strong>Description :</strong></p>
-        <p style="color: #4b5563; line-height: 1.5;"><?= nl2br(htmlspecialchars($reclamation->getDescription())); ?></p>
-        <div style="margin-top: 1rem; color: #6b7280; font-size: 0.9rem;">
-            <p><strong>Date :</strong> <?= date('d/m/Y H:i', strtotime($reclamation->getDate())); ?></p>
-            <p><strong>Utilisateur :</strong> <?= htmlspecialchars($username); ?></p>
-        </div>
     </div>
 
     <!-- Response Form -->
-    <div class="card" style="background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <div class="card" style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
         <?php if (!empty($errors)): ?>
             <div class="alert-error" style="background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
                 <ul style="margin: 0; padding-left: 1.5rem;">
@@ -91,48 +96,36 @@ $pageTitle = "Répondre à la Réclamation";
             </div>
         <?php endif; ?>
 
-        <form method="POST" action="enregistrer_reponse.php">
-            <input type="hidden" name="id_reclamation" value="<?= $reclamation->getId(); ?>">
+        <form method="POST" action="enregistrer_modification_reponse.php">
+            <input type="hidden" name="id" value="<?= $response->getId(); ?>">
+            <input type="hidden" name="reclamation_id" value="<?= $reclamationId; ?>">
 
             <div class="form-group" style="margin-bottom: 1.5rem;">
-                <label for="contenu" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Votre réponse *</label>
-                <textarea id="contenu" name="contenu" required minlength="5" maxlength="3000" rows="5"
-                          placeholder="Écrivez votre réponse à cette réclamation (minimum 5 caractères, maximum 3000)..."
-                          style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; font-family: inherit; resize: vertical;"></textarea>
+                <label for="contenu" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    <i class="fas fa-comment"></i> Votre réponse *
+                </label>
+                <textarea id="contenu" name="contenu" required minlength="5" maxlength="3000" rows="8"
+                          placeholder="Modifiez votre réponse à cette réclamation (minimum 5 caractères, maximum 3000)..."
+                          style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px; font-family: inherit; resize: vertical; transition: border-color 0.3s ease;"><?= htmlspecialchars($oldContenu); ?></textarea>
                 <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
                     <span id="contenuError" style="color: #ef4444; font-size: 0.85rem; display: none;"></span>
-                    <span id="contenuCount" style="color: #64748b; font-size: 0.85rem;">0 / 3000 caractères</span>
+                    <span id="contenuCount" style="color: #64748b; font-size: 0.85rem;"><?= mb_strlen($oldContenu) ?> / 3000 caractères</span>
                 </div>
             </div>
 
-            <!-- Statut Information -->
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-                <div style="background: <?= $reclamation->getStatut() === 'ouvert' ? '#fef3c7' : ($reclamation->getStatut() === 'en cours' ? '#dbeafe' : '#dcfce7'); ?>; border: 1px solid <?= $reclamation->getStatut() === 'ouvert' ? '#fde68a' : ($reclamation->getStatut() === 'en cours' ? '#93c5fd' : '#86efac'); ?>; border-radius: 8px; padding: 1rem;">
-                    <p style="margin: 0; color: <?= $reclamation->getStatut() === 'ouvert' ? '#92400e' : ($reclamation->getStatut() === 'en cours' ? '#1e40af' : '#166534'); ?>; font-size: 0.9rem; font-weight: 600;">
-                        <i class="fas fa-info-circle"></i>
-                        <strong>Changement de statut automatique :</strong>
-                    </p>
-                    <ul style="margin: 0.5rem 0 0 0; padding-left: 1.5rem; color: <?= $reclamation->getStatut() === 'ouvert' ? '#92400e' : ($reclamation->getStatut() === 'en cours' ? '#1e40af' : '#166534'); ?>; font-size: 0.85rem;">
-                        <?php if ($reclamation->getStatut() === 'ouvert'): ?>
-                            <li>Statut actuel : <strong>Ouvert</strong></li>
-                            <li>Après l'envoi de votre réponse, le statut passera automatiquement à <strong>"En cours"</strong></li>
-                        <?php elseif ($reclamation->getStatut() === 'en cours'): ?>
-                            <li>Statut actuel : <strong>En cours</strong></li>
-                            <li>Après l'envoi de votre réponse, le statut passera automatiquement à <strong>"Fermé"</strong></li>
-                        <?php else: ?>
-                            <li>Statut actuel : <strong>Fermé</strong></li>
-                            <li>Cette réclamation est déjà fermée. Le statut ne changera pas.</li>
-                        <?php endif; ?>
-                    </ul>
-                </div>
+            <div class="form-info" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+                <p style="margin: 0; color: #0369a1; font-size: 0.9rem;">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Note :</strong> La date de la réponse sera mise à jour automatiquement lors de l'enregistrement.
+                </p>
             </div>
 
             <div class="form-actions" style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-paper-plane"></i>
-                    Envoyer la réponse
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    Enregistrer les modifications
                 </button>
-                <a href="details_reclamation.php?id=<?= $reclamation->getId(); ?>" class="btn btn-secondary">
+                <a href="details_reclamation.php?id=<?= $reclamationId; ?>" class="btn btn-secondary">
                     <i class="fas fa-times"></i>
                     Annuler
                 </a>
@@ -152,15 +145,21 @@ contenu.addEventListener('input', function() {
     
     if (currentLength > 2800) {
         contenuCount.style.color = '#ef4444';
+        contenuCount.style.fontWeight = 'bold';
+    } else if (currentLength > 2500) {
+        contenuCount.style.color = '#f59e0b';
     } else {
         contenuCount.style.color = '#64748b';
+        contenuCount.style.fontWeight = 'normal';
     }
     
     if (this.value.trim().length < 5) {
         contenuError.textContent = 'La réponse doit contenir au moins 5 caractères';
         contenuError.style.display = 'block';
+        this.style.borderColor = '#ef4444';
     } else {
         contenuError.style.display = 'none';
+        this.style.borderColor = '#e5e7eb';
     }
 });
 
@@ -170,6 +169,13 @@ document.querySelector('form').addEventListener('submit', function(e) {
         e.preventDefault();
         contenuError.textContent = 'La réponse doit contenir au moins 5 caractères';
         contenuError.style.display = 'block';
+        contenu.style.borderColor = '#ef4444';
+        contenu.focus();
+    } else if (value.length > 3000) {
+        e.preventDefault();
+        contenuError.textContent = 'La réponse ne doit pas dépasser 3000 caractères';
+        contenuError.style.display = 'block';
+        contenu.style.borderColor = '#ef4444';
         contenu.focus();
     }
 });
@@ -191,8 +197,8 @@ document.querySelector('form').addEventListener('submit', function(e) {
     font-size: 0.9rem;
 }
 
-.btn-success {
-    background: #10b981;
+.btn-primary {
+    background: #3b82f6;
     color: white;
 }
 
@@ -246,3 +252,4 @@ document.querySelector('form').addEventListener('submit', function(e) {
 </style>
 
 <?php include '../../../admin_footer.php'; ?>
+

@@ -37,37 +37,62 @@ class ReclamationController
 
     // Store new reclamation
     public function store(): void
-    {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: ../../../views/reclamations/create.php');
-            exit;
-        }
-
-        $titre = trim($_POST['titre'] ?? '');
-        $description = trim($_POST['description'] ?? '');
-
-        $errors = $this->validate($titre, $description);
-        if (!empty($errors)) {
-            $_SESSION['errors'] = $errors;
-            $_POST['titre'] = $titre;
-            $_POST['description'] = $description;
-            header('Location: ../../../views/reclamations/create.php');
-            exit;
-        }
-
-        $this->reclamations->create([
-            'titre' => $titre,
-            'description' => $description,
-            'date' => date('Y-m-d H:i:s'),
-            'id_user' => $this->defaultUserId,
-            'type' => Reclamation::TYPE_NORMAL,
-            'statut' => Reclamation::STATUS_OPEN
-        ]);
-
-        $_SESSION['success_message'] = "Réclamation créée avec succès !";
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         header('Location: ../../../views/reclamations/create.php');
         exit;
     }
+
+    $titre = trim($_POST['titre'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+
+    // FONCTIONNALITÉ 2: Détection de mauvais mots
+    $reclamation = new Reclamation();
+    $badWords = $reclamation->detectBadWords($titre, $description);
+    if ($badWords !== null) {
+        $_SESSION['errors'] = [
+            "⚠️ ATTENTION : Votre réclamation contient des mots inappropriés.",
+            "Veuillez reformuler votre message de manière respectueuse.",
+            "Mots détectés : " . implode(', ', $badWords)
+        ];
+        $_SESSION['old_titre'] = $titre;
+        $_SESSION['old_description'] = $description;
+        header('Location: ../../../views/frontoffice/reclamation/create.php');
+        exit;
+    }
+
+    $errors = $this->validate($titre, $description);
+    if (!empty($errors)) {
+        $_SESSION['errors'] = $errors;
+        $_SESSION['old_titre'] = $titre;
+        $_SESSION['old_description'] = $description;
+        header('Location: ../../../views/frontoffice/reclamation/create.php');
+        exit;
+    }
+
+    // FONCTIONNALITÉ 1: Génération automatique de description détaillée
+    $detailedDescription = $reclamation->generateDetailedDescription($titre, $description);
+    
+    $reclamation->setTitre($titre)
+                ->setDescription($detailedDescription)
+                ->setDate(date('Y-m-d H:i:s'))
+                ->setUserId($this->defaultUserId)
+                ->setType(Reclamation::TYPE_NORMAL)
+                ->setStatut(Reclamation::STATUS_OPEN);
+    
+    if ($reclamation->create()) {
+        $_SESSION['notification'] = [
+            'type' => 'success',
+            'message' => "Réclamation créée avec succès ! Description enrichie automatiquement.",
+            'show' => true
+        ];
+    } else {
+        $_SESSION['errors'] = ["Erreur lors de la création de la réclamation"];
+    }
+    
+    header('Location: ../../../views/frontoffice/reclamation/index.php');
+    exit;
+}
 
     // Show single reclamation
     public function show(int $id): void
@@ -97,35 +122,59 @@ class ReclamationController
     }
 
     // Update reclamation
-    public function update(): void
-    {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: ../../../views/reclamations/index.php');
-            exit;
-        }
-
-        $id = (int)($_POST['id'] ?? 0);
-        $titre = trim($_POST['titre'] ?? '');
-        $description = trim($_POST['description'] ?? '');
-
-        $errors = $this->validate($titre, $description, $id);
-        if (!empty($errors)) {
-            $_SESSION['errors'] = $errors;
-            $_POST['titre'] = $titre;
-            $_POST['description'] = $description;
-            header("Location: ../../../views/reclamations/edit.php?id=$id");
-            exit;
-        }
-
-        $this->reclamations->update($id, $this->defaultUserId, [
-            'titre' => $titre,
-            'description' => $description
-        ]);
-
-        $_SESSION['success_message'] = "Réclamation mise à jour avec succès !";
+   public function update(): void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         header('Location: ../../../views/reclamations/index.php');
         exit;
     }
+
+    $id = (int)($_POST['id'] ?? 0);
+    $titre = trim($_POST['titre'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+
+    // FONCTIONNALITÉ 2: Détection de mauvais mots
+    $reclamation = new Reclamation();
+    $badWords = $reclamation->detectBadWords($titre, $description);
+    if ($badWords !== null) {
+        $_SESSION['errors'] = [
+            "⚠️ ATTENTION : Votre réclamation contient des mots inappropriés.",
+            "Veuillez reformuler votre message de manière respectueuse.",
+            "Mots détectés : " . implode(', ', $badWords)
+        ];
+        header("Location: ../../../views/reclamations/edit.php?id=$id");
+        exit;
+    }
+
+    $errors = $this->validate($titre, $description, $id);
+    if (!empty($errors)) {
+        $_SESSION['errors'] = $errors;
+        header("Location: ../../../views/reclamations/edit.php?id=$id");
+        exit;
+    }
+
+    $reclamation = $this->reclamations->findForUser($id, $this->defaultUserId);
+    if (!$reclamation) {
+        $_SESSION['errors'] = ["Réclamation introuvable"];
+        header('Location: ../../../views/reclamations/index.php');
+        exit;
+    }
+
+    // FONCTIONNALITÉ 1: Génération automatique de description détaillée
+    $detailedDescription = $reclamation->generateDetailedDescription($titre, $description);
+
+    $reclamation->setTitre($titre)
+                ->setDescription($detailedDescription);
+    
+    if ($reclamation->update()) {
+        $_SESSION['success_message'] = "Réclamation mise à jour avec succès ! Description enrichie automatiquement.";
+    } else {
+        $_SESSION['errors'] = ["Erreur lors de la mise à jour"];
+    }
+    
+    header('Location: ../../../views/reclamations/index.php');
+    exit;
+}
 
     // Delete a reclamation
     public function destroy(int $id): void
@@ -145,26 +194,46 @@ class ReclamationController
     }
 
     // Urgence reclamation
-    public function urgence(): void
-    {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $this->reclamations->create([
-                'titre' => "🚨 Urgence",
-                'description' => "Alerte urgence envoyée par l'utilisateur",
-                'date' => date('Y-m-d H:i:s'),
-                'id_user' => $this->defaultUserId,
-                'type' => Reclamation::TYPE_URGENCE,
-                'statut' => Reclamation::STATUS_OPEN
-            ]);
-
+   public function urgence(): void
+{
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $reclamation = new Reclamation();
+        
+        // Note: Pour les urgences, on garde le message simple mais on peut enrichir
+        $titre = "🚨 Urgence";
+        $descriptionBase = "Alerte urgence envoyée par l'utilisateur";
+        
+        // FONCTIONNALITÉ 1: Génération automatique de description détaillée pour urgence
+        $detailedDescription = $reclamation->generateDetailedDescription($titre, $descriptionBase);
+        
+        $reclamation->setTitre($titre)
+                    ->setDescription($detailedDescription)
+                    ->setDate(date('Y-m-d H:i:s'))
+                    ->setUserId($this->defaultUserId)
+                    ->setType(Reclamation::TYPE_URGENCE)
+                    ->setStatut(Reclamation::STATUS_OPEN);
+        
+        if ($reclamation->create()) {
             $_SESSION['success_message'] = "Réclamation d'urgence envoyée !";
-            header('Location: ../../../views/reclamations/urgence.php');
-            exit;
+        } else {
+            $_SESSION['errors'] = ["Erreur lors de l'envoi de l'urgence"];
         }
+        
+        header('Location: ../../../views/reclamations/urgence.php');
+        exit;
+    }
 
-        $successMessage = $_SESSION['success_message'] ?? '';
-        unset($_SESSION['success_message']);
-        include '../../../views/reclamations/urgence.php';
+    $successMessage = $_SESSION['success_message'] ?? '';
+    unset($_SESSION['success_message']);
+    include '../../../views/reclamations/urgence.php';
+}
+
+    // FONCTIONNALITÉ 3: Afficher les statistiques
+    public function statistics(): void
+    {
+        $reclamation = new Reclamation();
+        $stats = $reclamation->getStatistics();
+        include '../../../views/backoffice/reponse/admin_statistics.php';
     }
 
     // Validation function

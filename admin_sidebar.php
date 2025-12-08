@@ -338,7 +338,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <h3 class="nav-title">Statistiques & Rapports</h3>
                     <ul class="nav-links">
                         <li>
-                            <a href=" " class="<?= ($current_page == 'admin_statistics.php') ? 'active' : '' ?>">
+                            <a href="admin_statistics.php" class="<?= ($current_page == 'admin_statistics.php') ? 'active' : '' ?>">
                                 <i class="fas fa-chart-bar"></i>
                                 <span>Statistiques</span>
                             </a>

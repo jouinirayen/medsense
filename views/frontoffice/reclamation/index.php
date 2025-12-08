@@ -31,7 +31,7 @@ $pageTitle = "Mes Réclamations";
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle); ?></title>
     <link rel="stylesheet" href="../../../css/style.css">
-    
+    <script src="../../../js/reclamation-utils.js"></script>
 </head>
 <body>
 <?php include '../../../navbar.php'; ?>
@@ -44,35 +44,36 @@ $pageTitle = "Mes Réclamations";
         <a href="urgence.php" class="btn btn-urgence">🚨 Urgence</a>
     </div>
 
-    <?php if ($reclamations): ?>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Titre</th>
-                    <th>Type</th>
-                    <th>Statut</th>
-                    <th>Date</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($reclamations as $rec): ?>
-                    <tr>
-                        <td><?= $rec['id']; ?></td>
-                        <td><?= htmlspecialchars($rec['titre']); ?></td>
-                        <td><?= htmlspecialchars($rec['type']); ?></td>
-                        <td><?= htmlspecialchars($rec['statut']); ?></td>
-                        <td><?= date('d/m/Y H:i', strtotime($rec['date'])); ?></td>
-                        <td>
-                            <a href="show.php?id=<?= $rec['id']; ?>" class="btn btn-action">Voir</a>
-                            <a href="edit.php?id=<?= $rec['id']; ?>" class="btn btn-action">Modifier</a>
-                            <a href="delete.php?id=<?= $rec['id']; ?>" class="btn btn-delete" onclick="return confirm('Voulez-vous vraiment supprimer cette réclamation ? Cette action est irréversible.')">Supprimer</a>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+    <?php if (!empty($reclamations)): ?>
+        <table id="reclamationTable">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Titre</th>
+            <th>Type</th>
+            <th>Statut</th>
+            <th>Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php foreach ($reclamations as $index => $reclamation): ?>
+            <tr>
+                <td><?= $index + 1; ?></td>
+                <td><?= htmlspecialchars($reclamation->getTitre()); ?></td>
+                <td><?= htmlspecialchars($reclamation->getType()); ?></td>
+                <td><?= htmlspecialchars($reclamation->getStatut()); ?></td>
+                <td><?= date('d/m/Y H:i', strtotime($reclamation->getDate())); ?></td>
+                <td>
+                    <a href="show.php?id=<?= $reclamation->getId(); ?>" class="btn btn-action">Voir</a>
+                    <a href="edit.php?id=<?= $reclamation->getId(); ?>" class="btn btn-action">Modifier</a>
+                    <a href="delete.php?id=<?= $reclamation->getId(); ?>" class="btn btn-delete delete-link">Supprimer</a>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+    </tbody>
+</table>
+
     <?php else: ?>
         <p>Aucune réclamation trouvée.</p>
     <?php endif; ?>
@@ -127,17 +128,10 @@ $pageTitle = "Mes Réclamations";
     <?php if ($notification && $notification['show']): ?>
         document.addEventListener('DOMContentLoaded', function() {
             showNotification('<?= addslashes($notification['message']) ?>', '<?= $notification['type'] ?>');
+            // Afficher aussi l'alerte personnalisée
+            showAlert('<?= addslashes($notification['message']) ?>', '<?= $notification['type'] ?>');
         });
     <?php endif; ?>
-
-    // Enhanced confirmation for delete
-    document.querySelectorAll('a[href*="delete.php"]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            if (!confirm('Voulez-vous vraiment supprimer cette réclamation ? Cette action est irréversible.')) {
-                e.preventDefault();
-            }
-        });
-    });
     </script>
 </main>
 
