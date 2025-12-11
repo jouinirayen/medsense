@@ -6,7 +6,7 @@
             if (!isset(self::$pdo)) {
             try {
                 self::$pdo = new PDO(
-                'mysql:host=localhost;dbname=projet2025',
+                'mysql:host=localhost;dbname=blog 2',
                 'root',
                 '',
                 [

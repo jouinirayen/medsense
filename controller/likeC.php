@@ -3,7 +3,7 @@ class likeC {
     private $pdo;
 
     public function __construct() {
-        $db = new PDO('mysql:host=localhost;dbname=projet2025', 'root', '');
+        $db = new PDO('mysql:host=localhost;dbname=blog 2', 'root', '');
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->pdo = $db;
     }

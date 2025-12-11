@@ -2,7 +2,7 @@
 session_start();
 
 try {
-    $pdo = new PDO('mysql:host=localhost;dbname=projet2025;charset=utf8mb4', 'root', '');
+    $pdo = new PDO('mysql:host=localhost;dbname=blog 2;charset=utf8mb4', 'root', '');
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (Exception $e) {
     die('Erreur de connexion : ' . $e->getMessage());
@@ -18,13 +18,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $erreur = "Veuillez remplir tous les champs";
     } else {
         // Recherche de l'utilisateur
-        $req = $pdo->prepare("SELECT id, prenom, nom, email, motdepasse FROM utilisateur WHERE email = ?");
+        $req = $pdo->prepare("SELECT id, prenom, nom, email, mot_de_passe FROM utilisateur WHERE email = ?");
         $req->execute([$email]);
         $user = $req->fetch(PDO::FETCH_ASSOC);
 
         if (!$user) {
             $erreur = "Aucun compte avec cet email";
-        } elseif ($mdp === $user['motdepasse']) {  
+        } elseif ($mdp === $user['mot_de_passe']) {  
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['prenom']  = $user['prenom'];
             $_SESSION['nom']     = $user['nom'] ?? '';

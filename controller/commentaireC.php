@@ -6,7 +6,7 @@ class commentaireC {
 
     public function __construct() {
         try {
-            $this->pdo = new PDO('mysql:host=localhost;dbname=projet2025', 'root', '');
+            $this->pdo = new PDO('mysql:host=localhost;dbname=blog 2', 'root', '');
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->pdo->exec("SET NAMES utf8");
         } catch (PDOException $e) {
