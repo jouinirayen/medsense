@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $ext = explode('/', explode(':', substr($data, 0, strpos($data, ';')))[1])[1] ?? 'jpg';
 
-        $dir = '../../uploads/blog/';
+        $dir = '../../view/uploads/blog/';
         if (!is_dir($dir)) mkdir($dir, 0755, true);
 
         $newName = uniqid('post_') . '.' . $ext;
@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($post['imageUrl'] && file_exists('../../' . $post['imageUrl'])) {
                 unlink('../../' . $post['imageUrl']);
             }
-            $imageUrl = 'uploads/blog/' . $newName;
+            $imageUrl = 'view/uploads/blog/' . $newName;
         }
     } elseif (isset($_POST['supprimer_image'])) {
         if ($post['imageUrl'] && file_exists('../../' . $post['imageUrl'])) {

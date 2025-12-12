@@ -702,13 +702,15 @@ $all_users = $req->fetchAll(PDO::FETCH_ASSOC);
                         <?= htmlspecialchars($p['contenu']); ?>
                     </div>
 
-                    <?php if (!empty($p['imageUrl'])): ?>
-                        <div style="margin:16px 0; text-align:center;">
-                            <img src="../../<?= htmlspecialchars($p['imageUrl']) ?>" 
-                            style="max-width:100%; max-height:380px; height:auto; width:auto; object-fit:contain; border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,0.12);display:block; margin:0 auto;"
-                            onerror="this.style.display='none'">
-                        </div>
-                    <?php endif; ?>
+                    <?php if (!empty(trim($p['imageUrl'] ?? ''))): ?>
+    <div style="margin:16px 0; text-align:center;">
+        <img src="../uploads/<?= htmlspecialchars(basename($p['imageUrl'])) ?>" 
+             alt="Image de la publication"
+             style="max-width:100%; max-height:420px; height:auto; border-radius:16px; 
+                    box-shadow:0 6px 20px rgba(0,0,0,0.12); display:block; margin:0 auto;"
+             onerror="this.style.display='none';">
+    </div>
+<?php endif; ?>
 
                     <div class="interactions">
     <span class="action-btn like-btn <?= $isLiked ? 'liked' : '' ?>" 

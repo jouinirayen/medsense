@@ -194,16 +194,25 @@ $posts          = $blogC->listeTousPostsAdmin();
             <?php foreach($posts as $p): ?>
                 
                 <?php 
-                // Logique pour le chemin de l'image (gardée telle quelle)
-                $rawPath = $p['imageUrl'];
-                $displayPath = $rawPath;
+// Chemin correct pour afficher les images upload depuis n'importe où dans le projet
+$rawPath = $p['imageUrl'] ?? '';
 
-                if (strpos($rawPath, 'uploads/') === 0) {
-                    $displayPath = '/blog/' . $rawPath;
-                } elseif (strpos($rawPath, '/') !== 0 && strpos($rawPath, 'http') !== 0) {
-                    $displayPath = '/blog/uploads/' . $rawPath;
-                }
-                ?>
+// Nettoyage et normalisation du chemin
+$rawPath = trim($rawPath);
+
+// Cas 1 : lien externe (déjà http/https)
+if (strpos($rawPath, 'http://') === 0 || strpos($rawPath, 'https://') === 0) {
+    $displayPath = $rawPath;
+}
+// Cas 2 : chemin relatif qui commence déjà par uploads/
+elseif (strpos($rawPath, 'uploads/') === 0) {
+    $displayPath = '/blog/view/' . $rawPath;
+}
+// Cas 3 : juste le nom du fichier (ex: "photo.jpg" ou "dossier/photo.jpg")
+else {
+    $displayPath = '/blog/view/uploads/' . $rawPath;
+}
+?>
 
                 <div class="post-card">
                     <div class="post-header">
