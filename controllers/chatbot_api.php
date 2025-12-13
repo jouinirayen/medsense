@@ -12,7 +12,7 @@ if (!$user_message) {
 }
 
 
-$api_key = "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"; 
+$api_key = getenv('OPENAI_API_KEY');
 
 
 $data = [
