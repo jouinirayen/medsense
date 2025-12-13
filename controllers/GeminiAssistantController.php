@@ -4,12 +4,12 @@ class GeminiAssistantController {
     private $api_url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
     
     public function __construct() {
-        $this->api_key = 'AIzaSyAyGejWqEDw90zTnOyIpoL4dqfdLBwYU2w';
+           $this->api_key = getenv('GOOGLE_API_KEY'); // lire depuis l'environnement
     }
     
     public function askQuestion($question, $context = '') {
         try {
-            if (empty($this->api_key) || $this->api_key === 'AIzaSyAyGejWqEDw90zTnOyIpoL4dqfdLBwYU2w') {
+            if (empty($this->api_key) || $this->api_key = getenv('GOOGLE_API_KEY')); {
                 throw new Exception('Assistant non configuré. Veuillez configurer la clé API.');
             }
             $question = trim($question);
@@ -59,7 +59,7 @@ class GeminiAssistantController {
     }
     
     private function callAPI($prompt) {
-        // Préparer les données pour Gemini
+        
         $data = [
             'contents' => [
                 [
@@ -74,7 +74,7 @@ class GeminiAssistantController {
             ]
         ];
         
-        // Configuration cURL
+        
         $ch = curl_init();
         curl_setopt_array($ch, [
             CURLOPT_URL => $this->api_url . '?key=' . $this->api_key,
@@ -88,7 +88,7 @@ class GeminiAssistantController {
             CURLOPT_SSL_VERIFYPEER => true
         ]);
         
-        // Exécuter la requête
+        
         $response = curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         
@@ -98,7 +98,7 @@ class GeminiAssistantController {
         
         curl_close($ch);
         
-        // Traiter la réponse
+       
         if ($http_code !== 200) {
             throw new Exception('Erreur API (Code ' . $http_code . ')');
         }

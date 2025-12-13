@@ -15,6 +15,7 @@ if (!$user_message) {
 $api_key = getenv('OPENAI_API_KEY');
 
 
+
 $data = [
     "model" => "gpt-4.1-mini",
     "messages" => [
