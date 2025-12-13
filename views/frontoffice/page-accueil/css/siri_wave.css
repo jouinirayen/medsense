@@ -1,0 +1,171 @@
+/* Siri Wave Container - Bottom Center */
+.siri-container {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 320px;
+    height: 100px;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    /* Let clicks pass through unless on button */
+}
+
+/* Glassmorphism Backdrop */
+.siri-glass {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    transition: all 0.5s ease;
+    opacity: 0;
+    /* Hidden by default */
+    transform: translateY(20px);
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.siri-container.is-active .siri-glass {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* The Gooey Effect Wrapper */
+.siri-blobs {
+    position: relative;
+    width: 150px;
+    height: 100%;
+    filter: url('#goo');
+    /* SVG Filter for liquid effect */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Individual Color Blobs */
+.blob {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #6366f1;
+    /* Indigo */
+    animation: breathe 4s infinite ease-in-out;
+    opacity: 0.9;
+}
+
+.blob:nth-child(2) {
+    background: #ec4899;
+    /* Pink */
+    width: 45px;
+    height: 45px;
+    animation-delay: -1s;
+}
+
+.blob:nth-child(3) {
+    background: #06b6d4;
+    /* Cyan */
+    width: 55px;
+    height: 55px;
+    animation-delay: -2s;
+}
+
+/* STATES */
+
+/* 1. Standby (Idle) - Gentle pulsing */
+.siri-container.standby .blob {
+    animation: drift 6s infinite ease-in-out;
+}
+
+/* 2. Listening - Fast chaotic movement */
+.siri-container.listening .blob {
+    animation: listen 1.5s infinite linear;
+}
+
+/* 3. Speaking - Rhythmic expansion */
+.siri-container.speaking .blob {
+    animation: speak 0.8s infinite alternate;
+}
+
+/* Keyframes */
+@keyframes breathe {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+}
+
+@keyframes drift {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(20px, -10px) scale(1.1);
+    }
+
+    66% {
+        transform: translate(-15px, 15px) scale(0.9);
+    }
+
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+}
+
+@keyframes listen {
+    0% {
+        transform: rotate(0deg) translate(30px) rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg) translate(30px) rotate(-360deg);
+    }
+}
+
+@keyframes speak {
+    0% {
+        height: 20px;
+        width: 60px;
+        border-radius: 20px;
+    }
+
+    100% {
+        height: 60px;
+        width: 60px;
+        border-radius: 50%;
+    }
+}
+
+/* Text Feedback */
+.siri-text {
+    position: absolute;
+    bottom: -40px;
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s;
+    background: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.siri-container.is-active .siri-text {
+    opacity: 1;
+}

@@ -45,6 +45,11 @@ class ReservationController
                 return false; // Slot already taken
             }
 
+            // Check if slot is unavailable (Doctor Time Off)
+            if (!$this->isSlotAvailable($doctorId, $date, $time)) {
+                return false;
+            }
+
             // Fetch doctor's service ID
             $stmtService = $this->pdo->prepare("SELECT idService FROM utilisateur WHERE id_utilisateur = ?");
             $stmtService->execute([$doctorId]);
@@ -92,6 +97,25 @@ class ReservationController
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([$patientId]);
             return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
+    public function getDoctorReviews($doctorId)
+    {
+        try {
+            $sql = "SELECT r.note, r.commentaire, r.date, u.prenom, u.nom 
+                    FROM rendezvous r 
+                    JOIN utilisateur u ON r.idPatient = u.id_utilisateur 
+                    WHERE r.idMedecin = ? 
+                    AND r.note IS NOT NULL 
+                    AND r.commentaire IS NOT NULL 
+                    AND r.commentaire != ''
+                    ORDER BY r.date DESC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$doctorId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             return [];
         }
@@ -209,7 +233,7 @@ class ReservationController
             return false;
         }
     }
-    public function rateAppointment($appointmentId, $rating, $patientId)
+    public function rateAppointment($appointmentId, $rating, $patientId, $comment = null)
     {
         try {
             // 1. Get Appointment Details (Verification)
@@ -232,11 +256,11 @@ class ReservationController
                 return ['success' => false, 'error' => 'Déjà noté'];
             }
 
-            // 2. Update Appointment Rating
-            $stmtUpdate = $this->pdo->prepare("UPDATE rendezvous SET note = ? WHERE idRDV = ?");
-            $stmtUpdate->execute([$rating, $appointmentId]);
+            // 2. Update Appointment Rating & Comment
+            $stmtUpdate = $this->pdo->prepare("UPDATE rendezvous SET note = ?, commentaire = ? WHERE idRDV = ?");
+            $stmtUpdate->execute([$rating, $comment, $appointmentId]);
 
-            // 3. Update Doctor's Global Rating
+            // 3. Update Doctor's Global Rating (Existing Logic)
             // Fetch current doctor stats
             $stmtDoc = $this->pdo->prepare("SELECT note_globale, nb_avis FROM utilisateur WHERE id_utilisateur = ?");
             $stmtDoc->execute([$appt['idMedecin']]);
@@ -267,5 +291,62 @@ class ReservationController
         } catch (PDOException $e) {
             return false;
         }
+    }
+    // ==========================================
+    // GESTION DES DISPONIBILITÉS (JOURS OFF)
+    // ==========================================
+
+    public function addUnavailability($idMedecin, $date, $heureDebut = null, $heureFin = null)
+    {
+        try {
+            $stmt = $this->pdo->prepare("INSERT INTO disponibilite_medecin (idMedecin, date, heure_debut, heure_fin) VALUES (?, ?, ?, ?)");
+            return $stmt->execute([$idMedecin, $date, $heureDebut, $heureFin]);
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    public function getUnavailabilities($idMedecin)
+    {
+        try {
+            $stmt = $this->pdo->prepare("SELECT * FROM disponibilite_medecin WHERE idMedecin = ? ORDER BY date DESC");
+            $stmt->execute([$idMedecin]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
+    public function deleteUnavailability($id)
+    {
+        try {
+            $stmt = $this->pdo->prepare("DELETE FROM disponibilite_medecin WHERE id = ?");
+            return $stmt->execute([$id]);
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    public function isSlotAvailable($idMedecin, $date, $time)
+    {
+        // Check "Time Off"
+        try {
+            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM disponibilite_medecin 
+                                         WHERE idMedecin = ? 
+                                         AND date = ? 
+                                         AND (
+                                             (heure_debut IS NULL AND heure_fin IS NULL) -- Full day
+                                             OR 
+                                             (? BETWEEN heure_debut AND heure_fin) -- Specific time
+                                         )");
+            $stmt->execute([$idMedecin, $date, $time]);
+            if ($stmt->fetchColumn() > 0) {
+                return false;
+            }
+        } catch (PDOException $e) {
+            // Ignore error, assume available if check fails? Or fail safe?
+        }
+
+        return true;
     }
 }

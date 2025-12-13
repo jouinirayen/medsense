@@ -81,13 +81,13 @@ class UserController
     {
         switch ($role) {
             case 'medecin':
-                header('Location: ../backoffice/afficher_rendezvous_medecin.php');
+                header('Location: /projet2025/views/backoffice/dashboard_medecin/afficher_rendezvous_medecin.php');
                 break;
             case 'admin':
-                header('Location: ../backoffice/dashboard.php');
+                header('Location: /projet2025/views/backoffice/dashboard_service/dashboard.php');
                 break;
             default:
-                header('Location: ../frontoffice/front.php');
+                header('Location: /projet2025/views/frontoffice/page-accueil/front.php');
                 break;
         }
         exit;
