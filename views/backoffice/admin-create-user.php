@@ -12,13 +12,10 @@ $error_message = null;
 $success_message = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Nettoyage des données avant traitement
     $post_data = array_map(function($value) {
         if (is_string($value)) {
-            // Supprimer les balises HTML et PHP, et convertir les caractères spéciaux
             $value = strip_tags($value);
             $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-            // Supprimer les espaces en début et fin
             $value = trim($value);
         }
         return $value;
@@ -34,376 +31,654 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fonction pour échapper les données affichées dans le formulaire
 function escape_data($data) {
     return htmlspecialchars($data ?? '', ENT_QUOTES, 'UTF-8');
 }
+
+$dashboardData = $adminController->dashboard();
+$stats = $dashboardData['stats'] ?? [];
+$recentUsers = $dashboardData['recentUsers'] ?? [];
+$pendingDoctors = $dashboardData['pendingDoctors'] ?? [];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajouter un Utilisateur - Medsense Medical</title>
-    
-    <!-- Bootstrap CSS -->
+    <title>Créer un Utilisateur - Medsense Medical</title>
     <link rel="stylesheet" href="../assets/css/bootstrap.css">
-    <link rel="stylesheet" href="../../assets/css/themify-icons.css">
-    <link rel="stylesheet" href="../../assets/css/flaticon.css">
     <link rel="stylesheet" href="../assets/vendors/fontawesome/css/all.min.css">
-    
-    <!-- main css -->
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/responsive.css">
     
     <style>
-        :root {
-            --primary-color: #2c7be5;
-            --secondary-color: #6c757d;
-            --success-color: #00d97e;
-            --info-color: #39afd1;
-            --warning-color: #f6c343;
-            --danger-color: #e63757;
-            --light-color: #f9fafd;
-            --dark-color: #12263f;
-            --sidebar-width: 260px;
-            --medical-color: #17a2b8;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f6fa;
-            color: #333;
-        }
-        
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: var(--sidebar-width);
-            background: linear-gradient(180deg, var(--primary-color) 0%, #1a5bb8 100%);
-            color: white;
-            padding: 0;
-            z-index: 1000;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .sidebar-menu {
-            padding: 20px 0;
-        }
-        
-        .sidebar-menu .nav-link {
-            color: rgba(255, 255, 255, 0.8);
-            padding: 12px 20px;
-            border-left: 3px solid transparent;
-            transition: all 0.3s;
-        }
-        
-        .sidebar-menu .nav-link:hover, 
-        .sidebar-menu .nav-link.active {
-            color: white;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-left: 3px solid white;
-        }
-        
-        .sidebar-menu .nav-link i {
-            width: 24px;
-            margin-right: 10px;
-        }
-        
-        .sidebar-submenu {
-            padding-left: 40px;
-        }
-        
-        .sidebar-submenu .nav-link {
-            padding: 8px 20px;
-            font-size: 0.9rem;
-        }
-        
-        .main-content {
-            margin-left: var(--sidebar-width);
-            padding: 20px;
-        }
-        
-        .top-bar {
-            background-color: white;
-            border-radius: 10px;
-            padding: 15px 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
-        }
-        
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
-            transition: transform 0.3s;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .card-header {
-            background-color: white;
-            border-bottom: 1px solid #e3ebf6;
-            padding: 15px 20px;
-            border-radius: 10px 10px 0 0 !important;
-        }
-        
-        .card-body {
-            padding: 20px;
-        }
-        
-        .form-label {
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 0.5rem;
-        }
-        
-        .form-control, .form-select {
-            border: 1px solid #e2e8f0;
-            border-radius: 5px;
-            padding: 0.75rem;
-            transition: all 0.3s;
-        }
-        
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(44, 123, 229, 0.25);
-        }
-        
-        .form-control.invalid {
-            border-color: var(--danger-color);
-            box-shadow: 0 0 0 0.2rem rgba(230, 55, 87, 0.25);
-        }
-        
-        .form-control.valid {
-            border-color: var(--success-color);
-        }
-        
-        .validation-feedback {
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-        }
-        
-        .validation-feedback.invalid {
-            color: var(--danger-color);
-        }
-        
-        .validation-feedback.valid {
-            color: var(--success-color);
-        }
-        
-        .btn-view-all {
-            color: var(--primary-color);
-            font-weight: 500;
-            text-decoration: none;
-        }
-        
-        .btn-view-all:hover {
-            text-decoration: underline;
-        }
-        
-        .btn-dashboard {
-            padding: 12px 24px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-            text-align: center;
-        }
-        
-        .btn-primary {
-            background: #3f51b5;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #303f9f;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(63, 81, 181, 0.3);
-        }
-        
-        .btn-secondary {
-            background: #e2e8f0;
-            color: #4a5568;
-        }
-        
-        .btn-secondary:hover {
-            background: #cbd5e0;
-            transform: translateY(-2px);
-        }
-        
-        .password-card {
-            border-left: 4px solid var(--info-color);
-        }
-        
-        .password-card .card-header {
-            background-color: rgba(57, 175, 209, 0.05);
-        }
-        
-        .security-alert {
-            border-left: 4px solid var(--warning-color);
-        }
-        
-        @media (max-width: 992px) {
-            .sidebar {
-                width: 70px;
-                overflow: hidden;
-            }
-            
-            .sidebar .nav-link span {
-                display: none;
-            }
-            
-            .sidebar .sidebar-header h3 {
-                display: none;
-            }
-            
-            .sidebar .nav-link i {
-                margin-right: 0;
-            }
-            
-            .main-content {
-                margin-left: 70px;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 0;
-            }
-            
-            .main-content {
-                margin-left: 0;
-            }
-        }
+.dashboard-page {
+    min-height: 100vh;
+    background: #f8fafc;
+}
+
+.dashboard-container {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    grid-template-rows: 70px 1fr;
+    grid-template-areas:
+        "sidebar header"
+        "sidebar main";
+    min-height: 100vh;
+}
+
+.dashboard-header {
+    grid-area: header;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.dashboard-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #64748b;
+    cursor: pointer;
+}
+
+.dashboard-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.dashboard-subtitle {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.dashboard-user-info {
+    display: flex;
+    align-items: center;
+}
+
+.dashboard-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #3b82f6;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+}
+
+.dashboard-user-details {
+    line-height: 1.4;
+}
+
+.dashboard-user-name {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.dashboard-user-role {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.dashboard-sidebar {
+    grid-area: sidebar;
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
+
+.dashboard-logo {
+    padding: 24px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-logo-img {
+    max-height: 40px;
+    margin-right: 12px;
+}
+
+.dashboard-logo-text {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.dashboard-nav {
+    flex: 1;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dashboard-nav-section {
+    margin-bottom: 20px;
+}
+
+.dashboard-nav-title {
+    padding: 0 20px 8px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.dashboard-nav-item {
+    padding: 12px 20px;
+    color: #cbd5e1;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+}
+
+.dashboard-nav-item:hover,
+.dashboard-nav-item.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-left-color: #3b82f6;
+}
+
+.dashboard-nav-item.logout {
+    color: #f87171;
+    margin-top: auto;
+}
+
+.dashboard-nav-item.logout:hover {
+    background: rgba(248, 113, 113, 0.1);
+}
+
+.dashboard-nav-item i {
+    width: 20px;
+    text-align: center;
+}
+
+.dashboard-badge {
+    background: #ef4444;
+    color: white;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 8px;
+}
+
+.with-submenu {
+    flex-direction: column;
+    padding: 0;
+}
+
+.submenu-toggle {
+    transition: transform 0.3s;
+}
+
+.submenu-toggle.open {
+    transform: rotate(180deg);
+}
+
+.dashboard-submenu {
+    display: none;
+    background: rgba(0, 0, 0, 0.2);
+    border-left: 3px solid #3b82f6;
+}
+
+.dashboard-submenu-item {
+    padding: 10px 20px 10px 45px;
+    color: #cbd5e1;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s;
+    font-size: 0.875rem;
+}
+
+.dashboard-submenu-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.dashboard-main {
+    grid-area: main;
+    padding: 24px;
+    overflow-y: auto;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.dashboard-alert {
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert-success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.alert-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.alert-warning {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.dashboard-alert i {
+    margin-top: 2px;
+}
+
+.dashboard-alert-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: inherit;
+    cursor: pointer;
+    margin-left: auto;
+    opacity: 0.7;
+}
+
+.dashboard-alert-close:hover {
+    opacity: 1;
+}
+
+.dashboard-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.dashboard-card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dashboard-card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dashboard-card-body {
+    padding: 24px;
+}
+
+.dashboard-card-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.dashboard-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.dashboard-form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.dashboard-form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.dashboard-form-control:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dashboard-form-control.is-invalid {
+    border-color: #ef4444;
+}
+
+.dashboard-form-control.is-valid {
+    border-color: #10b981;
+}
+
+.dashboard-form-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.dashboard-invalid-feedback {
+    display: none;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #ef4444;
+}
+
+.dashboard-valid-feedback {
+    display: none;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #10b981;
+}
+
+.dashboard-form-control.is-invalid ~ .dashboard-invalid-feedback {
+    display: block;
+}
+
+.dashboard-form-control.is-valid ~ .dashboard-valid-feedback {
+    display: block;
+}
+
+.dashboard-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: -0.75rem;
+    margin-right: -0.75rem;
+}
+
+.dashboard-col {
+    flex: 1 0 0%;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+}
+
+.dashboard-col-6 {
+    flex: 0 0 auto;
+    width: 50%;
+}
+
+.dashboard-col-12 {
+    flex: 0 0 auto;
+    width: 100%;
+}
+
+.dashboard-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+}
+
+.dashboard-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    font-size: 0.875rem;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+}
+
+.btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+}
+
+.btn-outline {
+    background: white;
+    color: #64748b;
+    border: 1px solid #d1d5db;
+}
+
+.btn-outline:hover {
+    background: #f8fafc;
+    border-color: #9ca3af;
+}
+
+.dashboard-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 24px;
+}
+
+.dashboard-quick-action {
+    background: #f8fafc;
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    text-decoration: none;
+    color: #1e293b;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.dashboard-quick-action:hover {
+    border-color: #3b82f6;
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-quick-action-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: #3b82f6;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.dashboard-quick-action-text {
+    font-weight: 500;
+}
+
+.password-card {
+    border-left: 4px solid #3b82f6;
+    background: #f0f9ff;
+}
+
+.security-alert {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    color: #92400e;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-container {
+        grid-template-columns: 200px 1fr;
+    }
+    
+    .dashboard-sidebar {
+        width: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "header"
+            "main";
+    }
+    
+    .dashboard-sidebar {
+        position: fixed;
+        left: -250px;
+        top: 0;
+        bottom: 0;
+        z-index: 1000;
+        width: 250px;
+        transition: left 0.3s;
+    }
+    
+    .dashboard-sidebar.active {
+        left: 0;
+    }
+    
+    .dashboard-menu-toggle {
+        display: block;
+    }
+    
+    .dashboard-col-6 {
+        width: 100%;
+    }
+    
+    .dashboard-main {
+        padding: 16px;
+    }
+    
+    .dashboard-card-body {
+        padding: 16px;
+    }
+    
+    .dashboard-actions {
+        flex-direction: column;
+    }
+    
+    .dashboard-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-header {
+        padding: 0 16px;
+    }
+    
+    .dashboard-quick-actions {
+        grid-template-columns: 1fr;
+    }
+}
+
+.text-danger {
+    color: #ef4444 !important;
+}
+
+.text-success {
+    color: #10b981 !important;
+}
+
+.mb-3 {
+    margin-bottom: 1rem;
+}
+
+.mt-4 {
+    margin-top: 1.5rem;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.justify-content-between {
+    justify-content: space-between;
+}
+
+.align-items-center {
+    align-items: center;
+}
     </style>
 </head>
-<body>
+<body class="dashboard-page">
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <h3><i class="fas fa-hospital me-2"></i>medsense</h3>
-        </div>
-        <div class="sidebar-menu">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="admin-dashboard.php">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>Tableau de Bord</span>
-                    </a>
-                </li>
-                <li class="nav-item mt-3">
-                    <small class="text-uppercase text-muted ms-3">Gestion Médicale</small>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#appointmentsMenu">
-                        <i class="fas fa-calendar-check"></i>
-                        <span>Rendez-vous</span>
-                        <i class="fas fa-chevron-down float-end mt-1"></i>
-                    </a>
-                    <div class="collapse" id="appointmentsMenu">
-                        <ul class="nav flex-column sidebar-submenu">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <span>Tous les rendez-vous</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <span>Nouveau rendez-vous</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">
-                                    <span>Calendrier</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-user-injured"></i>
-                        <span>Patients</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-user-md"></i>
-                        <span>Médecins</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="admin-users.php">
-                        <i class="fas fa-users"></i>
-                        <span>Utilisateurs</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-prescription"></i>
-                        <span>Ordonnances</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                        <span>Facturation</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-cog"></i>
-                        <span>Paramètres</span>
-                    </a>
-                </li>
-                <li class="nav-item mt-3">
-                    <small class="text-uppercase text-muted ms-3">Rapports</small>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>Rapports statistiques</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-clipboard-list"></i>
-                        <span>Audit médical</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Top Bar -->
-        <div class="top-bar d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">Création d'Utilisateur</h4>
-            <div class="d-flex align-items-center">
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <button class="dashboard-menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="d-flex align-items-center gap-3">
+                <h1 class="dashboard-title mb-0">Création d'Utilisateur</h1>
+                <div class="dashboard-subtitle">Administration Medsense</div>
+            </div>
+            <div class="dashboard-user-info">
                 <div class="dropdown">
                     <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown">
-                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px;">
+                        <div class="dashboard-avatar">
                             <i class="fas fa-user-md"></i>
                         </div>
-                        <span class="ms-2">Dr. Admin</span>
+                        <div class="dashboard-user-details ms-2">
+                            <div class="dashboard-user-name">Admin</div>
+                            <div class="dashboard-user-role">Administrateur</div>
+                        </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Mon profil</a></li>
+                        <li><a class="dropdown-item" href="../frontoffice/auth/profile.php"><i class="fas fa-user me-2"></i> Mon profil</a></li>
                         <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Paramètres</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
@@ -415,222 +690,494 @@ function escape_data($data) {
                     </ul>
                 </div>
             </div>
-        </div>
+        </header>
 
-        <!-- Content -->
-        <div class="container-fluid">
-            <div class="row justify-content-center">
-                <div class="col-md-10 col-lg-8">
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i>Ajouter un Nouvel Utilisateur</h4>
-                            <a href="admin-users.php" class="btn btn-secondary btn-sm">
-                                <i class="fas fa-arrow-left me-1"></i> Retour à la liste
+        <aside class="dashboard-sidebar" id="sidebar">
+            <div class="dashboard-logo">
+                <a href="../home/index.php" class="text-white text-decoration-none">
+                    <img src="../assets/img/logo.png" alt="logo" class="dashboard-logo-img">
+                    <span class="dashboard-logo-text">Medsense Medical</span>
+                </a>
+            </div>
+            
+            <nav class="dashboard-nav">
+                <div class="dashboard-nav-section">
+                    <div class="dashboard-nav-title">Tableau de Bord</div>
+                    <a class="dashboard-nav-item" href="admin-dashboard.php">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </div>
+                
+                <div class="dashboard-nav-section">
+                    <div class="dashboard-nav-title">Gestion Médicale</div>
+                    
+                    <div class="dashboard-nav-item with-submenu">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <div>
+                                <i class="fas fa-calendar-check"></i>
+                                <span>Rendez-vous</span>
+                            </div>
+                            <i class="fas fa-chevron-down submenu-toggle"></i>
+                        </div>
+                        <div class="dashboard-submenu">
+                            <a class="dashboard-submenu-item" href="admin-appointments.php">
+                                <i class="fas fa-list"></i>
+                                <span>Tous les rendez-vous</span>
+                            </a>
+                            <a class="dashboard-submenu-item" href="admin-patient-appointments.php">
+                                <i class="fas fa-user-injured"></i>
+                                <span>Rendez-vous patients</span>
+                            </a>
+                            <a class="dashboard-submenu-item" href="admin-new-appointment.php">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Nouveau rendez-vous</span>
+                            </a>
+                            <a class="dashboard-submenu-item" href="admin-calendar.php">
+                                <i class="fas fa-calendar"></i>
+                                <span>Calendrier</span>
                             </a>
                         </div>
-                        <div class="card-body">
-                           
-                            <?php if ($success_message): ?>
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    <i class="fas fa-check-circle me-2"></i><?= htmlspecialchars($success_message) ?>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            <?php endif; ?>
-                            
-                            <?php if ($error_message): ?>
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                    <i class="fas fa-exclamation-circle me-2"></i><?= htmlspecialchars($error_message) ?>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            <?php endif; ?>
-
-                            <div class="alert alert-warning security-alert mb-4">
-                                <h6><i class="fas fa-shield-alt me-2"></i>Sécurité des données</h6>
-                                <small>
-                                    Toutes les données saisies sont automatiquement protégées contre les injections HTML et les scripts malveillants.
-                                    Les caractères spéciaux sont échappés pour garantir la sécurité du système.
-                                </small>
+                    </div>
+                    
+                    <a class="dashboard-nav-item" href="admin-patients.php">
+                        <i class="fas fa-user-injured"></i>
+                        <span>Patients</span>
+                    </a>
+                    
+                    <div class="dashboard-nav-item with-submenu">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <div>
+                                <i class="fas fa-user-md"></i>
+                                <span>Médecins</span>
+                                <?php if (isset($pendingDoctors['count']) && $pendingDoctors['count'] > 0): ?>
+                                    <span class="dashboard-badge"><?= $pendingDoctors['count'] ?></span>
+                                <?php endif; ?>
                             </div>
-
-                            <form method="POST" id="createUserForm" novalidate>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="nom" class="form-label">Nom <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="nom" name="nom" 
-                                                   value="<?= escape_data($_POST['nom'] ?? '') ?>" 
-                                                   pattern="[A-Za-zÀ-ÿ\s\-']{2,50}" 
-                                                   title="Le nom doit contenir entre 2 et 50 caractères alphabétiques" 
-                                                   required>
-                                            <div class="form-text">2 à 50 caractères alphabétiques uniquement</div>
-                                            <div class="validation-feedback" id="nom-feedback"></div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="prenom" class="form-label">Prénom <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="prenom" name="prenom" 
-                                                   value="<?= escape_data($_POST['prenom'] ?? '') ?>" 
-                                                   pattern="[A-Za-zÀ-ÿ\s\-']{2,50}" 
-                                                   title="Le prénom doit contenir entre 2 et 50 caractères alphabétiques" 
-                                                   required>
-                                            <div class="form-text">2 à 50 caractères alphabétiques uniquement</div>
-                                            <div class="validation-feedback" id="prenom-feedback"></div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control" id="email" name="email" 
-                                           value="<?= escape_data($_POST['email'] ?? '') ?>" 
-                                           pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" 
-                                           title="Veuillez entrer une adresse email valide" 
-                                           required>
-                                    <div class="form-text">L'adresse email sera utilisée pour la connexion</div>
-                                    <div class="validation-feedback" id="email-feedback"></div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="dateNaissance" class="form-label">Date de Naissance</label>
-                                            <input type="date" class="form-control" id="dateNaissance" name="dateNaissance" 
-                                                   value="<?= escape_data($_POST['dateNaissance'] ?? '') ?>"
-                                                   max="<?= date('Y-m-d', strtotime('-18 years')) ?>"
-                                                   title="L'utilisateur doit être majeur (18 ans minimum)">
-                                            <div class="form-text">Âge minimum : 18 ans</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="adresse" class="form-label">Adresse</label>
-                                            <input type="text" class="form-control" id="adresse" name="adresse" 
-                                                   value="<?= escape_data($_POST['adresse'] ?? '') ?>"
-                                                   maxlength="255"
-                                                   title="Maximum 255 caractères">
-                                            <div class="form-text">Maximum 255 caractères</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="role" class="form-label">Rôle <span class="text-danger">*</span></label>
-                                            <select class="form-select" id="role" name="role" required>
-                                                <option value="">Sélectionner un rôle</option>
-                                                <option value="user" <?= (($_POST['role'] ?? '') === 'user') ? 'selected' : '' ?>>Utilisateur</option>
-                                                <option value="admin" <?= (($_POST['role'] ?? '') === 'admin') ? 'selected' : '' ?>>Administrateur</option>
-                                                <option value="moderator" <?= (($_POST['role'] ?? '') === 'moderator') ? 'selected' : '' ?>>Modérateur</option>
-                                            </select>
-                                            <div class="validation-feedback" id="role-feedback"></div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="statut" class="form-label">Statut <span class="text-danger">*</span></label>
-                                            <select class="form-select" id="statut" name="statut" required>
-                                                <option value="">Sélectionner un statut</option>
-                                                <option value="actif" <?= (($_POST['statut'] ?? '') === 'actif') ? 'selected' : '' ?>>Actif</option>
-                                                <option value="inactif" <?= (($_POST['statut'] ?? '') === 'inactif') ? 'selected' : '' ?>>Inactif</option>
-                                            </select>
-                                            <div class="validation-feedback" id="statut-feedback"></div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                
-                                <div class="card mt-4 password-card">
-                                    <div class="card-header">
-                                        <h6 class="mb-0"><i class="fas fa-lock me-2"></i>Mot de passe <span class="text-danger">*</span></h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="alert alert-info">
-                                            <small>
-                                                <i class="fas fa-info-circle"></i>
-                                                Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial
-                                            </small>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="mot_de_passe" class="form-label">Mot de passe</label>
-                                                    <input type="password" class="form-control" id="mot_de_passe" name="mot_de_passe" 
-                                                           pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
-                                                           title="Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial"
-                                                           required>
-                                                    <div class="form-text">8 caractères minimum avec majuscule, minuscule, chiffre et caractère spécial</div>
-                                                    <div class="validation-feedback" id="password-feedback"></div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label for="confirm_mot_de_passe" class="form-label">Confirmer le mot de passe</label>
-                                                    <input type="password" class="form-control" id="confirm_mot_de_passe" 
-                                                           name="confirm_mot_de_passe" required>
-                                                    <div class="validation-feedback" id="confirm-password-feedback"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="mt-4 d-flex gap-2">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-user-plus me-1"></i> Créer l'utilisateur
-                                    </button>
-                                    <button type="reset" class="btn btn-outline-secondary" id="resetBtn">Réinitialiser</button>
-                                    <a href="admin-users.php" class="btn btn-secondary">Annuler</a>
-                                </div>
-                            </form>
+                            <i class="fas fa-chevron-down submenu-toggle"></i>
+                        </div>
+                        <div class="dashboard-submenu">
+                            <a class="dashboard-submenu-item" href="admin-doctors.php">
+                                <i class="fas fa-list"></i>
+                                <span>Tous les médecins</span>
+                            </a>
+                            <a class="dashboard-submenu-item" href="admin-doctor-availability.php">
+                                <i class="fas fa-clock"></i>
+                                <span>Disponibilité</span>
+                            </a>
+                            <a class="dashboard-submenu-item" href="admin-doctor-ratings.php">
+                                <i class="fas fa-star"></i>
+                                <span>Évaluations</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <a class="dashboard-nav-item active" href="admin-users.php">
+                        <i class="fas fa-users"></i>
+                        <span>Utilisateurs</span>
+                    </a>
+                    
+                    <a class="dashboard-nav-item" href="admin-complaints.php">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Réclamations</span>
+                    </a>
+                </div>
+                
+                <div class="dashboard-nav-section">
+                    <div class="dashboard-nav-title">Rapports</div>
+                    
+                    <div class="dashboard-nav-item with-submenu">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <div>
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Rapports</span>
+                            </div>
+                            <i class="fas fa-chevron-down submenu-toggle"></i>
+                        </div>
+                        <div class="dashboard-submenu">
+                            <a class="dashboard-submenu-item" href="admin-reports-statistics.php">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>Statistiques</span>
+                            </a>
                         </div>
                     </div>
                 </div>
+                
+                <div class="dashboard-nav-section mt-auto">
+                    <a class="dashboard-nav-item logout" href="../../../controllers/logout.php" 
+                       onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?')">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Déconnexion</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="dashboard-main">
+            <?php if ($success_message): ?>
+                <div class="dashboard-alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <div><?= htmlspecialchars($success_message) ?></div>
+                    <button type="button" class="dashboard-alert-close">&times;</button>
+                </div>
+            <?php endif; ?>
+            
+            <?php if ($error_message): ?>
+                <div class="dashboard-alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <div><?= htmlspecialchars($error_message) ?></div>
+                    <button type="button" class="dashboard-alert-close">&times;</button>
+                </div>
+            <?php endif; ?>
+
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                        <i class="fas fa-user-plus me-2"></i>Ajouter un Nouvel Utilisateur
+                    </h3>
+                    <a href="admin-users.php" class="dashboard-btn btn-outline">
+                        <i class="fas fa-arrow-left me-1"></i> Retour à la liste
+                    </a>
+                </div>
+                <div class="dashboard-card-body">
+                    <div class="alert alert-warning security-alert mb-4">
+                        <h6><i class="fas fa-shield-alt me-2"></i>Sécurité des données</h6>
+                        <small>
+                            Toutes les données saisies sont automatiquement protégées contre les injections HTML et les scripts malveillants.
+                            Les caractères spéciaux sont échappés pour garantir la sécurité du système.
+                        </small>
+                    </div>
+
+                    <form method="POST" id="createUserForm" novalidate>
+                        <div class="dashboard-row">
+                            <div class="dashboard-col dashboard-col-6">
+                                <div class="dashboard-form-group">
+                                    <label for="nom" class="dashboard-form-label">Nom <span class="text-danger">*</span></label>
+                                    <input type="text" class="dashboard-form-control" id="nom" name="nom" 
+                                           value="<?= escape_data($_POST['nom'] ?? '') ?>" 
+                                           pattern="[A-Za-zÀ-ÿ\s\-']{2,50}" 
+                                           title="Le nom doit contenir entre 2 et 50 caractères alphabétiques" 
+                                           required>
+                                    <small class="dashboard-form-text">2 à 50 caractères alphabétiques uniquement</small>
+                                    <div class="dashboard-invalid-feedback" id="nom-feedback"></div>
+                                    <div class="dashboard-valid-feedback" id="nom-valid-feedback"></div>
+                                </div>
+                            </div>
+                            <div class="dashboard-col dashboard-col-6">
+                                <div class="dashboard-form-group">
+                                    <label for="prenom" class="dashboard-form-label">Prénom <span class="text-danger">*</span></label>
+                                    <input type="text" class="dashboard-form-control" id="prenom" name="prenom" 
+                                           value="<?= escape_data($_POST['prenom'] ?? '') ?>" 
+                                           pattern="[A-Za-zÀ-ÿ\s\-']{2,50}" 
+                                           title="Le prénom doit contenir entre 2 et 50 caractères alphabétiques" 
+                                           required>
+                                    <small class="dashboard-form-text">2 à 50 caractères alphabétiques uniquement</small>
+                                    <div class="dashboard-invalid-feedback" id="prenom-feedback"></div>
+                                    <div class="dashboard-valid-feedback" id="prenom-valid-feedback"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-form-group">
+                            <label for="email" class="dashboard-form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="dashboard-form-control" id="email" name="email" 
+                                   value="<?= escape_data($_POST['email'] ?? '') ?>" 
+                                   pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" 
+                                   title="Veuillez entrer une adresse email valide" 
+                                   required>
+                            <small class="dashboard-form-text">L'adresse email sera utilisée pour la connexion</small>
+                            <div class="dashboard-invalid-feedback" id="email-feedback"></div>
+                            <div class="dashboard-valid-feedback" id="email-valid-feedback"></div>
+                        </div>
+
+                        <div class="dashboard-row">
+                            <div class="dashboard-col dashboard-col-6">
+                                <div class="dashboard-form-group">
+                                    <label for="dateNaissance" class="dashboard-form-label">Date de Naissance</label>
+                                    <input type="date" class="dashboard-form-control" id="dateNaissance" name="dateNaissance" 
+                                           value="<?= escape_data($_POST['dateNaissance'] ?? '') ?>"
+                                           max="<?= date('Y-m-d', strtotime('-18 years')) ?>"
+                                           title="L'utilisateur doit être majeur (18 ans minimum)">
+                                    <small class="dashboard-form-text">Âge minimum : 18 ans</small>
+                                </div>
+                            </div>
+                            <div class="dashboard-col dashboard-col-6">
+                                <div class="dashboard-form-group">
+                                    <label for="adresse" class="dashboard-form-label">Adresse</label>
+                                    <input type="text" class="dashboard-form-control" id="adresse" name="adresse" 
+                                           value="<?= escape_data($_POST['adresse'] ?? '') ?>"
+                                           maxlength="255"
+                                           title="Maximum 255 caractères">
+                                    <small class="dashboard-form-text">Maximum 255 caractères</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-row">
+                            <div class="dashboard-col dashboard-col-6">
+                                <div class="dashboard-form-group">
+                                    <label for="role" class="dashboard-form-label">Rôle <span class="text-danger">*</span></label>
+                                    <select class="dashboard-form-control" id="role" name="role" required>
+                                        <option value="">Sélectionner un rôle</option>
+                                        <option value="user" <?= (($_POST['role'] ?? '') === 'user') ? 'selected' : '' ?>>Utilisateur</option>
+                                        <option value="admin" <?= (($_POST['role'] ?? '') === 'admin') ? 'selected' : '' ?>>Administrateur</option>
+                                        <option value="moderator" <?= (($_POST['role'] ?? '') === 'moderator') ? 'selected' : '' ?>>Modérateur</option>
+                                    </select>
+                                    <div class="dashboard-invalid-feedback" id="role-feedback"></div>
+                                    <div class="dashboard-valid-feedback" id="role-valid-feedback"></div>
+                                </div>
+                            </div>
+                            <div class="dashboard-col dashboard-col-6">
+                                <div class="dashboard-form-group">
+                                    <label for="statut" class="dashboard-form-label">Statut <span class="text-danger">*</span></label>
+                                    <select class="dashboard-form-control" id="statut" name="statut" required>
+                                        <option value="">Sélectionner un statut</option>
+                                        <option value="actif" <?= (($_POST['statut'] ?? '') === 'actif') ? 'selected' : '' ?>>Actif</option>
+                                        <option value="inactif" <?= (($_POST['statut'] ?? '') === 'inactif') ? 'selected' : '' ?>>Inactif</option>
+                                    </select>
+                                    <div class="dashboard-invalid-feedback" id="statut-feedback"></div>
+                                    <div class="dashboard-valid-feedback" id="statut-valid-feedback"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card password-card mt-4">
+                            <div class="dashboard-card-header">
+                                <h4 class="dashboard-card-title">
+                                    <i class="fas fa-lock me-2"></i>Mot de passe <span class="text-danger">*</span>
+                                </h4>
+                            </div>
+                            <div class="dashboard-card-body">
+                                <div class="dashboard-alert alert-warning">
+                                    <i class="fas fa-info-circle"></i>
+                                    <small>Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial</small>
+                                </div>
+                                <div class="dashboard-row">
+                                    <div class="dashboard-col dashboard-col-6">
+                                        <div class="dashboard-form-group">
+                                            <label for="mot_de_passe" class="dashboard-form-label">Mot de passe</label>
+                                            <input type="password" class="dashboard-form-control" id="mot_de_passe" name="mot_de_passe" 
+                                                   pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                                                   title="Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial"
+                                                   required>
+                                            <small class="dashboard-form-text">8 caractères minimum avec majuscule, minuscule, chiffre et caractère spécial</small>
+                                            <div class="dashboard-invalid-feedback" id="password-feedback"></div>
+                                            <div class="dashboard-valid-feedback" id="password-valid-feedback"></div>
+                                        </div>
+                                    </div>
+                                    <div class="dashboard-col dashboard-col-6">
+                                        <div class="dashboard-form-group">
+                                            <label for="confirm_mot_de_passe" class="dashboard-form-label">Confirmer le mot de passe</label>
+                                            <input type="password" class="dashboard-form-control" id="confirm_mot_de_passe" 
+                                                   name="confirm_mot_de_passe" required>
+                                            <div class="dashboard-invalid-feedback" id="confirm-password-feedback"></div>
+                                            <div class="dashboard-valid-feedback" id="confirm-password-valid-feedback"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-actions mt-4">
+                            <button type="submit" class="dashboard-btn btn-primary">
+                                <i class="fas fa-user-plus me-1"></i> Créer l'utilisateur
+                            </button>
+                            <button type="reset" class="dashboard-btn btn-outline" id="resetBtn">Réinitialiser</button>
+                            <a href="admin-users.php" class="dashboard-btn btn-secondary">Annuler</a>
+                        </div>
+                    </form>
+                </div>
             </div>
 
-            <!-- Navigation Actions -->
-            <div class="dashboard-actions mt-4">
-                <a href="admin-dashboard.php" class="btn-dashboard btn-secondary">
-                    <i class="fas fa-tachometer-alt"></i> Retour au Dashboard
+            <div class="dashboard-quick-actions">
+                <a href="admin-dashboard.php" class="dashboard-quick-action">
+                    <div class="dashboard-quick-action-icon">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <div class="dashboard-quick-action-text">Retour au Dashboard</div>
                 </a>
-                <a href="admin-users.php" class="btn-dashboard btn-secondary">
-                    <i class="fas fa-users"></i> Liste des Utilisateurs
+                <a href="admin-users.php" class="dashboard-quick-action">
+                    <div class="dashboard-quick-action-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="dashboard-quick-action-text">Liste des Utilisateurs</div>
                 </a>
-                <a href="../frontoffice/home/index.php" class="btn-dashboard btn-secondary">
-                    <i class="fas fa-home"></i> Retour au site
+                <a href="../frontoffice/home/index.php" class="dashboard-quick-action">
+                    <div class="dashboard-quick-action-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <div class="dashboard-quick-action-text">Retour au site</div>
                 </a>
             </div>
-        </div>
+        </main>
     </div>
 
-
-    <!-- Scripts -->
+  
     <script src="../assets/js/jquery-2.2.4.min.js"></script>
     <script src="../assets/js/popper.js"></script>
     <script src="../assets/js/bootstrap.min.js"></script>
-    <script src="../assets/js/stellar.js"></script>
-    <script src="../assets/js/theme.js"></script>
     
     <script>
-        // Activer les dropdowns de Bootstrap
-        var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'))
-        var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
-            return new bootstrap.Dropdown(dropdownToggleEl)
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
         });
-        
-        // Gérer le menu déroulant des rendez-vous
-        document.getElementById('appointmentsMenu').addEventListener('show.bs.collapse', function () {
-            this.previousElementSibling.querySelector('.fa-chevron-down').classList.add('fa-chevron-up');
-            this.previousElementSibling.querySelector('.fa-chevron-down').classList.remove('fa-chevron-down');
+
+        document.querySelectorAll('.with-submenu').forEach(item => {
+            const toggle = item.querySelector('.submenu-toggle');
+            const submenu = item.querySelector('.dashboard-submenu');
+            
+            if (toggle && submenu) {
+                toggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    document.querySelectorAll('.with-submenu').forEach(otherItem => {
+                        if (otherItem !== item) {
+                            otherItem.querySelector('.dashboard-submenu').style.display = 'none';
+                            otherItem.querySelector('.submenu-toggle').classList.remove('open');
+                        }
+                    });
+                    
+                    if (submenu.style.display === 'block') {
+                        submenu.style.display = 'none';
+                        toggle.classList.remove('open');
+                    } else {
+                        submenu.style.display = 'block';
+                        toggle.classList.add('open');
+                    }
+                });
+            }
         });
-        
-        document.getElementById('appointmentsMenu').addEventListener('hide.bs.collapse', function () {
-            this.previousElementSibling.querySelector('.fa-chevron-up').classList.add('fa-chevron-down');
-            this.previousElementSibling.querySelector('.fa-chevron-up').classList.remove('fa-chevron-up');
+
+        document.querySelectorAll('.dashboard-alert-close').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.dashboard-alert').style.display = 'none';
+            });
         });
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.dashboard-alert');
+            alerts.forEach(alert => {
+                alert.style.display = 'none';
+            });
+        }, 5000);
+
+        const form = document.getElementById('createUserForm');
+        const patterns = {
+            nom: /^[A-Za-zÀ-ÿ\s\-']{2,50}$/,
+            prenom: /^[A-Za-zÀ-ÿ\s\-']{2,50}$/,
+            email: /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i,
+            mot_de_passe: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+        };
+
+        function validateField(field) {
+            const value = field.value.trim();
+            const fieldName = field.name || field.id;
+            const isRequired = field.hasAttribute('required');
+            const invalidFeedback = document.getElementById(`${field.id}-feedback`);
+            const validFeedback = document.getElementById(`${field.id}-valid-feedback`);
+            field.classList.remove('is-valid', 'is-invalid');
+            
+            if (invalidFeedback) invalidFeedback.style.display = 'none';
+            if (validFeedback) validFeedback.style.display = 'none';
+            if (isRequired && !value) {
+                field.classList.add('is-invalid');
+                if (invalidFeedback) {
+                    invalidFeedback.textContent = 'Ce champ est obligatoire';
+                    invalidFeedback.style.display = 'block';
+                }
+                return false;
+            }
+            if (value && patterns[fieldName]) {
+                if (!patterns[fieldName].test(value)) {
+                    field.classList.add('is-invalid');
+                    if (invalidFeedback) {
+                        invalidFeedback.textContent = field.getAttribute('title');
+                        invalidFeedback.style.display = 'block';
+                    }
+                    return false;
+                }
+            }
+            
+         
+            if (field.id === 'confirm_mot_de_passe' && value) {
+                const password = document.getElementById('mot_de_passe').value;
+                if (value !== password) {
+                    field.classList.add('is-invalid');
+                    if (invalidFeedback) {
+                        invalidFeedback.textContent = 'Les mots de passe ne correspondent pas';
+                        invalidFeedback.style.display = 'block';
+                    }
+                    return false;
+                }
+            }
+            
+            
+            if (value) {
+                field.classList.add('is-valid');
+                if (validFeedback) {
+                    validFeedback.textContent = '✓ Champ valide';
+                    validFeedback.style.display = 'block';
+                }
+                return true;
+            }
+            
+            return true; 
+        }
+
         
-        // Confirmation de déconnexion
+        form.querySelectorAll('input, select').forEach(field => {
+            field.addEventListener('blur', () => validateField(field));
+            field.addEventListener('input', () => {
+                if (field.classList.contains('is-invalid')) {
+                    field.classList.remove('is-invalid');
+                    const invalidFeedback = document.getElementById(`${field.id}-feedback`);
+                    if (invalidFeedback) invalidFeedback.style.display = 'none';
+                }
+            });
+        });
+
+       
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            form.querySelectorAll('input[required], select[required]').forEach(field => {
+                if (!validateField(field)) {
+                    isValid = false;
+                }
+            });
+            
+          
+            const password = document.getElementById('mot_de_passe');
+            const confirmPassword = document.getElementById('confirm_mot_de_passe');
+            
+            if (password.value && confirmPassword.value && password.value !== confirmPassword.value) {
+                isValid = false;
+                confirmPassword.classList.add('is-invalid');
+                const feedback = document.getElementById('confirm-password-feedback');
+                if (feedback) {
+                    feedback.textContent = 'Les mots de passe ne correspondent pas';
+                    feedback.style.display = 'block';
+                }
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Veuillez corriger les erreurs dans le formulaire avant de soumettre.');
+            }
+        });
+
+       
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            form.querySelectorAll('.is-valid, .is-invalid').forEach(field => {
+                field.classList.remove('is-valid', 'is-invalid');
+            });
+            document.querySelectorAll('.dashboard-invalid-feedback, .dashboard-valid-feedback').forEach(feedback => {
+                feedback.style.display = 'none';
+            });
+        });
+
+  
         document.querySelectorAll('a[href*="logout"]').forEach(link => {
             link.addEventListener('click', function(e) {
                 if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
@@ -638,138 +1185,6 @@ function escape_data($data) {
                 }
             });
         });
-
-        // Validation en temps réel
-        const form = document.getElementById('createUserForm');
-        const inputs = form.querySelectorAll('input, select');
-        
-        // Expressions régulières pour la validation
-        const patterns = {
-            nom: /^[A-Za-zÀ-ÿ\s\-']{2,50}$/,
-            prenom: /^[A-Za-zÀ-ÿ\s\-']{2,50}$/,
-            email: /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/,
-            mot_de_passe: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-        };
-        
-        // Fonction de validation
-        function validateField(field) {
-            const value = field.value.trim();
-            const id = field.id;
-            const feedback = document.getElementById(`${id}-feedback`);
-            
-            // Réinitialiser les styles
-            field.classList.remove('invalid', 'valid');
-            feedback.textContent = '';
-            feedback.className = 'validation-feedback';
-            
-            // Validation des champs requis
-            if (field.hasAttribute('required') && !value) {
-                field.classList.add('invalid');
-                feedback.textContent = 'Ce champ est obligatoire';
-                feedback.classList.add('invalid');
-                return false;
-            }
-            
-            // Validation par pattern
-            if (field.hasAttribute('pattern') && value) {
-                const pattern = new RegExp(field.getAttribute('pattern'));
-                if (!pattern.test(value)) {
-                    field.classList.add('invalid');
-                    feedback.textContent = field.getAttribute('title');
-                    feedback.classList.add('invalid');
-                    return false;
-                }
-            }
-            
-            // Validation spéciale pour la confirmation du mot de passe
-            if (id === 'confirm_mot_de_passe' && value) {
-                const password = document.getElementById('mot_de_passe').value;
-                if (value !== password) {
-                    field.classList.add('invalid');
-                    feedback.textContent = 'Les mots de passe ne correspondent pas';
-                    feedback.classList.add('invalid');
-                    return false;
-                }
-            }
-            
-            // Si tout est valide
-            if (value) {
-                field.classList.add('valid');
-                feedback.textContent = '✓ Champ valide';
-                feedback.classList.add('valid');
-            }
-            
-            return true;
-        }
-        
-        // Événements de validation en temps réel
-        inputs.forEach(input => {
-            input.addEventListener('blur', () => validateField(input));
-            input.addEventListener('input', () => {
-                // Nettoyer les classes de validation pendant la saisie
-                input.classList.remove('invalid', 'valid');
-                document.getElementById(`${input.id}-feedback`).textContent = '';
-            });
-        });
-        
-        // Validation du formulaire à la soumission
-        form.addEventListener('submit', function(e) {
-            let isValid = true;
-            
-            // Valider tous les champs
-            inputs.forEach(input => {
-                if (!validateField(input)) {
-                    isValid = false;
-                }
-            });
-            
-            if (!isValid) {
-                e.preventDefault();
-                // Afficher une alerte générale
-                const invalidFields = form.querySelectorAll('.invalid');
-                if (invalidFields.length > 0) {
-                    alert('Veuillez corriger les erreurs dans le formulaire avant de soumettre.');
-                    invalidFields[0].focus();
-                }
-            }
-        });
-        
-        // Réinitialisation du formulaire
-        document.getElementById('resetBtn').addEventListener('click', function() {
-            // Réinitialiser les styles de validation
-            inputs.forEach(input => {
-                input.classList.remove('invalid', 'valid');
-                document.getElementById(`${input.id}-feedback`).textContent = '';
-            });
-        });
-        
-        // Protection contre la copie/collage de HTML
-        document.addEventListener('paste', function(e) {
-            const target = e.target;
-            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-                // Récupérer le texte brut sans HTML
-                const text = (e.clipboardData || window.clipboardData).getData('text/plain');
-                e.preventDefault();
-                
-                // Insérer le texte nettoyé
-                const start = target.selectionStart;
-                const end = target.selectionEnd;
-                target.value = target.value.substring(0, start) + text + target.value.substring(end);
-                target.selectionStart = target.selectionEnd = start + text.length;
-                
-                // Déclencher la validation
-                validateField(target);
-            }
-        });
-
-        // Auto-dismiss alerts
-        setTimeout(() => {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            });
-        }, 5000);
     </script>
 </body>
 </html>

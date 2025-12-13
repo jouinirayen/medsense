@@ -7,8 +7,6 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
 
 require_once __DIR__ . '/../../controllers/AdminController.php';
 $adminController = new AdminController();
-
-// Récupérer les filtres de l'URL
 $filters = [];
 if (!empty($_GET['search'])) {
     $filters['search'] = $_GET['search'];
@@ -19,7 +17,5 @@ if (!empty($_GET['role'])) {
 if (!empty($_GET['statut'])) {
     $filters['statut'] = $_GET['statut'];
 }
-
-// Appeler la méthode d'export
 $adminController->exportUsersToExcel($filters);
 ?>

@@ -5,18 +5,14 @@ require_once __DIR__ . '/../../../controllers/PasswordController.php';
 $passwordController = new PasswordController();
 $error_message = null;
 $success_message = null;
-
-// Récupérer le token depuis l'URL
 $token = $_GET['token'] ?? '';
-
-// Vérifier si le token est valide avant d'afficher le formulaire
 if (empty($token) && !isset($_POST['new_password'])) {
     $error_message = "Lien de réinitialisation invalide ou expiré.";
 } elseif (!empty($token)) {
     $tokenCheck = $passwordController->validateToken($token);
     if (!$tokenCheck['success']) {
         $error_message = $tokenCheck['message'];
-        $token = ''; // Invalider le token pour empêcher la soumission
+        $token = ''; 
     }
 }
 
@@ -31,7 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (strlen($newPassword) < 8) {
         $error_message = "Le mot de passe doit contenir au moins 8 caractères.";
     } else {
-        // Réinitialiser le mot de passe
         $result = $passwordController->resetPassword($token, $newPassword);
         if ($result['success']) {
             $success_message = $result['message'];
@@ -225,14 +220,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/auth.js"></script>
 <script>
-// Script spécifique à reset-password
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('resetPasswordForm');
     const passwordInput = document.getElementById('new_password');
     const confirmInput = document.getElementById('confirm_password');
     
     if (form) {
-        // Fonction pour vérifier la correspondance des mots de passe
         function checkPasswordMatch() {
             const matchCheck = document.getElementById('passwordMatchCheck');
             if (passwordInput.value && confirmInput.value) {
@@ -249,33 +242,32 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
         
-        // Mise à jour des exigences
         function updateRequirements() {
             const password = passwordInput.value;
             const confirmPassword = confirmInput.value;
             
-            // Longueur
+            
             const reqLength = document.getElementById('reqLength');
             const iconLength = document.getElementById('iconLength');
             const hasLength = password.length >= 8;
             reqLength.className = hasLength ? 'auth-requirement met' : 'auth-requirement unmet';
             iconLength.className = hasLength ? 'fas fa-check-circle text-success' : 'fas fa-circle';
             
-            // Lettre
+        
             const reqLetter = document.getElementById('reqLetter');
             const iconLetter = document.getElementById('iconLetter');
             const hasLetter = /[A-Za-z]/.test(password);
             reqLetter.className = hasLetter ? 'auth-requirement met' : 'auth-requirement unmet';
             iconLetter.className = hasLetter ? 'fas fa-check-circle text-success' : 'fas fa-circle';
             
-            // Chiffre
+        
             const reqNumber = document.getElementById('reqNumber');
             const iconNumber = document.getElementById('iconNumber');
             const hasNumber = /\d/.test(password);
             reqNumber.className = hasNumber ? 'auth-requirement met' : 'auth-requirement unmet';
             iconNumber.className = hasNumber ? 'fas fa-check-circle text-success' : 'fas fa-circle';
             
-            // Correspondance
+         
             const reqMatch = document.getElementById('reqMatch');
             const iconMatch = document.getElementById('iconMatch');
             const hasMatch = password === confirmPassword && password !== '';
@@ -285,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return hasLength && hasLetter && hasNumber && hasMatch;
         }
         
-        // Validation en temps réel
+        
         passwordInput.addEventListener('input', function() {
             const password = this.value;
             const strength = AuthUtils.checkPasswordStrength(password);
@@ -300,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
             checkPasswordMatch();
         });
         
-        // Validation à la soumission
+        
         form.addEventListener('submit', function(e) {
             const password = passwordInput.value;
             const confirmPassword = confirmInput.value;
@@ -309,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             let isValid = true;
             
-            // Validation du mot de passe
+           
             if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
                 e.preventDefault();
                 passwordError.style.display = 'block';
@@ -317,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 isValid = false;
             }
             
-            // Validation de la confirmation
+         
             if (password !== confirmPassword) {
                 e.preventDefault();
                 confirmError.style.display = 'block';
@@ -325,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 isValid = false;
             }
             
-            // Si tout est valide, afficher le spinner
+            
             if (isValid) {
                 AuthUtils.toggleSpinner(true, 'resetPasswordForm');
             }
@@ -333,7 +325,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return isValid;
         });
         
-        // Focus sur le premier champ
+       
         if (passwordInput) passwordInput.focus();
     }
 });

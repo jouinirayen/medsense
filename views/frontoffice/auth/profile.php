@@ -8,25 +8,14 @@ $authController = new AuthController();
 $passwordController = new PasswordController();
 $profileController = new ProfileController();
 
-// Vérification de la connexion et récupération de l'utilisateur
 if (!$authController->isLoggedIn()) {
     header('Location: sign-in.php');
     exit;
 }
 
-// Récupérer l'utilisateur actuel avec vérification
 $user = $authController->getCurrentUser();
-
-// Vérifier si l'utilisateur a été correctement récupéré
-if (!$user || !is_object($user)) {
-    // Si l'utilisateur n'est pas trouvé, déconnecter et rediriger
-    session_destroy();
-    $_SESSION['error_message'] = "Session invalide. Veuillez vous reconnecter.";
-    header('Location: sign-in.php');
-    exit;
-}
-
-$isAdmin = $user->estAdmin();
+$isAdmin = $user && $user->estAdmin();
+$isMedecin = $user && $user->estMedecin();
 
 $profile_error = null;
 $profile_success = null;
@@ -41,7 +30,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($result['success']) {
             $profile_success = htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8');
-            // Refresh user data
             $user = $authController->getCurrentUser();
         } else {
             $profile_error = htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8');
@@ -53,7 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($result['success']) {
             $photo_success = htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8');
-            // Refresh user data
             $user = $authController->getCurrentUser();
         } else {
             $photo_error = htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8');
@@ -65,14 +52,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($result['success']) {
             $photo_success = htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8');
-            // Refresh user data
             $user = $authController->getCurrentUser();
         } else {
             $photo_error = htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8');
         }
     }
     
-    // Changement de mot de passe
     if (isset($_POST['change_password'])) {
         $current_password = $_POST['current_password'] ?? '';
         $new_password = $_POST['new_password'] ?? '';
@@ -89,7 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($result['success']) {
                 $password_success = htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8');
-                // Réinitialiser le formulaire
                 $_POST = [];
             } else {
                 $password_error = htmlspecialchars($result['message'], ENT_QUOTES, 'UTF-8');
@@ -98,42 +82,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fonction modifiée pour gérer le cas où $user est null
 function getProfilePhotoUrl($user) {
-    global $profileController;
-    
-    // Vérifier si l'utilisateur existe et a une photo
-    if ($user && method_exists($user, 'getPhotoProfil') && $user->getPhotoProfil()) {
-        $url = $profileController->getProfilePhotoUrl($user->getPhotoProfil());
-        if ($url) {
-            return $url;
-        }
-    }
-    return null;
+    return $user->getPhotoProfilUrl();
 }
-
-// Récupérer l'URL de la photo avec sécurité
-$photo_url = $user ? getProfilePhotoUrl($user) : null;
-
-// Fonction utilitaire pour afficher les informations utilisateur en toute sécurité
-function safeUserInfo($user, $method, $default = '') {
-    if ($user && method_exists($user, $method)) {
-        $value = $user->$method();
-        return $value ? htmlspecialchars($value, ENT_QUOTES, 'UTF-8') : $default;
-    }
-    return $default;
-}
-
-// Fonction pour obtenir les initiales en toute sécurité
-function getInitials($user) {
-    if ($user && method_exists($user, 'getPrenom') && method_exists($user, 'getNom')) {
-        $prenom = $user->getPrenom();
-        $nom = $user->getNom();
-        return strtoupper(substr($prenom, 0, 1) . substr($nom, 0, 1));
-    }
-    return '??';
-}
+$photo_url = getProfilePhotoUrl($user);
 ?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -141,418 +95,414 @@ function getInitials($user) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mon Profil - Medsense Medical</title>
     
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="../../assets/css/bootstrap.css">
+    <link rel="stylesheet" href="../assets/css/bootstrap.css">
     <link rel="stylesheet" href="../../assets/css/themify-icons.css">
     <link rel="stylesheet" href="../../assets/css/flaticon.css">
-    <link rel="stylesheet" href="../../assets/vendors/fontawesome/css/all.min.css">
-    
-    <!-- main css -->
-    <link rel="stylesheet" href="../../assets/css/style.css">
-    <link rel="stylesheet" href="../../assets/css/responsive.css">
+    <link rel="stylesheet" href="../assets/vendors/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
     
     <style>
-    :root {
-        --medical-blue: #1a73e8;
-        --medical-light-blue: #e8f0fe;
-        --medical-dark-blue: #0d47a1;
-        --medical-teal: #007c91;
-        --medical-cyan: #00bcd4;
-        --medical-light-cyan: #b2ebf2;
-        --secondary-color: #5f6368;
-        --success-color: #4caf50;
-        --info-color: #2196f3;
-        --warning-color: #ff9800;
-        --danger-color: #f44336;
-        --light-color: #f8f9fa;
-        --dark-color: #202124;
-        --sidebar-width: 280px;
-        --card-radius: 12px;
-        --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.05);
-        --shadow-medium: 0 6px 15px rgba(0, 0, 0, 0.07);
-        --shadow-strong: 0 10px 25px rgba(0, 0, 0, 0.1);
-        --transition: all 0.3s ease;
+    .dashboard-page {
+        min-height: 100vh;
+        background: #f8fafc;
     }
-    
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f8f9fa;
-        color: #333;
-        line-height: 1.6;
+
+    .dashboard-container {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        grid-template-rows: 70px 1fr;
+        grid-template-areas:
+            "sidebar header"
+            "sidebar main";
         min-height: 100vh;
     }
-    
-    /* Sidebar améliorée */
-    .sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: var(--sidebar-width);
-        background: linear-gradient(180deg, var(--medical-blue) 0%, var(--medical-dark-blue) 100%);
-        color: white;
-        padding: 0;
-        z-index: 1000;
-        box-shadow: var(--shadow-medium);
-        transition: var(--transition);
-        overflow-y: auto;
-    }
-    
-    .sidebar-header {
-        padding: 30px 20px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        text-align: center;
-        background-color: rgba(255, 255, 255, 0.05);
-    }
-    
-    .sidebar-header img {
-        height: 60px;
-        width: auto;
-        object-fit: contain;
-    }
-    
-    .sidebar-menu {
-        padding: 20px 0;
-    }
-    
-    .sidebar-menu .nav-link {
-        color: rgba(255, 255, 255, 0.85);
-        padding: 14px 25px;
-        border-left: 4px solid transparent;
-        transition: var(--transition);
-        font-weight: 500;
+
+    .dashboard-header {
+        grid-area: header;
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0 24px;
         display: flex;
         align-items: center;
-        margin: 2px 0;
-    }
-    
-    .sidebar-menu .nav-link:hover, 
-    .sidebar-menu .nav-link.active {
-        color: white;
-        background-color: rgba(255, 255, 255, 0.15);
-        border-left: 4px solid white;
-        transform: translateX(5px);
-    }
-    
-    .sidebar-menu .nav-link i {
-        width: 24px;
-        margin-right: 15px;
-        font-size: 18px;
-        text-align: center;
-    }
-    
-    .sidebar-menu .nav-item small {
-        display: block;
-        padding: 15px 25px 8px;
-        font-size: 11px;
-        letter-spacing: 1px;
-        opacity: 0.7;
-        color: rgba(255, 255, 255, 0.7);
-        text-transform: uppercase;
-        margin-top: 10px;
-    }
-    
-    .sidebar-menu .nav-item:not(:first-child) small {
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        margin-top: 20px;
-        padding-top: 25px;
-    }
-    
-    /* Main Content amélioré */
-    .main-content {
-        margin-left: var(--sidebar-width);
-        padding: 30px;
-        min-height: 100vh;
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        transition: var(--transition);
-    }
-    
-    /* Top Bar modernisé */
-    .top-bar {
-        background: white;
-        border-radius: var(--card-radius);
-        padding: 20px 30px;
-        box-shadow: var(--shadow-medium);
-        margin-bottom: 30px;
-        display: flex;
         justify-content: space-between;
-        align-items: center;
-        border-left: 4px solid var(--medical-blue);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .top-bar::before {
-        content: '';
-        position: absolute;
+        position: sticky;
         top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--medical-blue), var(--medical-cyan));
+        z-index: 100;
     }
-    
-    .top-bar h4 {
-        color: var(--medical-dark-blue);
+
+    .dashboard-menu-toggle {
+        display: none;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #64748b;
+        cursor: pointer;
+    }
+
+    .dashboard-title {
+        font-size: 1.25rem;
         font-weight: 600;
-        margin-bottom: 5px;
+        color: #1e293b;
     }
-    
-    .top-bar .text-muted {
-        color: var(--secondary-color) !important;
+
+    .dashboard-subtitle {
+        font-size: 0.875rem;
+        color: #64748b;
     }
-    
-    /* User dropdown amélioré */
-    .user-dropdown .dropdown-toggle {
-        padding: 8px 15px;
-        border-radius: 50px;
-        background: var(--medical-light-blue);
-        border: 2px solid rgba(26, 115, 232, 0.1);
-        transition: var(--transition);
+
+    .dashboard-user-info {
+        display: flex;
+        align-items: center;
     }
-    
-    .user-dropdown .dropdown-toggle:hover {
-        background: white;
-        border-color: var(--medical-blue);
-        box-shadow: 0 4px 12px rgba(26, 115, 232, 0.15);
-    }
-    
-    .user-avatar {
-        width: 45px;
-        height: 45px;
+
+    .dashboard-avatar {
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
-        background: linear-gradient(135deg, var(--medical-blue), var(--medical-cyan));
+        background: #3b82f6;
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
-        font-size: 16px;
-        border: 3px solid white;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        font-size: 1.125rem;
+        font-weight: 600;
     }
-    
-    .user-avatar img {
+
+    .dashboard-avatar img {
         width: 100%;
         height: 100%;
-        border-radius: 50%;
         object-fit: cover;
+        border-radius: 50%;
     }
-    
-    /* Stats Container modernisé */
-    .stats-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 25px;
-        margin-bottom: 35px;
+
+    .dashboard-user-details {
+        line-height: 1.4;
     }
-    
-    .stat-card {
-        background: white;
-        border-radius: var(--card-radius);
-        padding: 25px;
-        box-shadow: var(--shadow-light);
-        text-align: center;
-        transition: var(--transition);
-        border-top: 4px solid;
-        position: relative;
-        overflow: hidden;
+
+    .dashboard-user-name {
+        font-weight: 600;
+        color: #1e293b;
     }
-    
-    .stat-card::before {
-        content: '';
-        position: absolute;
+
+    .dashboard-user-role {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .dashboard-sidebar {
+        grid-area: sidebar;
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        position: sticky;
         top: 0;
-        left: 0;
-        right: 0;
-        height: 100%;
-        background: linear-gradient(135deg, rgba(26, 115, 232, 0.03), rgba(0, 188, 212, 0.03));
-        opacity: 0;
-        transition: var(--transition);
+        height: 100vh;
     }
-    
-    .stat-card:hover {
-        transform: translateY(-8px);
-        box-shadow: var(--shadow-strong);
+
+    .dashboard-logo {
+        padding: 24px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
-    
-    .stat-card:hover::before {
+
+    .dashboard-logo-img {
+        max-height: 40px;
+        margin-right: 12px;
+    }
+
+    .dashboard-logo-text {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: white;
+    }
+
+    .dashboard-nav {
+        flex: 1;
+        padding: 20px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .dashboard-nav-section {
+        margin-bottom: 20px;
+    }
+
+    .dashboard-nav-title {
+        padding: 0 20px 8px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #94a3b8;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .dashboard-nav-item {
+        padding: 12px 20px;
+        color: #cbd5e1;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.3s;
+        border-left: 3px solid transparent;
+        cursor: pointer;
+    }
+
+    .dashboard-nav-item:hover,
+    .dashboard-nav-item.active {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border-left-color: #3b82f6;
+    }
+
+    .dashboard-nav-item.logout {
+        color: #f87171;
+        margin-top: auto;
+    }
+
+    .dashboard-nav-item.logout:hover {
+        background: rgba(248, 113, 113, 0.1);
+    }
+
+    .dashboard-nav-item i {
+        width: 20px;
+        text-align: center;
+    }
+
+    .dashboard-main {
+        grid-area: main;
+        padding: 24px;
+        overflow-y: auto;
+        max-width: 1400px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .dashboard-alert {
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .alert-success {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+    }
+
+    .alert-error {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+
+    .alert-warning {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+
+    .dashboard-alert i {
+        margin-top: 2px;
+    }
+
+    .dashboard-alert-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: inherit;
+        cursor: pointer;
+        margin-left: auto;
+        opacity: 0.7;
+    }
+
+    .dashboard-alert-close:hover {
         opacity: 1;
     }
-    
-    .stat-card:nth-child(1) { border-top-color: var(--medical-blue); }
-    .stat-card:nth-child(2) { border-top-color: var(--success-color); }
-    .stat-card:nth-child(3) { border-top-color: var(--info-color); }
-    .stat-card:nth-child(4) { border-top-color: var(--medical-cyan); }
-    
-    .stat-icon {
-        width: 70px;
-        height: 70px;
-        border-radius: 50%;
+
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .dashboard-stat-card {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .dashboard-stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 20px;
-        font-size: 28px;
-        background: linear-gradient(135deg, rgba(26, 115, 232, 0.1), rgba(0, 188, 212, 0.1));
-        color: var(--medical-blue);
-        position: relative;
-        z-index: 1;
+        font-size: 1.5rem;
     }
-    
-    .stat-value {
-        font-size: 32px;
-        font-weight: 700;
-        margin-bottom: 8px;
-        color: var(--medical-dark-blue);
-        position: relative;
-        z-index: 1;
+
+    .dashboard-stat-icon.primary {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
     }
-    
-    .stat-label {
-        font-size: 14px;
-        color: var(--secondary-color);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-weight: 600;
-        position: relative;
-        z-index: 1;
+
+    .dashboard-stat-icon.success {
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
     }
-    
-    /* Profile Completion amélioré */
-    .profile-completion {
-        margin-bottom: 35px;
+
+    .dashboard-stat-icon.info {
+        background: rgba(6, 182, 212, 0.1);
+        color: #06b6d4;
     }
-    
-    .profile-completion .card {
-        border: none;
-        border-radius: var(--card-radius);
-        box-shadow: var(--shadow-medium);
-        overflow: hidden;
-        background: linear-gradient(135deg, white, #f8f9fa);
+
+    .dashboard-stat-icon.warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
     }
-    
-    .profile-completion .card-header {
-        background: linear-gradient(135deg, var(--medical-blue) 0%, var(--medical-dark-blue) 100%);
-        color: white;
-        border-bottom: none;
-        padding: 20px 30px;
+
+    .dashboard-stat-icon.danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
     }
-    
-    .profile-completion .card-body {
-        padding: 30px;
+
+    .dashboard-stat-value {
+        font-size: 1.875rem;
+        font-weight: bold;
+        color: #1e293b;
+        line-height: 1;
+        margin-bottom: 4px;
     }
-    
-    .progress {
-        height: 12px;
-        border-radius: 6px;
-        background: #e9ecef;
-        overflow: hidden;
-        margin-bottom: 15px;
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+
+    .dashboard-stat-label {
+        color: #64748b;
+        font-size: 0.875rem;
     }
-    
-    .progress-bar {
-        background: linear-gradient(90deg, var(--medical-blue), var(--medical-cyan));
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .progress-bar::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(90deg, 
-            transparent 0%, 
-            rgba(255, 255, 255, 0.3) 50%, 
-            transparent 100%);
-        animation: shimmer 2s infinite;
-    }
-    
-    @keyframes shimmer {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
-    }
-    
-    .completion-text {
-        font-size: 15px;
-        color: var(--secondary-color);
-        text-align: center;
-        font-weight: 500;
-    }
-    
-    /* Main Profile Card modernisé */
-    .profile-main-card {
-        border: none;
-        border-radius: var(--card-radius);
-        box-shadow: var(--shadow-strong);
-        margin-bottom: 30px;
-        overflow: hidden;
+
+    .dashboard-card {
         background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 24px;
+        overflow: hidden;
+        animation: slideUp 0.6s ease;
     }
-    
-    .profile-main-card .card-header {
-        background: linear-gradient(135deg, var(--medical-blue) 0%, var(--medical-teal) 100%);
-        color: white;
-        border-bottom: none;
-        padding: 25px 30px;
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dashboard-card-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #e2e8f0;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
-    
-    .profile-main-card .card-header h4 {
-        margin: 0;
+
+    .dashboard-card-title {
+        font-size: 1.125rem;
         font-weight: 600;
-        font-size: 1.5rem;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
-    
-    .profile-main-card .card-body {
-        padding: 35px;
+
+    .dashboard-card-badge {
+        background: #3b82f6;
+        color: white;
+        font-size: 0.75rem;
+        padding: 4px 12px;
+        border-radius: 20px;
     }
-    
-    /* Profile Header amélioré */
-    .profile-header {
+
+    .dashboard-card-badge.danger {
+        background: #ef4444;
+    }
+
+    .dashboard-card-badge.success {
+        background: #22c55e;
+    }
+
+    .dashboard-card-badge.warning {
+        background: #f59e0b;
+    }
+
+    .dashboard-card-body {
+        padding: 24px;
+    }
+
+    .dashboard-card-footer {
+        padding: 16px 24px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .profile-section {
+        padding: 40px 0;
+        border-bottom: 1px solid #e2e8f0;
         text-align: center;
-        margin-bottom: 40px;
-        padding-bottom: 40px;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-        position: relative;
     }
-    
+
     .profile-avatar-container {
         position: relative;
-        width: 160px;
-        height: 160px;
-        margin: 0 auto 25px;
+        display: inline-block;
+        margin-bottom: 25px;
     }
-    
+
     .profile-avatar {
-        width: 100%;
-        height: 100%;
+        width: 150px;
+        height: 150px;
         border-radius: 50%;
         overflow: hidden;
         border: 5px solid white;
-        box-shadow: var(--shadow-strong);
-        background: linear-gradient(135deg, var(--medical-blue) 0%, var(--medical-cyan) 100%);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
         position: relative;
-        z-index: 2;
+        margin: 0 auto;
     }
-    
+
     .profile-avatar img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        transition: var(--transition);
     }
-    
-    .profile-avatar:hover img {
-        transform: scale(1.05);
-    }
-    
+
     .avatar-initials {
         width: 100%;
         height: 100%;
@@ -560,292 +510,146 @@ function getInitials($user) {
         align-items: center;
         justify-content: center;
         font-size: 3.5rem;
-        font-weight: bold;
+        font-weight: 800;
         color: white;
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
     }
-    
-    .avatar-ring {
-        position: absolute;
-        top: -6px;
-        left: -6px;
-        right: -6px;
-        bottom: -6px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--medical-blue), var(--medical-cyan), var(--medical-teal));
-        z-index: 1;
-        animation: rotate 10s linear infinite;
-    }
-    
-    @keyframes rotate {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    
-    .photo-actions {
+
+    .avatar-actions {
         position: absolute;
         bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.8);
-        padding: 12px 20px;
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        border-radius: 50px;
-        opacity: 0;
-        transition: var(--transition);
-        z-index: 3;
-        width: auto;
-    }
-    
-    .profile-avatar-container:hover .photo-actions {
-        opacity: 1;
-        bottom: 15px;
-    }
-    
-    .photo-btn {
-        width: 45px;
-        height: 45px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        background: white;
         border-radius: 50%;
-        border: none;
         display: flex;
         align-items: center;
         justify-content: center;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         cursor: pointer;
-        font-size: 18px;
-        transition: var(--transition);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        color: #3b82f6;
+        transition: all 0.3s;
+        z-index: 2;
     }
-    
-    .photo-upload-btn {
-        background: linear-gradient(135deg, var(--medical-cyan), #00a5bb);
+
+    .avatar-actions:hover {
+        background: #3b82f6;
         color: white;
+        transform: scale(1.1) rotate(15deg);
     }
-    
-    .photo-upload-btn:hover {
-        background: linear-gradient(135deg, #00a5bb, #008b9e);
-        transform: scale(1.1) rotate(5deg);
-    }
-    
-    .photo-delete-btn {
-        background: linear-gradient(135deg, var(--danger-color), #d32f2f);
-        color: white;
-    }
-    
-    .photo-delete-btn:hover {
-        background: linear-gradient(135deg, #d32f2f, #b71c1c);
-        transform: scale(1.1) rotate(-5deg);
-    }
-    
-    .profile-header h2 {
-        font-size: 2.2rem;
-        font-weight: 600;
-        color: var(--medical-dark-blue);
+
+    .profile-info h3 {
+        font-size: 28px;
+        font-weight: 800;
+        color: #1e293b;
         margin-bottom: 8px;
     }
-    
-    .profile-header .text-muted {
-        font-size: 1.1rem;
-        color: var(--secondary-color) !important;
+
+    .profile-info p {
+        color: #64748b;
+        font-size: 16px;
         margin-bottom: 20px;
     }
-    
-    /* Badges améliorés */
-    .role-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 10px 20px;
-        border-radius: 25px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        gap: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    .role-badge.user {
-        background: linear-gradient(135deg, rgba(26, 115, 232, 0.15), rgba(26, 115, 232, 0.05));
-        color: var(--medical-blue);
-        border: 1px solid rgba(26, 115, 232, 0.2);
-    }
-    
-    .role-badge.admin {
-        background: linear-gradient(135deg, rgba(244, 67, 54, 0.15), rgba(244, 67, 54, 0.05));
-        color: var(--danger-color);
-        border: 1px solid rgba(244, 67, 54, 0.2);
-    }
-    
+
     .status-badge {
         display: inline-flex;
         align-items: center;
+        gap: 8px;
         padding: 10px 20px;
         border-radius: 25px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        gap: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        font-weight: 700;
+        font-size: 14px;
     }
-    
+
     .status-badge.actif {
-        background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05));
-        color: var(--success-color);
-        border: 1px solid rgba(76, 175, 80, 0.2);
+        background: rgba(34, 197, 94, 0.1);
+        color: #16a34a;
+        border: 1px solid rgba(34, 197, 94, 0.2);
     }
-    
+
     .status-badge.inactif {
-        background: linear-gradient(135deg, rgba(108, 117, 125, 0.15), rgba(108, 117, 125, 0.05));
-        color: var(--secondary-color);
-        border: 1px solid rgba(108, 117, 125, 0.2);
+        background: rgba(148, 163, 184, 0.1);
+        color: #64748b;
+        border: 1px solid rgba(148, 163, 184, 0.2);
     }
-    
-    /* Tabs modernisés */
-    .tab-container {
-        margin-top: 40px;
+
+    .status-badge.en_attente {
+        background: rgba(245, 158, 11, 0.1);
+        color: #d97706;
+        border: 1px solid rgba(245, 158, 11, 0.2);
     }
-    
+
     .nav-tabs {
-        border-bottom: 2px solid #e2e8f0;
-        margin-bottom: 30px;
+        border: none;
+        margin: 20px 0;
+        display: flex;
+        gap: 5px;
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 12px;
     }
-    
+
     .nav-tabs .nav-link {
         border: none;
-        padding: 15px 30px;
-        color: var(--secondary-color);
+        color: #64748b;
         font-weight: 600;
-        border-radius: 8px 8px 0 0;
+        padding: 15px 25px;
+        border-radius: 8px;
+        background: transparent;
+        transition: all 0.3s;
         display: flex;
         align-items: center;
-        gap: 12px;
-        transition: var(--transition);
-        background: transparent;
-        position: relative;
-        font-size: 1rem;
+        gap: 10px;
+        font-size: 14px;
     }
-    
+
     .nav-tabs .nav-link:hover {
-        color: var(--medical-blue);
-        background: rgba(26, 115, 232, 0.08);
-        transform: translateY(-2px);
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
     }
-    
+
     .nav-tabs .nav-link.active {
-        color: var(--medical-blue);
-        background: white;
-        border-bottom: 3px solid var(--medical-blue);
-        box-shadow: 0 -4px 12px rgba(26, 115, 232, 0.1);
+        background: #3b82f6;
+        color: white;
+        box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
     }
-    
-    .nav-tabs .nav-link.active i {
-        color: var(--medical-blue);
-    }
-    
+
     .tab-content {
-        background: white;
-        border-radius: 0 0 var(--card-radius) var(--card-radius);
-        padding: 35px;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+        padding: 20px 0;
     }
-    
-    /* Formulaires améliorés */
+
     .form-label {
         font-weight: 600;
-        color: var(--medical-dark-blue);
+        color: #1e293b;
         margin-bottom: 10px;
-        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
-    
-    .form-control, .form-select {
+
+    .form-label i {
+        color: #3b82f6;
+        font-size: 16px;
+    }
+
+    .form-control {
         border: 2px solid #e2e8f0;
         border-radius: 8px;
-        padding: 14px;
-        transition: var(--transition);
-        font-size: 16px;
-        background: #fff;
+        padding: 12px 15px;
+        font-size: 14px;
+        transition: all 0.3s;
     }
-    
-    .form-control:focus, .form-select:focus {
-        border-color: var(--medical-blue);
-        box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
-        background: #fff;
+
+    .form-control:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
     }
-    
-    textarea.form-control {
-        min-height: 120px;
-        resize: vertical;
-    }
-    
-    .form-text {
-        font-size: 0.875rem;
-        margin-top: 8px;
-        color: var(--secondary-color);
-    }
-    
-    /* Boutons améliorés */
-    .btn {
-        padding: 14px 28px;
-        border-radius: 8px;
-        font-weight: 600;
-        transition: var(--transition);
-        border: none;
-        cursor: pointer;
-        text-align: center;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        font-size: 16px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    .btn-primary {
-        background: linear-gradient(135deg, var(--medical-blue), #0d62d9);
-        color: white;
-    }
-    
-    .btn-primary:hover {
-        background: linear-gradient(135deg, #0d62d9, var(--medical-dark-blue));
-        transform: translateY(-3px);
-        box-shadow: 0 8px 16px rgba(26, 115, 232, 0.3);
-    }
-    
-    .btn-success {
-        background: linear-gradient(135deg, var(--success-color), #3d8b40);
-        color: white;
-    }
-    
-    .btn-success:hover {
-        background: linear-gradient(135deg, #3d8b40, #2d7730);
-        transform: translateY(-3px);
-        box-shadow: 0 8px 16px rgba(76, 175, 80, 0.3);
-    }
-    
-    .btn-danger {
-        background: linear-gradient(135deg, var(--danger-color), #d32f2f);
-        color: white;
-    }
-    
-    .btn-danger:hover {
-        background: linear-gradient(135deg, #d32f2f, #b71c1c);
-        transform: translateY(-3px);
-        box-shadow: 0 8px 16px rgba(244, 67, 54, 0.3);
-    }
-    
-    .btn-secondary {
-        background: linear-gradient(135deg, #e2e8f0, #cbd5e0);
-        color: #4a5568;
-    }
-    
-    .btn-secondary:hover {
-        background: linear-gradient(135deg, #cbd5e0, #a0aec0);
-        transform: translateY(-3px);
-        box-shadow: 0 8px 16px rgba(108, 117, 125, 0.2);
-    }
-    
-    /* Password input container */
+
     .password-input-container {
         position: relative;
     }
-    
+
     .password-toggle {
         position: absolute;
         right: 15px;
@@ -853,968 +657,835 @@ function getInitials($user) {
         transform: translateY(-50%);
         background: none;
         border: none;
-        color: var(--secondary-color);
+        color: #64748b;
         cursor: pointer;
-        font-size: 18px;
-        padding: 5px;
-        transition: var(--transition);
     }
-    
-    .password-toggle:hover {
-        color: var(--medical-blue);
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
     }
-    
-    /* Alerts améliorés */
-    .alert {
-        padding: 20px 25px;
-        border-radius: 10px;
-        margin-bottom: 25px;
-        border-left: 5px solid;
-        font-size: 15px;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        box-shadow: var(--shadow-light);
+
+    .info-card {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 20px;
+        border-left: 4px solid #3b82f6;
     }
-    
-    .alert-success {
-        background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
-        color: #2d7740;
-        border-left-color: var(--success-color);
-    }
-    
-    .alert-danger {
-        background: linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(244, 67, 54, 0.05));
-        color: #c53030;
-        border-left-color: var(--danger-color);
-    }
-    
-    .alert-info {
-        background: linear-gradient(135deg, rgba(26, 115, 232, 0.1), rgba(26, 115, 232, 0.05));
-        color: var(--medical-dark-blue);
-        border-left-color: var(--medical-blue);
-    }
-    
-    .alert i {
-        font-size: 24px;
-        flex-shrink: 0;
-    }
-    
-    /* Admin Section améliorée */
-    .admin-section {
-        background: linear-gradient(135deg, rgba(255, 245, 245, 0.8), rgba(255, 235, 235, 0.9));
-        border-left: 5px solid var(--danger-color);
-        padding: 25px 30px;
-        border-radius: 12px;
-        margin-top: 30px;
-        box-shadow: 0 4px 12px rgba(244, 67, 54, 0.1);
-    }
-    
-    .admin-section h5 {
-        color: var(--danger-color);
+
+    .info-label {
+        font-size: 12px;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
         font-weight: 600;
-        margin-bottom: 15px;
     }
-    
-    /* Dashboard Actions améliorées */
-    .dashboard-actions {
-        margin-top: 40px;
+
+    .info-value {
+        font-size: 16px;
+        color: #1e293b;
+        font-weight: 500;
+    }
+
+    .quick-actions {
         display: flex;
         gap: 15px;
         flex-wrap: wrap;
+        margin-top: 30px;
+        padding-top: 25px;
+        border-top: 1px solid #e2e8f0;
     }
-    
-    /* Info Groups améliorés */
-    .info-group {
-        margin-bottom: 20px;
+
+    .dashboard-btn {
+        padding: 12px 24px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+        font-size: 14px;
+    }
+
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #2563eb;
+    }
+
+    .btn-success {
+        background: #22c55e;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #16a34a;
+    }
+
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #dc2626;
+    }
+
+    .btn-outline {
+        background: white;
+        color: #64748b;
+        border: 1px solid #d1d5db;
+    }
+
+    .btn-outline:hover {
+        background: #f8fafc;
+        border-color: #9ca3af;
+    }
+
+    .admin-section {
+        background: #fef2f2;
+        border-radius: 8px;
         padding: 20px;
-        background: linear-gradient(135deg, var(--medical-light-blue), rgba(232, 240, 254, 0.5));
-        border-radius: 10px;
-        border-left: 5px solid var(--medical-blue);
-        transition: var(--transition);
+        margin-top: 30px;
+        border-left: 4px solid #ef4444;
     }
-    
-    .info-group:hover {
-        background: linear-gradient(135deg, white, #f8f9fa);
-        box-shadow: var(--shadow-light);
-        transform: translateX(5px);
-    }
-    
-    .info-label {
-        font-size: 12px;
-        text-transform: uppercase;
-        color: var(--medical-teal);
+
+    .admin-section h5 {
+        color: #ef4444;
         font-weight: 600;
-        letter-spacing: 1px;
-        margin-bottom: 8px;
+        margin-bottom: 15px;
         display: flex;
         align-items: center;
         gap: 10px;
     }
-    
-    .info-value {
-        font-size: 17px;
-        color: #2d3748;
-        font-weight: 500;
-    }
-    
-    /* Mobile Menu Button amélioré */
-    .mobile-menu-btn {
-        display: none;
-        background: linear-gradient(135deg, var(--medical-blue), var(--medical-dark-blue));
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 12px 18px;
-        font-size: 20px;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        z-index: 1001;
-        transition: var(--transition);
-    }
-    
-    .mobile-menu-btn:hover {
-        transform: scale(1.05);
-        box-shadow: 0 6px 16px rgba(26, 115, 232, 0.4);
-    }
-    
-    /* Animation pour les cartes */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .animate-fade-in-up {
-        animation: fadeInUp 0.6s ease-out;
-    }
-    
-    /* Responsive Design amélioré */
-    @media (max-width: 992px) {
-        .sidebar {
-            width: 80px;
+
+    @media (max-width: 1024px) {
+        .dashboard-container {
+            grid-template-columns: 200px 1fr;
         }
         
-        .sidebar .nav-link span,
-        .sidebar .nav-item small {
-            display: none;
-        }
-        
-        .sidebar .sidebar-header img {
-            height: 40px;
-        }
-        
-        .sidebar .nav-link {
-            padding: 15px;
-            justify-content: center;
-        }
-        
-        .sidebar .nav-link i {
-            margin-right: 0;
-            font-size: 20px;
-        }
-        
-        .main-content {
-            margin-left: 80px;
-            padding: 20px;
-        }
-        
-        .stats-container {
-            grid-template-columns: repeat(2, 1fr);
+        .dashboard-sidebar {
+            width: 200px;
         }
     }
-    
+
     @media (max-width: 768px) {
-        .sidebar {
-            transform: translateX(-100%);
-            width: 280px;
-        }
-        
-        .sidebar.mobile-open {
-            transform: translateX(0);
-        }
-        
-        .main-content {
-            margin-left: 0;
-            padding: 20px 15px;
-        }
-        
-        .stats-container {
+        .dashboard-container {
             grid-template-columns: 1fr;
+            grid-template-areas:
+                "header"
+                "main";
         }
         
-        .mobile-menu-btn {
+        .dashboard-sidebar {
+            position: fixed;
+            left: -250px;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            width: 250px;
+            transition: left 0.3s;
+        }
+        
+        .dashboard-sidebar.active {
+            left: 0;
+        }
+        
+        .dashboard-menu-toggle {
             display: block;
         }
         
-        .top-bar {
-            flex-direction: column;
-            gap: 15px;
-            text-align: center;
-            padding: 20px;
+        .dashboard-stats {
+            grid-template-columns: repeat(2, 1fr);
         }
         
-        .user-dropdown {
-            width: 100%;
-        }
-        
-        .user-dropdown .dropdown-toggle {
-            width: 100%;
-            justify-content: center;
-        }
-        
-        .dashboard-actions {
-            flex-direction: column;
-        }
-        
-        .btn {
-            width: 100%;
-        }
-        
-        .nav-tabs .nav-link {
-            padding: 12px 20px;
-            font-size: 0.9rem;
-        }
-        
-        .profile-main-card .card-body {
-            padding: 25px 20px;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .profile-avatar-container {
-            width: 140px;
-            height: 140px;
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
         }
         
         .avatar-initials {
-            font-size: 3rem;
+            font-size: 2.5rem;
         }
         
-        .nav-tabs .nav-link {
-            padding: 10px 15px;
-            font-size: 0.85rem;
+        .nav-tabs {
+            flex-direction: column;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .dashboard-stats {
+            grid-template-columns: 1fr;
         }
         
-        .profile-header h2 {
-            font-size: 1.8rem;
+        .dashboard-header {
+            padding: 0 16px;
+        }
+        
+        .dashboard-main {
+            padding: 16px;
+        }
+        
+        .dashboard-card-body {
+            padding: 16px;
+        }
+        
+        .quick-actions {
+            flex-direction: column;
+        }
+        
+        .dashboard-btn {
+            width: 100%;
         }
     }
-    
-    /* Scrollbar personnalisée */
-    .sidebar::-webkit-scrollbar {
-        width: 6px;
+
+    .is-valid {
+        border-color: #22c55e !important;
     }
-    
-    .sidebar::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.1);
+
+    .is-invalid {
+        border-color: #ef4444 !important;
     }
-    
-    .sidebar::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 3px;
+
+    .invalid-feedback {
+        color: #ef4444;
+        font-size: 12px;
+        margin-top: 5px;
+        display: none;
     }
-    
-    .sidebar::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.5);
+
+    .error-message {
+        color: #ef4444;
+        font-size: 12px;
+        margin-top: 5px;
     }
-    
-    /* Loading animation */
-    @keyframes pulse {
-        0% { opacity: 1; }
-        50% { opacity: 0.5; }
-        100% { opacity: 1; }
-    }
-    
-    .loading {
-        animation: pulse 1.5s infinite;
-    }
-</style>
+   
+.ia-chatbot-box {
+    position: fixed;
+    bottom: 110px;
+    right: 30px;
+    width: 340px;
+    height: 480px;
+    background: #f0f4ff;
+    border-radius: 20px;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.2);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 9999;
+}
+
+.ia-chatbot-header {
+    background: linear-gradient(135deg, #4a90e2, #3572c6); 
+    padding: 14px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+
+.ia-chatbot-messages {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    font-size: 14px;
+}
+
+
+.ia-chatbot-input {
+    padding: 12px;
+    border-top: 1px solid #cdd6f0;
+    display: flex;
+    gap: 6px;
+    background: #e8f0ff;
+}
+
+.ia-chatbot-input input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid #b0c4ff;
+    background: white;
+}
+
+.ia-chatbot-input button {
+    padding: 10px 14px;
+    background: #4a90e2;
+    color: white;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+
+.ia-chatbot-message {
+    margin-bottom: 10px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    max-width: 75%;
+    word-wrap: break-word;
+}
+
+.ia-chatbot-message.user {
+    background: #d0e6ff;
+    align-self: flex-end;
+}
+
+.ia-chatbot-message.bot {
+    background: #3572c6;
+    color: white;
+    align-self: flex-start;
+}
+
+.ia-chatbot-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #4a90e2, #3572c6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    z-index: 9999;
+    transition: transform 0.2s;
+}
+
+.ia-chatbot-btn:hover {
+    transform: scale(1.1);
+}
+    </style>
 </head>
-<body>
+<body class="dashboard-page">
 
-    <!-- Mobile Menu Button -->
-    <button class="mobile-menu-btn" id="mobileMenuBtn">
-        <i class="fas fa-bars"></i>
-    </button>
-
-   <!-- Sidebar -->
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <a class="navbar-brand logo_h" href="../home/index.php">
-            <img src="../../assets/img/logo.png" alt="logo" style="height: 200px;">
-        </a>
-    </div>
-    <div class="sidebar-menu">
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" href="../home/index.php">
-                    <i class="fas fa-home"></i>
-                    <span>Accueil</span>
+    <div class="dashboard-container">
+       
+        <aside class="dashboard-sidebar" id="sidebar">
+            <div class="dashboard-logo">
+                <a href="../home/index.php" class="text-white text-decoration-none">
+                    <img src="../assets/img/logo.png" alt="logo" class="dashboard-logo-img">
+                    <span class="dashboard-logo-text">Medsense Medical</span>
                 </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link active" href="profile.php">
-                    <i class="fas fa-user"></i>
-                    <span>Mon Profil</span>
-                </a>
-            </li>
-            
-            <!-- Section pour les médecins -->
-            <?php if ($user->estMedecin()): ?>
-            <li class="nav-item">
-                <small class="text-uppercase text-muted ms-3 mt-3">Médecin</small>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="../consultations/">
-                    <i class="fas fa-stethoscope"></i>
-                    <span>Mes Consultations</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="../patients/">
-                    <i class="fas fa-user-injured"></i>
-                    <span>Mes Patients</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="../calendrier/">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Calendrier</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="../reclamations/">
-                    <i class="fas fa-comment-medical"></i>
-                    <span>Réclamations</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="../blog/">
-                    <i class="fas fa-blog"></i>
-                    <span>Blog</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="../activity/">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Activité</span>
-                </a>
-            </li>
-            <?php endif; ?>
-            
-            <!-- Section pour les administrateurs -->
-            <?php if ($isAdmin): ?>
-            <li class="nav-item">
-                <small class="text-uppercase text-muted ms-3 mt-3">Administration</small>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="../../backoffice/admin-dashboard.php">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>Tableau de Bord</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="../../backoffice/admin-users.php">
-                    <i class="fas fa-users"></i>
-                    <span>Gestion Utilisateurs</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="../../backoffice/admin-medecins.php">
-                    <i class="fas fa-user-md"></i>
-                    <span>Gestion Médecins</span>
-                </a>
-            </li>
-            <?php endif; ?>
-            
-            <!-- Section pour les patients (si non médecin et non admin) -->
-            <?php if ($user->estPatient()): ?>
-            <li class="nav-item">
-                <small class="text-uppercase text-muted ms-3 mt-3">Patient</small>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="../appointments/">
-                    <i class="fas fa-calendar-check"></i>
-                    <span>Mes Rendez-vous</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="../historique/">
-                    <i class="fas fa-history"></i>
-                    <span>Historique Médical</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="../ordonnances/">
-                    <i class="fas fa-prescription"></i>
-                    <span>Ordonnances</span>
-                </a>
-            </li>
-            <?php endif; ?>
-            
-            <li class="nav-item mt-3">
-                <small class="text-uppercase text-muted ms-3">Compte</small>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="rate_site.php">
-                    <i class="fas fa-star"></i>
-                    <span>Évaluer le site</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="../../../controllers/logout.php" 
-                   onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?')">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Déconnexion</span>
-                </a>
-            </li>
-        </ul>
-    </div>
-</div>
-
-    <!-- Main Content -->
-    <div class="main-content" id="mainContent">
-        <!-- Top Bar -->
-        <div class="top-bar">
-            <div>
-                <h4 class="mb-0"><i class="fas fa-user-md medical-icon me-2"></i>Mon Profil</h4>
-                <p class="text-muted mb-0">Gérez vos informations personnelles et votre compte</p>
             </div>
-            <div class="d-flex align-items-center">
-                <div class="dropdown">
-                    <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown">
-                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" style="width: 45px; height: 45px;">
-                            <?php if ($photo_url): ?>
-                                <img src="<?php echo $photo_url; ?>" alt="Photo de profil" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
-                            <?php else: ?>
-                                <span style="font-size: 16px;">
-                                    <?php echo getInitials($user); ?>
-                                </span>
-                            <?php endif; ?>
-                        </div>
-                        <span class="ms-2"><?php echo safeUserInfo($user, 'getPrenom', 'Utilisateur'); ?></span>
+            
+            <nav class="dashboard-nav">
+                <div class="dashboard-nav-section">
+                    <div class="dashboard-nav-title">Navigation</div>
+                    <a class="dashboard-nav-item" href="../home/index.php">
+                        <i class="fas fa-home"></i>
+                        <span>Accueil</span>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="profile.php"><i class="fas fa-user me-2"></i> Mon profil</a></li>
-                        <li><a class="dropdown-item" href="../appointments/"><i class="fas fa-calendar me-2"></i> Mes rendez-vous</a></li>
+                    <a class="dashboard-nav-item active" href="profile.php">
+                        <i class="fas fa-user"></i>
+                        <span>Mon Profil</span>
+                    </a>
+                </div>
+                
+                <?php if ($isAdmin): ?>
+                <div class="dashboard-nav-section">
+                    <div class="dashboard-nav-title">Administration</div>
+                    <a class="dashboard-nav-item" href="../../backoffice/admin-dashboard.php">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Tableau de Bord</span>
+                    </a>
+                    <a class="dashboard-nav-item" href="../../backoffice/admin-users.php">
+                        <i class="fas fa-users"></i>
+                        <span>Utilisateurs</span>
+                    </a>
+                </div>
+                <?php elseif ($isMedecin): ?>
+                <div class="dashboard-nav-section">
+                    <div class="dashboard-nav-title">Médecin</div>
+                    <a class="dashboard-nav-item" href="../appointments/">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Mes Rendez-vous</span>
+                    </a>
+                    <a class="dashboard-nav-item" href="../consultations/">
+                        <i class="fas fa-stethoscope"></i>
+                        <span>Consultations</span>
+                    </a>
+                </div>
+                <?php else: ?>
+                <div class="dashboard-nav-section">
+                    <div class="dashboard-nav-title">Patient</div>
+                    <a class="dashboard-nav-item" href="../appointments/">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Mes Rendez-vous</span>
+                    </a>
+                    <a class="dashboard-nav-item" href="../doctors/">
+                        <i class="fas fa-user-md"></i>
+                        <span>Trouver un Médecin</span>
+                    </a>
+                </div>
+                <?php endif; ?>
+                
+                <div class="dashboard-nav-section mt-auto">
+                    <a class="dashboard-nav-item logout" href="../../../controllers/logout.php" 
+                       onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?')">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Déconnexion</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="dashboard-main">
+            
+            <?php if ($profile_success): ?>
+                <div class="dashboard-alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <div><?php echo $profile_success; ?></div>
+                    <button type="button" class="dashboard-alert-close">&times;</button>
+                </div>
+            <?php endif; ?>
+            
+            <?php if ($profile_error): ?>
+                <div class="dashboard-alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <div><?php echo $profile_error; ?></div>
+                    <button type="button" class="dashboard-alert-close">&times;</button>
+                </div>
+            <?php endif; ?>
+            
+            <?php if ($photo_success): ?>
+                <div class="dashboard-alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <div><?php echo $photo_success; ?></div>
+                    <button type="button" class="dashboard-alert-close">&times;</button>
+                </div>
+            <?php endif; ?>
+            
+            <?php if ($photo_error): ?>
+                <div class="dashboard-alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <div><?php echo $photo_error; ?></div>
+                    <button type="button" class="dashboard-alert-close">&times;</button>
+                </div>
+            <?php endif; ?>
+
+            
+            <div class="dashboard-stats">
+                <div class="dashboard-stat-card">
+                    <div class="dashboard-stat-icon primary">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="dashboard-stat-content">
+                        <div class="dashboard-stat-value"><?php echo $user->estActif() ? 'Actif' : 'Inactif'; ?></div>
+                        <div class="dashboard-stat-label">Statut</div>
+                    </div>
+                </div>
+                <div class="dashboard-stat-card">
+                    <div class="dashboard-stat-icon <?php echo $isAdmin ? 'danger' : ($isMedecin ? 'info' : 'success'); ?>">
+                        <i class="fas <?php echo $isAdmin ? 'fa-user-shield' : ($isMedecin ? 'fa-user-md' : 'fa-user-injured'); ?>"></i>
+                    </div>
+                    <div class="dashboard-stat-content">
+                        <div class="dashboard-stat-value"><?php echo ucfirst($user->getRole()); ?></div>
+                        <div class="dashboard-stat-label">Rôle</div>
+                    </div>
+                </div>
+                <div class="dashboard-stat-card">
+                    <div class="dashboard-stat-icon warning">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="dashboard-stat-content">
+                        <div class="dashboard-stat-value">
+                            <?php 
+                            $date = new DateTime($user->getDateInscription());
+                            echo $date->format('d/m/Y');
+                            ?>
+                        </div>
+                        <div class="dashboard-stat-label">Membre depuis</div>
+                    </div>
+                </div>
+                <?php if ($user->getDateNaissance()): ?>
+                <div class="dashboard-stat-card">
+                    <div class="dashboard-stat-icon success">
+                        <i class="fas fa-birthday-cake"></i>
+                    </div>
+                    <div class="dashboard-stat-content">
+                        <div class="dashboard-stat-value"><?php echo $user->getAge(); ?> ans</div>
+                        <div class="dashboard-stat-label">Âge</div>
+                    </div>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                        <i class="fas fa-user-cog me-2"></i>Gestion du Profil
+                    </h3>
+                    <span class="dashboard-card-badge <?php echo $isAdmin ? 'danger' : ($isMedecin ? 'info' : 'success'); ?>">
+                        <i class="fas fa-<?php echo $isAdmin ? 'crown' : ($isMedecin ? 'user-md' : 'user'); ?> me-1"></i>
+                        <?php echo ucfirst($user->getRole()); ?>
+                    </span>
+                </div>
+                
+                <div class="dashboard-card-body">
+                   
+                    <div class="profile-section">
+                        <div class="profile-avatar-container">
+                            <div class="profile-avatar">
+                                <?php if ($photo_url && $photo_url != '/assets/images/default-avatar.png'): ?>
+                                    <img src="<?php echo $photo_url; ?>" alt="Photo de profil" id="currentPhoto">
+                                <?php else: ?>
+                                    <div class="avatar-initials" id="currentInitials">
+                                        <?php echo strtoupper(substr($user->getPrenom(), 0, 1) . substr($user->getNom(), 0, 1)); ?>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <div class="avatar-actions" data-bs-toggle="dropdown">
+                                    <i class="fas fa-camera"></i>
+                                </div>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <form method="POST" action="" enctype="multipart/form-data" id="photoUploadForm">
+                                            <input type="file" name="photo_profil" id="photoInput" accept="image/*">
+                                            <input type="hidden" name="update_photo" value="1">
+                                        </form>
+                                        <a class="dropdown-item" href="#" onclick="document.getElementById('photoInput').click()">
+                                            <i class="fas fa-upload me-2"></i>Changer la photo
+                                        </a>
+                                    </li>
+                                    <?php if ($photo_url && $photo_url != '/assets/images/default-avatar.png'): ?>
+                                    <li>
+                                        <a class="dropdown-item text-danger" href="#" onclick="deleteProfilePhoto()">
+                                            <i class="fas fa-trash me-2"></i>Supprimer la photo
+                                        </a>
+                                    </li>
+                                    <?php endif; ?>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-info">
+                            <h3><?php echo htmlspecialchars($user->getPrenom() . ' ' . $user->getNom()); ?></h3>
+                            <p><?php echo htmlspecialchars($user->getEmail()); ?></p>
+                            <span class="status-badge <?php echo $user->estActif() ? 'actif' : 'inactif'; ?>">
+                                <i class="fas fa-<?php echo $user->estActif() ? 'check-circle' : 'times-circle'; ?> me-1"></i>
+                                <?php echo ucfirst($user->getStatut()); ?>
+                            </span>
+                        </div>
+                    </div>
+
                     
-                         <li><a class="dropdown-item" href="rate_site.php"><i class="fas fa-star me-2"></i> Évaluer le site</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" href="../../../controllers/logout.php" 
-                               onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?')">
-                                <i class="fas fa-sign-out-alt me-2"></i> Déconnexion
-                            </a>
+                    <?php if ($password_success): ?>
+                        <div class="dashboard-alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            <div><?php echo $password_success; ?></div>
+                            <button type="button" class="dashboard-alert-close">&times;</button>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if ($password_error): ?>
+                        <div class="dashboard-alert alert-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <div><?php echo $password_error; ?></div>
+                            <button type="button" class="dashboard-alert-close">&times;</button>
+                        </div>
+                    <?php endif; ?>
+
+                    
+                    <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="edit-tab" data-bs-toggle="tab" data-bs-target="#edit" type="button" role="tab">
+                                <i class="fas fa-edit me-1"></i> Modifier le profil
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab">
+                                <i class="fas fa-lock me-1"></i> Mot de passe
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
+                                <i class="fas fa-info-circle me-1"></i> Informations
+                            </button>
                         </li>
                     </ul>
+                    
+                    <div class="tab-content" id="profileTabsContent">
+                        
+                        <div class="tab-pane fade show active" id="edit" role="tabpanel">
+                            <form method="POST" action="" id="profileForm" onsubmit="return validateProfileForm()">
+                                <input type="hidden" name="update_profile" value="1">
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="prenom" class="form-label"><i class="fas fa-user"></i>Prénom *</label>
+                                        <input type="text" class="form-control" id="prenom" name="prenom" 
+                                               value="<?php echo htmlspecialchars($user->getPrenom()); ?>" 
+                                               required>
+                                        <div class="error-message" id="prenom-error"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="nom" class="form-label"><i class="fas fa-user"></i>Nom *</label>
+                                        <input type="text" class="form-control" id="nom" name="nom" 
+                                               value="<?php echo htmlspecialchars($user->getNom()); ?>" 
+                                               required>
+                                        <div class="error-message" id="nom-error"></div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label for="email" class="form-label"><i class="fas fa-envelope"></i>Email *</label>
+                                        <input type="email" class="form-control" id="email" name="email" 
+                                               value="<?php echo htmlspecialchars($user->getEmail()); ?>" 
+                                               required>
+                                        <div class="error-message" id="email-error"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="dateNaissance" class="form-label"><i class="fas fa-calendar"></i>Date de naissance</label>
+                                        <input type="date" class="form-control" id="dateNaissance" name="dateNaissance" 
+                                               value="<?php echo $user->getDateNaissance() ? htmlspecialchars($user->getDateNaissance()) : ''; ?>">
+                                        <div class="error-message" id="dateNaissance-error"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="adresse" class="form-label"><i class="fas fa-map-marker-alt"></i>Adresse</label>
+                                        <input type="text" class="form-control" id="adresse" name="adresse" 
+                                               value="<?php echo $user->getAdresse() ? htmlspecialchars($user->getAdresse()) : ''; ?>">
+                                        <div class="error-message" id="adresse-error"></div>
+                                    </div>
+                                    <div class="col-12 mt-3">
+                                        <button type="submit" class="dashboard-btn btn-success">
+                                            <i class="fas fa-save me-2"></i>Enregistrer les modifications
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="tab-pane fade" id="password" role="tabpanel">
+    <form method="POST" action="" id="passwordForm" onsubmit="return validatePasswordForm()">
+        <input type="hidden" name="change_password" value="1">
+        
+        <div class="row g-3">
+            <div class="col-md-12">
+                <label for="current_password" class="form-label">
+                    <i class="fas fa-key"></i> Mot de passe actuel
+                </label>
+                <div class="password-input-container">
+                    <input type="password" class="form-control" 
+                           id="current_password" 
+                           name="current_password">
+                    <button type="button" class="password-toggle" 
+                            onclick="togglePassword('current_password')">
+                        <i class="fas fa-eye"></i>
+                    </button>
                 </div>
+                <div class="error-message" id="current_password-error"></div>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="new_password" class="form-label">
+                    <i class="fas fa-key"></i> Nouveau mot de passe
+                </label>
+                <div class="password-input-container">
+                    <input type="password" class="form-control" 
+                           id="new_password" 
+                           name="new_password">
+                    <button type="button" class="password-toggle" 
+                            onclick="togglePassword('new_password')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="error-message" id="new_password-error"></div>
+            </div>
+            
+            <div class="col-md-6">
+                <label for="confirm_password" class="form-label">
+                    <i class="fas fa-key"></i> Confirmer le mot de passe
+                </label>
+                <div class="password-input-container">
+                    <input type="password" class="form-control" 
+                           id="confirm_password" 
+                           name="confirm_password">
+                    <button type="button" class="password-toggle" 
+                            onclick="togglePassword('confirm_password')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="error-message" id="confirm_password-error"></div>
+            </div>
+            
+            <div class="col-12 mt-3">
+                <button type="submit" class="dashboard-btn btn-primary">
+                    <i class="fas fa-key me-2"></i> Changer le mot de passe
+                </button>
             </div>
         </div>
-
-        <!-- Content -->
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12">
-                    <!-- Stats Overview -->
-                    <div class="stats-container">
-                        <div class="stat-card">
-                            <div class="stat-icon primary">
-                                <i class="fas fa-user-check"></i>
-                            </div>
-                            <div class="stat-value"><?php echo $user && $user->estActif() ? 'Actif' : 'Inactif'; ?></div>
-                            <div class="stat-label">Statut du compte</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon info">
-                                <i class="fas fa-user-tag"></i>
-                            </div>
-                            <div class="stat-value"><?php echo $user ? ucfirst($user->getRole()) : 'Non défini'; ?></div>
-                            <div class="stat-label">Rôle</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon primary">
-                                <i class="fas fa-calendar-day"></i>
-                            </div>
-                            <div class="stat-value">
-                                <?php 
-                                if ($user && $user->getDateInscription()) {
-                                    $date = new DateTime($user->getDateInscription());
-                                    echo $date->format('d/m/Y');
-                                } else {
-                                    echo 'N/A';
-                                }
-                                ?>
-                            </div>
-                            <div class="stat-label">Membre depuis</div>
-                        </div>
-                        <?php if ($user && $user->getDateNaissance()): ?>
-                        <div class="stat-card">
-                            <div class="stat-icon info">
-                                <i class="fas fa-birthday-cake"></i>
-                            </div>
-                            <div class="stat-value"><?php echo $user->getAge(); ?> ans</div>
-                            <div class="stat-label">Âge</div>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Profile Completion -->
-                    <div class="profile-completion">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0"><i class="fas fa-tasks me-2"></i>Complétion du profil</h5>
-                            </div>
-                            <div class="card-body">
-                                <?php
-                                $completion = 0;
-                                if ($user) {
-                                    $completion = 25; // Base
-                                    if ($user->getDateNaissance()) $completion += 25;
-                                    if ($user->getAdresse()) $completion += 25;
-                                    if ($photo_url) $completion += 25;
-                                }
-                                ?>
-                                <div class="progress">
-                                    <div class="progress-bar" role="progressbar" style="width: <?php echo $completion; ?>%" 
-                                         aria-valuenow="<?php echo $completion; ?>" aria-valuemin="0" aria-valuemax="100"></div>
+    </form>
+</div>
+                     
+                       
+                        <div class="tab-pane fade" id="info" role="tabpanel">
+                            <div class="info-grid">
+                                <div class="info-card">
+                                    <div class="info-label">Nom complet</div>
+                                    <div class="info-value"><?php echo htmlspecialchars($user->getPrenom() . ' ' . $user->getNom()); ?></div>
                                 </div>
-                                <div class="completion-text">Votre profil est complété à <?php echo $completion; ?>%</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Main Profile Card -->
-                    <div class="card animate-fade-in-up">
-                        <div class="card-header">
-                            <h4 class="mb-0"><i class="fas fa-user-circle me-2"></i>Gestion du Profil</h4>
-                            <?php if ($user): ?>
-                            <span class="role-badge <?php echo $isAdmin ? 'admin' : 'user'; ?>">
-                                <i class="fas fa-<?php echo $isAdmin ? 'crown' : 'user'; ?>"></i>
-                                <?php echo ucfirst($user->getRole()); ?>
-                            </span>
-                            <?php endif; ?>
-                        </div>
-                        <div class="card-body">
-                            <!-- Profile Header -->
-                            <div class="profile-header">
-                                <div class="profile-avatar-container">
-                                    <div class="avatar-ring"></div>
-                                    <div class="profile-avatar">
-                                        <?php if ($photo_url): ?>
-                                            <img src="<?php echo $photo_url; ?>" alt="Photo de profil" 
-                                                 onerror="this.style.display='none'; document.getElementById('avatar-initials').style.display='flex';">
-                                            <div class="avatar-initials" id="avatar-initials" style="display: none;">
-                                                <?php echo getInitials($user); ?>
-                                            </div>
-                                        <?php else: ?>
-                                            <div class="avatar-initials">
-                                                <?php echo getInitials($user); ?>
-                                            </div>
-                                        <?php endif; ?>
-                                        
-                                        <div class="photo-actions">
-                                            <!-- Formulaire pour uploader une photo -->
-                                            <form method="POST" action="" enctype="multipart/form-data" id="photoUploadForm" class="photo-form">
-                                                <input type="file" name="photo_profil" id="photoInput" accept="image/jpeg,image/png,image/gif,image/webp" required>
-                                                <input type="hidden" name="update_photo" value="1">
-                                            </form>
-                                            
-                                            <button type="button" class="photo-btn photo-upload-btn" onclick="document.getElementById('photoInput').click()" title="Changer la photo">
-                                                <i class="fas fa-camera"></i>
-                                            </button>
-                                            
-                                            <?php if ($photo_url): ?>
-                                            <form method="POST" action="" id="deletePhotoForm" class="photo-form">
-                                                <input type="hidden" name="delete_photo" value="1">
-                                            </form>
-                                            <button type="button" class="photo-btn photo-delete-btn" onclick="if(confirm('Supprimer la photo de profil ?')) { document.getElementById('deletePhotoForm').submit(); }" title="Supprimer la photo">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                            <?php endif; ?>
-                                        </div>
+                                <div class="info-card">
+                                    <div class="info-label">Email</div>
+                                    <div class="info-value"><?php echo htmlspecialchars($user->getEmail()); ?></div>
+                                </div>
+                                <div class="info-card">
+                                    <div class="info-label">Rôle</div>
+                                    <div class="info-value">
+                                        <span class="dashboard-card-badge <?php echo $isAdmin ? 'danger' : ($isMedecin ? 'info' : 'success'); ?>">
+                                            <?php echo ucfirst($user->getRole()); ?>
+                                        </span>
                                     </div>
                                 </div>
-                                <?php if ($user): ?>
-                                <h2 class="mb-2"><?php echo safeUserInfo($user, 'getPrenom') . ' ' . safeUserInfo($user, 'getNom'); ?></h2>
-                                <p class="text-muted mb-2"><?php echo safeUserInfo($user, 'getEmail'); ?></p>
-                                <div class="status-badge <?php echo $user->estActif() ? 'actif' : 'inactif'; ?>">
-                                    <i class="fas fa-<?php echo $user->estActif() ? 'check-circle' : 'pause-circle'; ?>"></i>
-                                    <?php echo ucfirst($user->getStatut()); ?>
+                                <div class="info-card">
+                                    <div class="info-label">Statut</div>
+                                    <div class="info-value">
+                                        <span class="status-badge <?php echo $user->estActif() ? 'actif' : 'inactif'; ?>">
+                                            <?php echo ucfirst($user->getStatut()); ?>
+                                        </span>
+                                    </div>
                                 </div>
-                                <?php else: ?>
-                                <h2 class="mb-2">Utilisateur non trouvé</h2>
-                                <p class="text-muted mb-2">Veuillez vous reconnecter</p>
+                                <div class="info-card">
+                                    <div class="info-label">Date d'inscription</div>
+                                    <div class="info-value">
+                                        <?php 
+                                        $date = new DateTime($user->getDateInscription());
+                                        echo $date->format('d/m/Y à H:i');
+                                        ?>
+                                    </div>
+                                </div>
+                                <?php if ($user->getDateNaissance()): ?>
+                                <div class="info-card">
+                                    <div class="info-label">Date de naissance</div>
+                                    <div class="info-value">
+                                        <?php 
+                                        $dateNaissance = new DateTime($user->getDateNaissance());
+                                        echo $dateNaissance->format('d/m/Y');
+                                        ?>
+                                    </div>
+                                </div>
                                 <?php endif; ?>
                             </div>
-
-                            <!-- Messages d'alerte -->
-                            <?php if ($profile_success): ?>
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    <i class="fas fa-check-circle"></i>
-                                    <div><?php echo $profile_success; ?></div>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            <?php endif; ?>
                             
-                            <?php if ($profile_error): ?>
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                    <div><?php echo $profile_error; ?></div>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            <?php endif; ?>
-                            
-                            <?php if ($photo_success): ?>
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    <i class="fas fa-check-circle"></i>
-                                    <div><?php echo $photo_success; ?></div>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            <?php endif; ?>
-                            
-                            <?php if ($photo_error): ?>
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                    <div><?php echo $photo_error; ?></div>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            <?php endif; ?>
-
-                            <?php if (!$user): ?>
-                                <div class="alert alert-danger">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    <div>Votre session a expiré ou est invalide. Veuillez vous reconnecter.</div>
-                                    <a href="sign-in.php" class="btn btn-danger mt-3">Se reconnecter</a>
-                                </div>
-                            <?php else: ?>
-                            <!-- Tabs Navigation -->
-                            <div class="tab-container">
-                                <ul class="nav nav-tabs" id="profileTabs" role="tablist">
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" id="edit-tab" data-bs-toggle="tab" data-bs-target="#edit" type="button" role="tab">
-                                            <i class="fas fa-edit"></i> Modifier le profil
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab">
-                                            <i class="fas fa-lock"></i> Mot de passe
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
-                                            <i class="fas fa-info-circle"></i> Informations
-                                        </button>
-                                    </li>
-                                </ul>
-                                
-                                <div class="tab-content" id="profileTabsContent">
-                                    <!-- Edit Profile Tab -->
-                                    <div class="tab-pane fade show active" id="edit" role="tabpanel">
-                                        <form method="POST" action="" onsubmit="return validateProfileForm()">
-                                            <input type="hidden" name="update_profile" value="1">
-                                            
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label for="prenom" class="form-label">Prénom *</label>
-                                                        <input type="text" class="form-control" id="prenom" name="prenom" 
-                                                               value="<?php echo safeUserInfo($user, 'getPrenom'); ?>" 
-                                                               required 
-                                                               minlength="2" 
-                                                               maxlength="50"
-                                                               pattern="[A-Za-zÀ-ÿ\s\-']+"
-                                                               title="Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes">
-                                                        <div class="form-text">Minimum 2 caractères, lettres uniquement</div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label for="nom" class="form-label">Nom *</label>
-                                                        <input type="text" class="form-control" id="nom" name="nom" 
-                                                               value="<?php echo safeUserInfo($user, 'getNom'); ?>" 
-                                                               required 
-                                                               minlength="2" 
-                                                               maxlength="50"
-                                                               pattern="[A-Za-zÀ-ÿ\s\-']+"
-                                                               title="Le nom ne peut contenir que des lettres, espaces, tirets et apostrophes">
-                                                        <div class="form-text">Minimum 2 caractères, lettres uniquement</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="mb-3">
-                                                <label for="email" class="form-label">Email *</label>
-                                                <input type="email" class="form-control" id="email" name="email" 
-                                                       value="<?php echo safeUserInfo($user, 'getEmail'); ?>" 
-                                                       required
-                                                       maxlength="255"
-                                                       pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
-                                                       title="Format d'email valide requis (exemple@domaine.com)">
-                                                <div class="form-text">Format: exemple@domaine.com</div>
-                                            </div>
-
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label for="dateNaissance" class="form-label">Date de naissance</label>
-                                                        <input type="date" class="form-control" id="dateNaissance" name="dateNaissance" 
-                                                               value="<?php echo $user->getDateNaissance() ? htmlspecialchars($user->getDateNaissance()) : ''; ?>"
-                                                               max="<?php echo date('Y-m-d'); ?>"
-                                                               title="La date ne peut pas être dans le futur">
-                                                        <div class="form-text">Doit être dans le passé</div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label for="adresse" class="form-label">Adresse</label>
-                                                        <textarea class="form-control" id="adresse" name="adresse" rows="3" maxlength="500" placeholder="Votre adresse complète"><?php echo $user->getAdresse() ? htmlspecialchars($user->getAdresse()) : ''; ?></textarea>
-                                                        <div class="form-text">Maximum 500 caractères</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                                <button type="submit" class="btn btn-success">
-                                                    <i class="fas fa-save me-2"></i>Enregistrer les modifications
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                    
-                                    <!-- Password Tab -->
-                                    <div class="tab-pane fade" id="password" role="tabpanel">
-                                        <?php if ($password_success): ?>
-                                            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                                <i class="fas fa-check-circle"></i>
-                                                <div><?php echo $password_success; ?></div>
-                                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                            </div>
-                                        <?php endif; ?>
-                                        
-                                        <?php if ($password_error): ?>
-                                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                                <i class="fas fa-exclamation-circle"></i>
-                                                <div><?php echo $password_error; ?></div>
-                                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                            </div>
-                                        <?php endif; ?>
-                                        
-                                        <form method="POST" action="" onsubmit="return validatePasswordForm()">
-                                            <input type="hidden" name="change_password" value="1">
-                                            
-                                            <div class="mb-3">
-                                                <label for="current_password" class="form-label">Mot de passe actuel</label>
-                                                <div class="password-input-container">
-                                                    <input type="password" class="form-control" id="current_password" name="current_password" 
-                                                           required
-                                                           minlength="6"
-                                                           maxlength="255">
-                                                    <button type="button" class="password-toggle" onclick="togglePassword('current_password')">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
-                                                </div>
-                                                <div class="form-text">Minimum 6 caractères</div>
-                                            </div>
-                                            
-                                            <div class="mb-3">
-                                                <label for="new_password" class="form-label">Nouveau mot de passe</label>
-                                                <div class="password-input-container">
-                                                    <input type="password" class="form-control" id="new_password" name="new_password" 
-                                                           required
-                                                           minlength="6"
-                                                           maxlength="255"
-                                                           pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$"
-                                                           title="Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre">
-                                                    <button type="button" class="password-toggle" onclick="togglePassword('new_password')">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
-                                                </div>
-                                                <div class="form-text">Minimum 6 caractères, avec majuscule, minuscule et chiffre</div>
-                                            </div>
-                                            
-                                            <div class="mb-3">
-                                                <label for="confirm_password" class="form-label">Confirmer le mot de passe</label>
-                                                <div class="password-input-container">
-                                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
-                                                           required
-                                                           minlength="6"
-                                                           maxlength="255">
-                                                    <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
-                                                </div>
-                                                <div class="form-text">Doit correspondre au nouveau mot de passe</div>
-                                            </div>
-                                            
-                                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                                <button type="submit" class="btn btn-primary">
-                                                    <i class="fas fa-key me-2"></i>Changer le mot de passe
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                    
-                                    <!-- Info Tab -->
-                                    <div class="tab-pane fade" id="info" role="tabpanel">
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="info-group">
-                                                    <div class="info-label">
-                                                        <i class="fas fa-id-card"></i> Nom complet
-                                                    </div>
-                                                    <div class="info-value"><?php echo safeUserInfo($user, 'getPrenom') . ' ' . safeUserInfo($user, 'getNom'); ?></div>
-                                                </div>
-                                                
-                                                <div class="info-group">
-                                                    <div class="info-label">
-                                                        <i class="fas fa-envelope"></i> Email
-                                                    </div>
-                                                    <div class="info-value"><?php echo safeUserInfo($user, 'getEmail'); ?></div>
-                                                </div>
-                                                
-                                                <div class="info-group">
-                                                    <div class="info-label">
-                                                        <i class="fas fa-user-tag"></i> Rôle
-                                                    </div>
-                                                    <div class="info-value">
-                                                        <span class="role-badge <?php echo $isAdmin ? 'admin' : 'user'; ?>">
-                                                            <i class="fas fa-<?php echo $isAdmin ? 'crown' : 'user'; ?>"></i>
-                                                            <?php echo ucfirst($user->getRole()); ?>
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="info-group">
-                                                    <div class="info-label">
-                                                        <i class="fas fa-toggle-on"></i> Statut
-                                                    </div>
-                                                    <div class="info-value">
-                                                        <span class="status-badge <?php echo $user->estActif() ? 'actif' : 'inactif'; ?>">
-                                                            <i class="fas fa-<?php echo $user->estActif() ? 'check-circle' : 'pause-circle'; ?>"></i>
-                                                            <?php echo ucfirst($user->getStatut()); ?>
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div class="info-group">
-                                                    <div class="info-label">
-                                                        <i class="fas fa-calendar-plus"></i> Date d'inscription
-                                                    </div>
-                                                    <div class="info-value">
-                                                        <?php 
-                                                        $date = new DateTime($user->getDateInscription());
-                                                        echo $date->format('d/m/Y à H:i');
-                                                        ?>
-                                                    </div>
-                                                </div>
-                                                
-                                                <?php if ($user->getDateNaissance()): ?>
-                                                <div class="info-group">
-                                                    <div class="info-label">
-                                                        <i class="fas fa-birthday-cake"></i> Date de naissance
-                                                    </div>
-                                                    <div class="info-value">
-                                                        <?php 
-                                                        $dateNaissance = new DateTime($user->getDateNaissance());
-                                                        echo $dateNaissance->format('d/m/Y');
-                                                        ?>
-                                                    </div>
-                                                </div>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-                                        
-                                        <?php if ($user->getAdresse()): ?>
-                                        <div class="info-group">
-                                            <div class="info-label">
-                                                <i class="fas fa-map-marker-alt"></i> Adresse
-                                            </div>
-                                            <div class="info-value"><?php echo htmlspecialchars($user->getAdresse()); ?></div>
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
+                            <?php if ($user->getAdresse()): ?>
+                            <div class="info-card mt-3">
+                                <div class="info-label">Adresse</div>
+                                <div class="info-value"><?php echo htmlspecialchars($user->getAdresse()); ?></div>
                             </div>
-
+                            <?php endif; ?>
+                            
                             <?php if ($isAdmin): ?>
                             <div class="admin-section">
-                                <h5><i class="fas fa-shield-alt me-2"></i>Zone Administrateur</h5>
-                                <p class="mb-3">Vous avez accès aux fonctionnalités d'administration du système.</p>
-                                <div>
-                                    <a href="../../backoffice/admin-dashboard.php" class="btn btn-primary me-2">
-                                        <i class="fas fa-tachometer-alt me-1"></i>Tableau de bord
+                                <h5><i class="fas fa-shield-alt"></i>Zone Administrateur</h5>
+                                <p>Vous avez accès aux fonctionnalités d'administration du système.</p>
+                                <div class="quick-actions">
+                                    <a href="../../backoffice/admin-dashboard.php" class="dashboard-btn btn-primary">
+                                        <i class="fas fa-tachometer-alt me-2"></i>Tableau de bord
                                     </a>
-                                    <a href="../../backoffice/admin-users.php" class="btn btn-secondary">
-                                        <i class="fas fa-users me-1"></i>Gestion utilisateurs
+                                    <a href="../../backoffice/admin-users.php" class="dashboard-btn btn-outline">
+                                        <i class="fas fa-users me-2"></i>Gestion utilisateurs
                                     </a>
                                 </div>
                             </div>
                             <?php endif; ?>
-
-                            <!-- Actions du dashboard -->
-                            <div class="dashboard-actions">
-                                <a href="../home/index.php" class="btn btn-secondary">
-                                    <i class="fas fa-home me-2"></i> Retour à l'accueil
-                                </a>
-                                
-                                <?php if ($isAdmin): ?>
-                                    <a href="../../backoffice/admin-dashboard.php" class="btn btn-primary">
-                                        <i class="fas fa-tachometer-alt me-2"></i> Tableau de bord
-                                    </a>
-                                <?php else: ?>
-                                    <a href="../appointments/" class="btn btn-primary">
-                                        <i class="fas fa-calendar me-2"></i> Mes rendez-vous
-                                    </a>
-                                <?php endif; ?>
-                                
-                                <a href="../../../controllers/logout.php" 
-                                   class="btn btn-danger" 
-                                   onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?')">
-                                    <i class="fas fa-sign-out-alt me-2"></i> Déconnexion
-                                </a>
-                            </div>
-                            <?php endif; ?>
                         </div>
+                    </div>
+
+                    <div class="quick-actions">
+                        <a href="../home/index.php" class="dashboard-btn btn-outline">
+                            <i class="fas fa-home me-2"></i> Accueil
+                        </a>
+                        
+                        <?php if ($isAdmin): ?>
+                            <a href="../../backoffice/admin-dashboard.php" class="dashboard-btn btn-primary">
+                                <i class="fas fa-tachometer-alt me-2"></i> Tableau de bord Admin
+                            </a>
+                        <?php elseif ($isMedecin): ?>
+                            <a href="../appointments/" class="dashboard-btn btn-primary">
+                                <i class="fas fa-calendar me-2"></i> Mes rendez-vous
+                            </a>
+                        <?php else: ?>
+                            <a href="../appointments/" class="dashboard-btn btn-primary">
+                                <i class="fas fa-calendar me-2"></i> Mes rendez-vous
+                            </a>
+                        <?php endif; ?>
+                        
+                        <a href="../../../controllers/logout.php" 
+                           class="dashboard-btn btn-danger" 
+                           onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?')">
+                            <i class="fas fa-sign-out-alt me-2"></i> Déconnexion
+                        </a>
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 
-    <!-- Scripts -->
-    <script src="../../assets/js/jquery-2.2.4.min.js"></script>
-    <script src="../../assets/js/popper.js"></script>
-    <script src="../../assets/js/bootstrap.min.js"></script>
-    <script src="../../assets/js/stellar.js"></script>
-    <script src="../../assets/js/theme.js"></script>
+   
+    <script src="../assets/js/jquery-2.2.4.min.js"></script>
+    <script src="../assets/js/popper.js"></script>
+    <script src="../assets/js/bootstrap.min.js"></script>
     
     <script>
-        // Fonction de validation pour la photo
-        document.getElementById('photoInput').addEventListener('change', function() {
+       
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        });
+
+        
+        document.querySelectorAll('.dashboard-alert-close').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.dashboard-alert').style.display = 'none';
+            });
+        });
+
+        
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.dashboard-alert');
+            alerts.forEach(alert => {
+                alert.style.display = 'none';
+            });
+        }, 5000);
+
+        document.getElementById('photoInput')?.addEventListener('change', function() {
             validatePhoto(this);
         });
 
         function validatePhoto(input) {
             const file = input.files[0];
             if (file) {
-                // Vérifier la taille (max 2MB)
+                
                 if (file.size > 2 * 1024 * 1024) {
                     alert('La taille de la photo ne doit pas dépasser 2MB');
                     input.value = '';
                     return false;
                 }
                 
-                // Vérifier le type
                 const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
                 if (!allowedTypes.includes(file.type)) {
                     alert('Type de fichier non autorisé. Formats acceptés: JPEG, PNG, GIF, WebP');
@@ -1822,85 +1493,264 @@ function getInitials($user) {
                     return false;
                 }
                 
-                // Si tout est valide, soumettre le formulaire
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const currentPhoto = document.getElementById('currentPhoto');
+                    const currentInitials = document.getElementById('currentInitials');
+                    
+                    if (currentPhoto) {
+                        currentPhoto.src = e.target.result;
+                    } else if (currentInitials) {
+                        currentInitials.style.display = 'none';
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = 'Photo de profil';
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.objectFit = 'cover';
+                        currentInitials.parentNode.appendChild(img);
+                        currentInitials.parentNode.removeChild(currentInitials);
+                    }
+                };
+                reader.readAsDataURL(file);
+                
+                
                 document.getElementById('photoUploadForm').submit();
             }
             return true;
         }
 
-        // Fonction de validation pour le formulaire de profil
+        function deleteProfilePhoto() {
+            if (confirm('Êtes-vous sûr de vouloir supprimer votre photo de profil ?')) {
+              
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '';
+                
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'delete_photo';
+                input.value = '1';
+                
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        
         function validateProfileForm() {
-            const prenom = document.getElementById('prenom');
-            const nom = document.getElementById('nom');
-            const email = document.getElementById('email');
-            const dateNaissance = document.getElementById('dateNaissance');
-            
             let isValid = true;
             
-            // Validation des champs requis
-            if (!prenom.checkValidity()) {
-                prenom.reportValidity();
+            clearErrors();
+            
+            
+            const prenom = document.getElementById('prenom');
+            if (!prenom.value.trim()) {
+                showError('prenom', 'Le prénom est requis');
+                isValid = false;
+            } else if (prenom.value.trim().length < 2) {
+                showError('prenom', 'Le prénom doit contenir au moins 2 caractères');
+                isValid = false;
+            } else if (!/^[a-zA-ZÀ-ÿ\s\-']+$/.test(prenom.value.trim())) {
+                showError('prenom', 'Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes');
                 isValid = false;
             }
             
-            if (!nom.checkValidity()) {
-                nom.reportValidity();
+           
+            const nom = document.getElementById('nom');
+            if (!nom.value.trim()) {
+                showError('nom', 'Le nom est requis');
+                isValid = false;
+            } else if (nom.value.trim().length < 2) {
+                showError('nom', 'Le nom doit contenir au moins 2 caractères');
+                isValid = false;
+            } else if (!/^[a-zA-ZÀ-ÿ\s\-']+$/.test(nom.value.trim())) {
+                showError('nom', 'Le nom ne peut contenir que des lettres, espaces, tirets et apostrophes');
                 isValid = false;
             }
             
-            if (!email.checkValidity()) {
-                email.reportValidity();
+        
+            const email = document.getElementById('email');
+            if (!email.value.trim()) {
+                showError('email', 'L\'email est requis');
+                isValid = false;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
+                showError('email', 'Format d\'email invalide');
                 isValid = false;
             }
-            
-            // Validation de la date
+           
+            const dateNaissance = document.getElementById('dateNaissance');
             if (dateNaissance.value) {
                 const selectedDate = new Date(dateNaissance.value);
                 const today = new Date();
                 if (selectedDate > today) {
-                    alert('La date de naissance ne peut pas être dans le futur');
+                    showError('dateNaissance', 'La date de naissance ne peut pas être dans le futur');
                     isValid = false;
                 }
             }
             
+          
+            const adresse = document.getElementById('adresse');
+            if (adresse.value && adresse.value.length > 500) {
+                showError('adresse', 'L\'adresse ne peut pas dépasser 500 caractères');
+                isValid = false;
+            }
+            
             return isValid;
         }
 
-        // Fonction de validation pour le formulaire de mot de passe
         function validatePasswordForm() {
-            const currentPassword = document.getElementById('current_password');
-            const newPassword = document.getElementById('new_password');
-            const confirmPassword = document.getElementById('confirm_password');
-            
             let isValid = true;
             
-            // Validation des champs requis
-            if (!currentPassword.checkValidity()) {
-                currentPassword.reportValidity();
+            
+            clearErrors();
+            
+          
+            const currentPassword = document.getElementById('current_password');
+            if (!currentPassword.value) {
+                showError('current_password', 'Le mot de passe actuel est requis');
                 isValid = false;
             }
             
-            if (!newPassword.checkValidity()) {
-                newPassword.reportValidity();
+          
+            const newPassword = document.getElementById('new_password');
+            if (!newPassword.value) {
+                showError('new_password', 'Le nouveau mot de passe est requis');
+                isValid = false;
+            } else if (newPassword.value.length < 6) {
+                showError('new_password', 'Le mot de passe doit contenir au moins 6 caractères');
+                isValid = false;
+            } else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(newPassword.value)) {
+                showError('new_password', 'Le mot de passe doit contenir au moins une lettre et un chiffre');
                 isValid = false;
             }
             
-            if (!confirmPassword.checkValidity()) {
-                confirmPassword.reportValidity();
+           
+            const confirmPassword = document.getElementById('confirm_password');
+            if (!confirmPassword.value) {
+                showError('confirm_password', 'La confirmation du mot de passe est requise');
                 isValid = false;
-            }
-            
-            // Validation de la correspondance des mots de passe
-            if (newPassword.value !== confirmPassword.value) {
-                alert('Les mots de passe ne correspondent pas');
-                confirmPassword.focus();
+            } else if (newPassword.value !== confirmPassword.value) {
+                showError('confirm_password', 'Les mots de passe ne correspondent pas');
                 isValid = false;
             }
             
             return isValid;
         }
 
-        // Toggle password visibility
+    
+        function showError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const errorElement = document.getElementById(fieldId + '-error');
+            
+            field.classList.remove('is-valid');
+            field.classList.add('is-invalid');
+            
+            if (errorElement) {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+        }
+
+        function clearErrors() {
+           
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.textContent = '';
+                el.style.display = 'none';
+            });
+            
+            
+            document.querySelectorAll('.form-control').forEach(el => {
+                el.classList.remove('is-valid', 'is-invalid');
+            });
+        }
+
+      
+        document.querySelectorAll('#profileForm .form-control').forEach(input => {
+            input.addEventListener('blur', function() {
+                validateField(this);
+            });
+            
+            input.addEventListener('input', function() {
+               
+                const errorElement = document.getElementById(this.id + '-error');
+                if (errorElement) {
+                    errorElement.textContent = '';
+                    errorElement.style.display = 'none';
+                }
+                this.classList.remove('is-invalid');
+            });
+        });
+
+        function validateField(field) {
+            const value = field.value.trim();
+            const fieldId = field.id;
+            
+            switch(fieldId) {
+                case 'prenom':
+                    if (!value) {
+                        showError(fieldId, 'Le prénom est requis');
+                    } else if (value.length < 2) {
+                        showError(fieldId, 'Le prénom doit contenir au moins 2 caractères');
+                    } else if (!/^[a-zA-ZÀ-ÿ\s\-']+$/.test(value)) {
+                        showError(fieldId, 'Le prénom ne peut contenir que des lettres, espaces, tirets et apostrophes');
+                    } else {
+                        field.classList.remove('is-invalid');
+                        field.classList.add('is-valid');
+                    }
+                    break;
+                    
+                case 'nom':
+                    if (!value) {
+                        showError(fieldId, 'Le nom est requis');
+                    } else if (value.length < 2) {
+                        showError(fieldId, 'Le nom doit contenir au moins 2 caractères');
+                    } else if (!/^[a-zA-ZÀ-ÿ\s\-']+$/.test(value)) {
+                        showError(fieldId, 'Le nom ne peut contenir que des lettres, espaces, tirets et apostrophes');
+                    } else {
+                        field.classList.remove('is-invalid');
+                        field.classList.add('is-valid');
+                    }
+                    break;
+                    
+                case 'email':
+                    if (!value) {
+                        showError(fieldId, 'L\'email est requis');
+                    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                        showError(fieldId, 'Format d\'email invalide');
+                    } else {
+                        field.classList.remove('is-invalid');
+                        field.classList.add('is-valid');
+                    }
+                    break;
+                    
+                case 'dateNaissance':
+                    if (value) {
+                        const selectedDate = new Date(value);
+                        const today = new Date();
+                        if (selectedDate > today) {
+                            showError(fieldId, 'La date de naissance ne peut pas être dans le futur');
+                        } else {
+                            field.classList.remove('is-invalid');
+                            field.classList.add('is-valid');
+                        }
+                    }
+                    break;
+                    
+                case 'adresse':
+                    if (value && value.length > 500) {
+                        showError(fieldId, 'L\'adresse ne peut pas dépasser 500 caractères');
+                    } else if (value) {
+                        field.classList.remove('is-invalid');
+                        field.classList.add('is-valid');
+                    }
+                    break;
+            }
+        }
+
+        
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
             const icon = input.nextElementSibling.querySelector('i');
@@ -1916,45 +1766,8 @@ function getInitials($user) {
             }
         }
 
-        // Mobile menu toggle
-        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('mobile-open');
-        });
-
-        // Activer les dropdowns de Bootstrap
-        var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'))
-        var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
-            return new bootstrap.Dropdown(dropdownToggleEl)
-        });
-        
-        // Activer les tabs de Bootstrap
-        var tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]')
-        tabEls.forEach(function (tabEl) {
-            var tab = new bootstrap.Tab(tabEl);
-        });
-        
-        // Confirmation de déconnexion
-        document.querySelectorAll('a[href*="logout"]').forEach(link => {
-            link.addEventListener('click', function(e) {
-                if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                    e.preventDefault();
-                }
-            });
-        });
-
-        // Auto-dismiss alerts
-        setTimeout(() => {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            });
-        }, 5000);
-
-        // Animation au chargement
         document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.card');
+            const cards = document.querySelectorAll('.dashboard-card');
             cards.forEach((card, index) => {
                 card.style.opacity = '0';
                 card.style.transform = 'translateY(30px)';
@@ -1965,15 +1778,420 @@ function getInitials($user) {
                     card.style.transform = 'translateY(0)';
                 }, 300 + (index * 100));
             });
-            
-            // Animate progress bar
-            const progressBar = document.querySelector('.progress-bar');
-            if (progressBar) {
-                setTimeout(() => {
-                    progressBar.style.width = progressBar.getAttribute('aria-valuenow') + '%';
-                }, 500);
-            }
+        });
+
+     
+        document.querySelectorAll('a[href*="logout"]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                    e.preventDefault();
+                }
+            });
         });
     </script>
+    <script>
+
+function validatePasswordForm() {
+    let isValid = true;
+    
+    const currentPassword = document.getElementById('current_password').value.trim();
+    const newPassword = document.getElementById('new_password').value.trim();
+    const confirmPassword = document.getElementById('confirm_password').value.trim();
+    
+    clearPasswordErrors();
+    
+    if (!currentPassword) {
+        showPasswordError('current_password', 'Le mot de passe actuel est requis');
+        isValid = false;
+    }
+    
+    if (!newPassword) {
+        showPasswordError('new_password', 'Le nouveau mot de passe est requis');
+        isValid = false;
+    } else if (newPassword.length < 6) {
+        showPasswordError('new_password', 'Le mot de passe doit contenir au moins 6 caractères');
+        isValid = false;
+    } else if (!containsLetterAndNumber(newPassword)) {
+        showPasswordError('new_password', 'Le mot de passe doit contenir au moins une lettre et un chiffre');
+        isValid = false;
+    } else if (containsSpecialChars(newPassword)) {
+        showPasswordError('new_password', 'Le mot de passe ne doit pas contenir de caractères spéciaux');
+        isValid = false;
+    }
+    
+    if (!confirmPassword) {
+        showPasswordError('confirm_password', 'La confirmation du mot de passe est requise');
+        isValid = false;
+    } else if (newPassword !== confirmPassword) {
+        showPasswordError('confirm_password', 'Les mots de passe ne correspondent pas');
+        isValid = false;
+    }
+    
+    if (isValid) {
+        return true;
+    }
+    
+    return false;
+}
+
+function containsLetterAndNumber(str) {
+    const hasLetter = /[a-zA-Z]/.test(str);
+    const hasNumber = /\d/.test(str);
+    return hasLetter && hasNumber;
+}
+
+function containsSpecialChars(str) {
+    const specialChars = /[`!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/;
+    return specialChars.test(str);
+}
+
+
+function showPasswordError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    const errorElement = document.getElementById(fieldId + '-error');
+    
+    
+    field.classList.remove('is-valid');
+    field.classList.add('is-invalid');
+    
+    
+    if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+    }
+    
+    if (fieldId === 'current_password') {
+        field.focus();
+    }
+}
+
+function clearPasswordErrors() {
+    
+    document.querySelectorAll('#passwordForm .error-message').forEach(el => {
+        el.textContent = '';
+        el.style.display = 'none';
+    });
+    
+    document.querySelectorAll('#passwordForm .form-control').forEach(el => {
+        el.classList.remove('is-valid', 'is-invalid');
+    });
+}
+
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const icon = input.parentElement.querySelector('.password-toggle i');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+   
+    const passwordForm = document.getElementById('passwordForm');
+    if (passwordForm) {
+        
+        const passwordFields = passwordForm.querySelectorAll('.form-control');
+        
+        passwordFields.forEach(field => {
+            field.addEventListener('input', function() {
+                validatePasswordField(this);
+            });
+            
+            field.addEventListener('blur', function() {
+                validatePasswordField(this);
+            });
+        });
+    }
+});
+
+function validatePasswordField(field) {
+    const fieldId = field.id;
+    const value = field.value.trim();
+    const errorElement = document.getElementById(fieldId + '-error');
+    
+    if (errorElement) {
+        errorElement.textContent = '';
+        errorElement.style.display = 'none';
+    }
+    
+    switch(fieldId) {
+        case 'current_password':
+            if (!value) {
+                showPasswordError(fieldId, 'Le mot de passe actuel est requis');
+            } else {
+                field.classList.remove('is-invalid');
+                field.classList.add('is-valid');
+            }
+            break;
+            
+        case 'new_password':
+            if (!value) {
+                showPasswordError(fieldId, 'Le nouveau mot de passe est requis');
+            } else if (value.length < 6) {
+                showPasswordError(fieldId, 'Le mot de passe doit contenir au moins 6 caractères');
+            } else if (!containsLetterAndNumber(value)) {
+                showPasswordError(fieldId, 'Le mot de passe doit contenir au moins une lettre et un chiffre');
+            } else if (containsSpecialChars(value)) {
+                showPasswordError(fieldId, 'Le mot de passe ne doit pas contenir de caractères spéciaux');
+            } else {
+                field.classList.remove('is-invalid');
+                field.classList.add('is-valid');
+            }
+            break;
+            
+        case 'confirm_password':
+            const newPasswordValue = document.getElementById('new_password').value.trim();
+            if (!value) {
+                showPasswordError(fieldId, 'La confirmation du mot de passe est requise');
+            } else if (value !== newPasswordValue) {
+                showPasswordError(fieldId, 'Les mots de passe ne correspondent pas');
+            } else {
+                field.classList.remove('is-invalid');
+                field.classList.add('is-valid');
+            }
+            break;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordForm = document.getElementById('passwordForm');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', function(e) {
+            if (!validatePasswordForm()) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const errorFields = passwordForm.querySelectorAll('.is-invalid');
+                if (errorFields.length > 0) {
+                    const firstErrorField = errorFields[0];
+                    firstErrorField.focus();
+                    
+                    setTimeout(() => {
+                        if (passwordForm.querySelectorAll('.is-invalid').length > 0) {
+                            alert('Veuillez corriger les erreurs dans le formulaire avant de soumettre.');
+                        }
+                    }, 100);
+                }
+            }
+        });
+    }
+});
+
+function checkPasswordStrength(password) {
+    let strength = 0;
+    let feedback = '';
+    
+    
+    if (password.length >= 8) strength += 1;
+    
+  
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 1;
+    
+    
+    if (/\d/.test(password)) strength += 1;
+    
+    
+    switch(strength) {
+        case 0:
+        case 1:
+            feedback = 'Faible';
+            break;
+        case 2:
+            feedback = 'Moyen';
+            break;
+        case 3:
+            feedback = 'Fort';
+            break;
+    }
+    
+    return {
+        strength: strength,
+        feedback: feedback
+    };
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const newPasswordField = document.getElementById('new_password');
+    if (newPasswordField) {
+        
+        const strengthIndicator = document.createElement('div');
+        strengthIndicator.id = 'password-strength';
+        strengthIndicator.style.fontSize = '12px';
+        strengthIndicator.style.marginTop = '5px';
+        
+        newPasswordField.parentNode.appendChild(strengthIndicator);
+        
+        newPasswordField.addEventListener('input', function() {
+            const password = this.value;
+            const strength = checkPasswordStrength(password);
+            
+            strengthIndicator.textContent = `Force du mot de passe: ${strength.feedback}`;
+            
+            switch(strength.strength) {
+                case 0:
+                case 1:
+                    strengthIndicator.style.color = '#ef4444'; 
+                    break;
+                case 2:
+                    strengthIndicator.style.color = '#f59e0b'; 
+                    break;
+                case 3:
+                    strengthIndicator.style.color = '#22c55e'; 
+                    break;
+            }
+        });
+    }
+});
+</script>
+
+
+<div id="ia-chatbot-btn" class="ia-chatbot-btn">
+    💬
+</div>
+
+
+<div id="ia-chatbot-box" class="ia-chatbot-box">
+    <div class="ia-chatbot-header">
+        <span>Assistant IA</span>
+        <button id="ia-close-btn" class="close-btn">×</button>
+    </div>
+    <div id="ia-chatbot-messages" class="ia-chatbot-messages"></div>
+
+    <div class="ia-chatbot-input">
+        <input type="text" id="ia-user-input" placeholder="Pose ta question..." />
+        <button id="ia-send-btn">Envoyer</button>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    const btn = document.getElementById("ia-chatbot-btn");
+    const box = document.getElementById("ia-chatbot-box");
+    const closeBtn = document.getElementById("ia-close-btn");
+    const sendBtn = document.getElementById("ia-send-btn");
+    const input = document.getElementById("ia-user-input");
+    const messages = document.getElementById("ia-chatbot-messages");
+
+    if (!btn || !box || !closeBtn || !sendBtn || !input || !messages) {
+        console.error("Un ou plusieurs éléments du chatbot sont manquants");
+        return;
+    }
+
+    btn.onclick = () => {
+        box.style.display = "flex";
+        input.focus();
+    };
+
+    
+    closeBtn.onclick = () => {
+        box.style.display = "none";
+    };
+
+    sendBtn.onclick = sendMessage;
+
+    input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+            sendMessage();
+        }
+    });
+
+    function sendMessage() {
+        const text = input.value.trim();
+
+        if (text === "") return;
+
+        addUserMessage(text);
+        input.value = "";
+
+        showTypingIndicator();
+
+        fetch("http://localhost/projet/controllers/chatbot_api.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ message: text })
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Erreur réseau');
+            }
+            return res.json();
+        })
+        .then(data => {
+           
+            removeTypingIndicator();
+          
+            if (data.reply) {
+                addBotMessage(data.reply);
+            } else {
+                addBotMessage("Je n'ai pas reçu de réponse valide.");
+            }
+        })
+        .catch(err => {
+            removeTypingIndicator();
+            addBotMessage("Désolé, une erreur s'est produite. Veuillez réessayer.");
+            console.error(err);
+        });
+    }
+
+    function addUserMessage(text) {
+        const msgDiv = document.createElement('div');
+        msgDiv.classList.add('ia-chatbot-message', 'user');
+        msgDiv.innerHTML = `<b>Vous :</b> ${escapeHtml(text)}`;
+        messages.appendChild(msgDiv);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    function addBotMessage(message) {
+        const msgDiv = document.createElement('div');
+        msgDiv.classList.add('ia-chatbot-message', 'bot');
+        msgDiv.innerHTML = `<b>IA :</b> ${escapeHtml(message)}`;
+        messages.appendChild(msgDiv);
+        messages.scrollTop = messages.scrollHeight;
+
+       
+    }
+
+    function showTypingIndicator() {
+        const typingDiv = document.createElement('div');
+        typingDiv.id = 'typing-indicator';
+        typingDiv.classList.add('ia-chatbot-message', 'bot');
+        typingDiv.innerHTML = `<b>IA :</b> <span class="typing-dots">...</span>`;
+        messages.appendChild(typingDiv);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+   
+    function speak(text) {
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'fr-FR';
+            speechSynthesis.speak(utterance);
+        }
+    }
+});
+</script>
 </body>
 </html>

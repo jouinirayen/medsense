@@ -1,9 +1,9 @@
 <?php
 require_once __DIR__ . '/../models/Utilisateur.php';
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../phpmailer/src/PHPMailer.php';
-require_once __DIR__ . '/../phpmailer/src/SMTP.php';
-require_once __DIR__ . '/../phpmailer/src/Exception.php';
+require_once __DIR__ . '/../models/phpmailer/src/PHPMailer.php';
+require_once __DIR__ . '/../models/phpmailer/src/SMTP.php';
+require_once __DIR__ . '/../models/phpmailer/src/Exception.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -155,7 +155,7 @@ private function getResetEmailTemplate($userName, $resetLink) {
             ");
             $update->execute([$hashedPassword, $userId]);
 
-            // Mail confirmation
+            
             $this->sendConfirmationEmail($user['email'], $user['prenom'] . ' ' . $user['nom']);
 
             return ["success" => true, "message" => "Mot de passe réinitialisé. Email de confirmation envoyé."];

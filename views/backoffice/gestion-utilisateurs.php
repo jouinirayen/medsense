@@ -1,40 +1,33 @@
 <?php
 declare(strict_types=1);
 
-// Démarrage sécurisé de session
 if (session_status() === PHP_SESSION_NONE) {
     session_start([
-        'cookie_secure' => false, // Mettre à true en production avec HTTPS
+        'cookie_secure' => false, 
         'cookie_httponly' => true,
         'cookie_samesite' => 'Strict'
     ]);
 }
 
-// Vérification des permissions
 if (!isset($_SESSION['user_role'], $_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     header('Location: ../frontoffice/auth/sign-in.php');
     exit;
 }
 
-// Inclure le contrôleur
 require_once __DIR__ . '../../controllers/AdminController.php';
 
-// Fonction d'échappement
 function e(string $string): string {
     return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
 }
 
-// Fonction pour vérifier l'URL
 function isActivePage(string $page): string {
     $currentPage = basename($_SERVER['PHP_SELF']);
     return $currentPage === $page ? 'active' : '';
 }
 
-// Initialisation du contrôleur
 try {
     $adminController = new AdminController();
     
-    // Récupération des filtres
     $search = $_GET['search'] ?? '';
     $role_filter = $_GET['role'] ?? '';
     $statut_filter = $_GET['statut'] ?? '';
@@ -44,12 +37,10 @@ try {
     if ($role_filter) $filters['role'] = $role_filter;
     if ($statut_filter) $filters['statut'] = $statut_filter;
     
-    // Récupération des utilisateurs
     $usersResult = $adminController->getAllUsers($filters);
     $allUsers = $usersResult['success'] ? $usersResult['users'] : [];
     $totalUsers = count($allUsers);
     
-    // Statistiques
     $stats = [
         'total' => $totalUsers,
         'actifs' => count(array_filter($allUsers, fn($u) => $u['statut'] === 'actif')),
@@ -69,24 +60,18 @@ try {
     ];
 }
 
-// Messages de session
 $success_message = $_SESSION['success_message'] ?? null;
 $error_message = $_SESSION['error_message'] ?? null;
 unset($_SESSION['success_message'], $_SESSION['error_message']);
 
-// Récupération des données de session sécurisées
 $userFullName = isset($_SESSION['user_prenom'], $_SESSION['user_nom']) 
     ? e($_SESSION['user_prenom'] . ' ' . $_SESSION['user_nom'])
     : 'Administrateur';
 
-// Génération de token CSRF
 $csrfToken = bin2hex(random_bytes(32));
 $_SESSION['csrf_token'] = $csrfToken;
 
-// Définition des variables pour le template
 $pageTitle = "Gestion des Utilisateurs";
-
-// URLs
 $logoutUrl = '../../controllers/logout.php?csrf=' . $csrfToken;
 $profileUrl = '../../frontoffice/auth/profile.php';
 $siteUrl = '../../frontoffice/home/index.php';
@@ -103,228 +88,15 @@ $editUserUrl = 'admin-edit-user.php';
     <meta name="description" content="Gestion des utilisateurs - Tableau de bord administrateur">
     <meta name="csrf-token" content="<?= e($csrfToken) ?>">
     <title><?= e($pageTitle) ?> | Système Médical</title>
-    
-    <!-- Bootstrap 5 CSS -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome -->
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Styles personnalisés -->
-    <style>
-        :root {
-            --primary-color: #4e73df;
-            --success-color: #1cc88a;
-            --info-color: #36b9cc;
-            --warning-color: #f6c23e;
-            --danger-color: #e74a3b;
-            --dark-color: #5a5c69;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fc;
-        }
-        
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 250px;
-            background: linear-gradient(180deg, var(--primary-color) 0%, #224abe 100%);
-            color: white;
-            padding-top: 20px;
-            z-index: 1000;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-        }
-        
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            min-height: 100vh;
-        }
-        
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-            }
-            .main-content {
-                margin-left: 0;
-            }
-        }
-        
-        .sidebar .logo {
-            padding: 0 20px 30px;
-            text-align: center;
-        }
-        
-        .sidebar .nav-link {
-            color: rgba(255,255,255,.8);
-            padding: 12px 20px;
-            margin: 2px 0;
-            border-radius: 0;
-            transition: all 0.3s;
-        }
-        
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            color: white;
-            background-color: rgba(255,255,255,.1);
-            border-left: 4px solid white;
-        }
-        
-        .sidebar .nav-link i {
-            width: 20px;
-            margin-right: 10px;
-        }
-        
-        .stat-card {
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-            transition: transform 0.3s;
-            border-left: 4px solid;
-            height: 100%;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .stat-card.total { border-left-color: var(--primary-color); }
-        .stat-card.actif { border-left-color: var(--success-color); }
-        .stat-card.inactif { border-left-color: var(--warning-color); }
-        .stat-card.admin { border-left-color: var(--danger-color); }
-        .stat-card.medecin { border-left-color: var(--info-color); }
-        .stat-card.patient { border-left-color: #6f42c1; }
-        
-        .stat-icon {
-            font-size: 1.5rem;
-            color: #dddfeb;
-            margin-bottom: 10px;
-        }
-        
-        .stat-number {
-            font-size: 1.5rem;
-            font-weight: 700;
-            line-height: 1;
-        }
-        
-        .stat-label {
-            font-size: 0.8rem;
-            color: #858796;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-        
-        .section-title {
-            color: var(--dark-color);
-            font-weight: 600;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #eaecf4;
-        }
-        
-        .table th {
-            font-weight: 600;
-            color: var(--dark-color);
-            border-top: none;
-        }
-        
-        .badge-admin {
-            background-color: var(--danger-color);
-            color: white;
-        }
-        
-        .badge-medecin {
-            background-color: var(--info-color);
-            color: white;
-        }
-        
-        .badge-patient {
-            background-color: var(--warning-color);
-            color: #000;
-        }
-        
-        .badge-actif {
-            background-color: var(--success-color);
-            color: white;
-        }
-        
-        .badge-inactif {
-            background-color: var(--warning-color);
-            color: #000;
-        }
-        
-        .top-bar {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            background: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-        
-        .filter-active {
-            background-color: rgba(78, 115, 223, 0.05);
-            border-left: 4px solid var(--primary-color);
-        }
-        
-        .user-avatar-small {
-            width: 35px;
-            height: 35px;
-            background: linear-gradient(135deg, var(--primary-color) 0%, #224abe 100%);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        
-        .actions-column {
-            min-width: 180px;
-        }
-        
-        .role-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.35rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            gap: 5px;
-        }
-        
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.35rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            gap: 5px;
-        }
-    </style>
+ 
+   
 </head>
 <body>
-    <!-- Sidebar Navigation -->
+    
     <div class="sidebar d-none d-md-block">
         <div class="logo">
             <h4 class="mb-0">
@@ -355,7 +127,7 @@ $editUserUrl = 'admin-edit-user.php';
         </nav>
     </div>
 
-    <!-- Mobile Navigation -->
+ 
     <nav class="navbar navbar-dark bg-primary d-md-none">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
@@ -367,7 +139,7 @@ $editUserUrl = 'admin-edit-user.php';
         </div>
     </nav>
 
-    <!-- Mobile Sidebar Offcanvas -->
+    
     <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar">
         <div class="offcanvas-header bg-primary text-white">
             <h5 class="offcanvas-title">Menu Administrateur</h5>
@@ -394,9 +166,8 @@ $editUserUrl = 'admin-edit-user.php';
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
-        <!-- Top Bar -->
+     
         <div class="top-bar">
             <div class="row align-items-center">
                 <div class="col-md-6">
@@ -432,7 +203,7 @@ $editUserUrl = 'admin-edit-user.php';
             </div>
         </div>
 
-        <!-- Messages d'alerte -->
+       
         <?php if (isset($success_message)): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="fas fa-check-circle me-2"></i>
@@ -449,7 +220,7 @@ $editUserUrl = 'admin-edit-user.php';
             </div>
         <?php endif; ?>
 
-        <!-- Statistiques -->
+       
         <div class="row mb-4">
             <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
                 <div class="stat-card total">
@@ -512,7 +283,6 @@ $editUserUrl = 'admin-edit-user.php';
             </div>
         </div>
 
-        <!-- Filtres -->
         <div class="card mb-4 <?= ($search || $role_filter || $statut_filter) ? 'filter-active' : '' ?>">
             <div class="card-header">
                 <h5 class="mb-0">
@@ -563,8 +333,6 @@ $editUserUrl = 'admin-edit-user.php';
                 </form>
             </div>
         </div>
-
-        <!-- Actions et tableau -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
@@ -689,8 +457,6 @@ $editUserUrl = 'admin-edit-user.php';
                 <?php endif; ?>
             </div>
         </div>
-
-        <!-- Actions supplémentaires -->
         <div class="row mb-4">
             <div class="col-md-4 mb-3">
                 <div class="card h-100">
@@ -730,7 +496,7 @@ $editUserUrl = 'admin-edit-user.php';
             </div>
         </div>
 
-        <!-- Navigation -->
+ 
         <div class="d-flex justify-content-between mt-4">
             <a href="<?= e($dashboardUrl) ?>" class="btn btn-secondary">
                 <i class="fas fa-arrow-left me-2"></i> Retour au tableau de bord
@@ -739,8 +505,6 @@ $editUserUrl = 'admin-edit-user.php';
                 <i class="fas fa-home me-2"></i> Retour au site
             </a>
         </div>
-
-        <!-- Pied de page -->
         <footer class="mt-5 pt-4 border-top">
             <div class="row">
                 <div class="col-md-6">
@@ -758,15 +522,14 @@ $editUserUrl = 'admin-edit-user.php';
         </footer>
     </div>
 
-    <!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Scripts personnalisés -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        // Configuration CSRF
+    
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
         
-        // Mise à jour de l'heure
+  
         function updateTime() {
             const now = new Date();
             const timeString = now.toLocaleTimeString('fr-FR', {
@@ -783,7 +546,7 @@ $editUserUrl = 'admin-edit-user.php';
         updateTime();
         setInterval(updateTime, 1000);
         
-        // Confirmation de déconnexion
+    
         function confirmLogout(event) {
             event.preventDefault();
             if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
@@ -792,7 +555,7 @@ $editUserUrl = 'admin-edit-user.php';
             }
         }
         
-        // Exporter les utilisateurs
+ 
         function exportUsers() {
             const search = '<?= e($search) ?>';
             const role = '<?= e($role_filter) ?>';
@@ -806,7 +569,6 @@ $editUserUrl = 'admin-edit-user.php';
             window.location.href = url;
         }
         
-        // Auto-dismiss alerts
         setTimeout(() => {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {
@@ -815,19 +577,16 @@ $editUserUrl = 'admin-edit-user.php';
             });
         }, 5000);
         
-        // Gestion des filtres
         document.addEventListener('DOMContentLoaded', function() {
             const filterForm = document.getElementById('filterForm');
             const inputs = filterForm.querySelectorAll('input, select');
             
-            // Réinitialiser avec Escape
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     window.location.href = 'gestion-utilisateurs.php';
                 }
             });
             
-            // Indicateurs visuels
             inputs.forEach(input => {
                 if (input.value) {
                     input.classList.add('border-primary', 'border-2');

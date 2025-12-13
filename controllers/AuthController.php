@@ -9,10 +9,9 @@ class AuthController {
         $this->pdo = config::getConnexion();
     }
 
-   
     public function register($userData): array {
         try {
-           
+            
             $errors = $this->validateRegistrationData($userData);
             if (!empty($errors)) {
                 return ["success" => false, "message" => "Données invalides", "errors" => $errors];
@@ -31,31 +30,52 @@ class AuthController {
                 $userData['dateNaissance'] ?? '',
                 $userData['adresse'] ?? '',
                 $userData['role'] ?? 'patient',
-                $userData['statut'] ?? 'actif',
-                $userData['diplome_path'] ?? null
+                $userData['statut'] ?? 'en_attente', 
+                $userData['diplome_path'] ?? null,
+                null, 
+                null,
+                null, 
+                null, 
+                null, 
+                null, 
+                null, 
+                null,
+                null, 
+                null,
+                null, 
+                0,    
+                0,    
+                $userData['langues'] ?? null,
+                null,
+                $userData['experience'] ?? null,
+                null, 
+                null  
             );
 
-            
+         
+            if (($userData['role'] ?? 'patient') === 'medecin') {
+                $user->setStatut('en_attente');
+            }
+
             error_log("DEBUG - Mot de passe après création utilisateur:");
             error_log("  - Original: " . $userData['mot_de_passe']);
             error_log("  - Hashé: " . $user->getMotDePasse());
             error_log("  - Longueur hash: " . strlen($user->getMotDePasse()));
 
-           
+         
             if ($this->saveUser($user)) {
-               
+             
                 $freshUser = $this->findUserByEmail($userData['email']);
                 
                 if (!$freshUser) {
                     return ["success" => false, "message" => "Compte créé mais impossible de récupérer les données"];
                 }
                 
-              
                 error_log("DEBUG - Utilisateur récupéré de la base:");
                 error_log("  - Email: " . $freshUser->getEmail());
                 error_log("  - Hash en base: " . substr($freshUser->getMotDePasse(), 0, 20) . "...");
                 
-               
+                
                 return $this->performAutoLogin($freshUser, $userData['mot_de_passe']);
             }
 
@@ -68,11 +88,7 @@ class AuthController {
 
     private function performAutoLogin(Utilisateur $user, $plainPassword): array {
         try {
-           
             error_log("DEBUG - Auto-login pour: " . $user->getEmail());
-            error_log("  - Mot de passe fourni: " . $plainPassword);
-            error_log("  - Hash stocké: " . substr($user->getMotDePasse(), 0, 20) . "...");
-            
             
             if (!password_verify($plainPassword, $user->getMotDePasse())) {
                 error_log("DEBUG - password_verify ÉCHEC!");
@@ -87,7 +103,7 @@ class AuthController {
             
             error_log("DEBUG - password_verify SUCCÈS!");
             
-            
+          
             if ($user->getStatut() !== 'actif') {
                 if ($user->getStatut() === 'en_attente') {
                     return [
@@ -105,7 +121,6 @@ class AuthController {
                 ];
             }
 
-            
             $this->startUserSession($user);
 
             return [
@@ -131,7 +146,6 @@ class AuthController {
         }
     }
 
-  
     public function login($email, $password): array {
         try {
             error_log("DEBUG - Tentative de login pour: " . $email);
@@ -144,9 +158,8 @@ class AuthController {
             }
             
             error_log("DEBUG - Utilisateur trouvé, vérification mot de passe...");
-            error_log("  - Hash stocké: " . substr($user->getMotDePasse(), 0, 20) . "...");
             
-           
+        
             if (!password_verify($password, $user->getMotDePasse())) {
                 error_log("DEBUG - password_verify ÉCHEC pour: " . $email);
                 return ["success" => false, "message" => "Email ou mot de passe incorrect"];
@@ -154,7 +167,7 @@ class AuthController {
             
             error_log("DEBUG - password_verify SUCCÈS pour: " . $email);
             
-           
+        
             if ($user->getStatut() !== 'actif') {
                 if ($user->getStatut() === 'en_attente') {
                     return ["success" => false, "message" => "Votre compte est en attente d'activation par l'administrateur"];
@@ -162,7 +175,7 @@ class AuthController {
                 return ["success" => false, "message" => "Votre compte est désactivé"];
             }
 
-            
+          
             $this->startUserSession($user);
 
             return [
@@ -183,7 +196,6 @@ class AuthController {
         }
     }
 
-    
     public function logout(): array {
         $this->destroySession();
         return ["success" => true, "message" => "Déconnexion réussie"];
@@ -242,7 +254,6 @@ class AuthController {
         return isset($_SESSION['user_id']);
     }
 
-   
     public function hasRole($role): bool {
         if (!$this->isLoggedIn()) return false;
         return isset($_SESSION['user_role']) && $_SESSION['user_role'] === $role;
@@ -267,11 +278,21 @@ class AuthController {
         }
     }
 
-    
     private function saveUser(Utilisateur $user): bool {
         try {
-            $query = "INSERT INTO utilisateur (nom, prenom, email, mot_de_passe, dateNaissance, adresse, role, statut, diplome_path) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $query = "INSERT INTO utilisateur (
+                nom, prenom, email, mot_de_passe, dateNaissance, adresse, 
+                role, statut, diplome_path, bio, idService, heure1_debut, 
+                heure1_fin, heure2_debut, heure2_fin, heure3_debut, 
+                heure3_fin, heure4_debut, heure4_fin, image, note_globale, 
+                nb_avis, langues, prix_consultation, experience, username, 
+                specialite, date_inscription, reset_token, reset_token_expires, 
+                historique_connexions, diplome_statut, diplome_commentaire, 
+                diplome_date_verification, derniere_connexion
+            ) VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )";
             
             $stmt = $this->pdo->prepare($query);
             
@@ -279,12 +300,38 @@ class AuthController {
                 $user->getNom(),
                 $user->getPrenom(),
                 $user->getEmail(),
-                $user->getMotDePasse(), // Déjà hashé par le modèle
+                $user->getMotDePasse(),
                 $user->getDateNaissance(),
                 $user->getAdresse(),
                 $user->getRole(),
                 $user->getStatut(),
-                $user->getDiplomePath()
+                $user->getDiplomePath(),
+                $user->getBio(),
+                $user->getIdService(),
+                $user->getHeure1Debut(),
+                $user->getHeure1Fin(),
+                $user->getHeure2Debut(),
+                $user->getHeure2Fin(),
+                $user->getHeure3Debut(),
+                $user->getHeure3Fin(),
+                $user->getHeure4Debut(),
+                $user->getHeure4Fin(),
+                $user->getImage(),
+                $user->getNoteGlobale(),
+                $user->getNbAvis(),
+                $user->getLangues(),
+                $user->getPrixConsultation(),
+                $user->getExperience(),
+                $user->getUsername(),
+                $user->getSpecialite(),
+                $user->getDateInscription(),
+                $user->getResetToken(),
+                $user->getResetTokenExpires(),
+                $user->getHistoriqueConnexions(),
+                $user->getDiplomeStatut(),
+                $user->getDiplomeCommentaire(),
+                $user->getDiplomeDateVerification(),
+                $user->getDerniereConnexion()
             ]);
             
             if ($result) {
@@ -302,9 +349,6 @@ class AuthController {
         }
     }
 
-    /**
-     * Trouver un utilisateur par email
-     */
     private function findUserByEmail($email): ?Utilisateur {
         try {
             $query = "SELECT * FROM utilisateur WHERE email = ?";
@@ -325,9 +369,6 @@ class AuthController {
         }
     }
 
-    /**
-     * Trouver un utilisateur par ID
-     */
     private function findUserById($id): ?Utilisateur {
         try {
             $query = "SELECT * FROM utilisateur WHERE id_utilisateur = ?";
@@ -344,61 +385,55 @@ class AuthController {
         }
     }
 
-    /**
-     * Convertir une ligne DB en objet Utilisateur
-     */
-   /**
- * Convertir une ligne DB en objet Utilisateur
- */
-private function rowToUser($row): Utilisateur {
-    // Créer l'utilisateur avec le hash de la base
-    $user = new Utilisateur(
-        $row['nom'],
-        $row['prenom'],
-        $row['email'],
-        $row['mot_de_passe'], // Hash de la base
-        $row['dateNaissance'] ?? '',
-        $row['adresse'] ?? '',
-        $row['role'] ?? 'patient',
-        $row['statut'] ?? 'actif',
-        $row['diplome_path'] ?? null,
-        $row['specialite'] ?? null
-    );
+    private function rowToUser($row): Utilisateur {
+  
+        $user = new Utilisateur(
+            $row['nom'],
+            $row['prenom'],
+            $row['email'],
+            '',
+            $row['dateNaissance'] ?? '',
+            $row['adresse'] ?? '',
+            $row['role'] ?? 'patient',
+            $row['statut'] ?? 'en_attente',
+            $row['diplome_path'] ?? null,
+            $row['bio'] ?? null,
+            $row['idService'] ?? null,
+            $row['heure1_debut'] ?? null,
+            $row['heure1_fin'] ?? null,
+            $row['heure2_debut'] ?? null,
+            $row['heure2_fin'] ?? null,
+            $row['heure3_debut'] ?? null,
+            $row['heure3_fin'] ?? null,
+            $row['heure4_debut'] ?? null,
+            $row['heure4_fin'] ?? null,
+            $row['image'] ?? null,
+            $row['note_globale'] ?? 0,
+            $row['nb_avis'] ?? 0,
+            $row['langues'] ?? null,
+            $row['prix_consultation'] ?? null,
+            $row['experience'] ?? null,
+            $row['username'] ?? null,
+            $row['specialite'] ?? null
+        );
+        
+     
+        $user->setId($row['id_utilisateur']);
     
-    $user->setId($row['id_utilisateur'])
-         ->setDateInscription($row['date_inscription'])
-         ->setPhotoProfil($row['photo_profil'] ?? null);
-    
-    // Ces champs n'existent plus dans votre modèle, commentez-les
-    // $user->setResetToken($row['reset_token'] ?? null)
-    //      ->setResetTokenExpires($row['reset_token_expires'] ?? null);
-    
-    // Ajoutez les nouveaux champs si présents dans la base
-    if (isset($row['diplome_statut'])) {
-        $user->setDiplomeStatut($row['diplome_statut']);
+        $user->setMotDePasse($row['mot_de_passe'], true);
+        
+        $user->setDateInscription($row['date_inscription'] ?? date('Y-m-d H:i:s'));
+        $user->setResetToken($row['reset_token'] ?? null);
+        $user->setResetTokenExpires($row['reset_token_expires'] ?? null);
+        $user->setHistoriqueConnexions($row['historique_connexions'] ?? null);
+        $user->setDiplomeStatut($row['diplome_statut'] ?? 'en attente');
+        $user->setDiplomeCommentaire($row['diplome_commentaire'] ?? null);
+        $user->setDiplomeDateVerification($row['diplome_date_verification'] ?? null);
+        $user->setDerniereConnexion($row['derniere_connexion'] ?? null);
+        
+        return $user;
     }
     
-    if (isset($row['diplome_commentaire'])) {
-        $user->setDiplomeCommentaire($row['diplome_commentaire']);
-    }
-    
-    if (isset($row['diplome_date_verification'])) {
-        $user->setDiplomeDateVerification($row['diplome_date_verification']);
-    }
-    
-    if (isset($row['specialite'])) {
-        $user->setSpecialite($row['specialite']);
-    }
-    
-    if (isset($row['derniere_connexion'])) {
-        $user->setDerniereConnexion($row['derniere_connexion']);
-    }
-    
-    return $user;
-}
-    /**
-     * Mettre à jour le statut d'un utilisateur
-     */
     private function updateUserStatus($userId, $status): bool {
         try {
             $query = "UPDATE utilisateur SET statut = ? WHERE id_utilisateur = ?";
@@ -410,9 +445,6 @@ private function rowToUser($row): Utilisateur {
         }
     }
 
-    /**
-     * Valider les données d'inscription
-     */
     private function validateRegistrationData($data): array {
         $errors = [];
 
@@ -446,9 +478,6 @@ private function rowToUser($row): Utilisateur {
         return $errors;
     }
 
-    /**
-     * Démarrer la session utilisateur
-     */
     private function startUserSession(Utilisateur $user): void {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -464,9 +493,6 @@ private function rowToUser($row): Utilisateur {
         error_log("DEBUG - Session démarrée pour: " . $user->getEmail());
     }
 
-    /**
-     * Détruire la session
-     */
     private function destroySession(): void {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -488,124 +514,9 @@ private function rowToUser($row): Utilisateur {
         
         error_log("DEBUG - Session détruite");
     }
+
     public function exportUsersPDF($filters = []) {
-    // Récupérer les utilisateurs avec les filtres
-    $usersResult = $this->manageUsers('list');
-    if (!$usersResult['success']) {
+      
         return false;
     }
-    $allUsers = $usersResult['users'];
-
-    // Appliquer les filtres (similaire à admin-users.php)
-    $users = $allUsers;
-    if (isset($filters['search']) || isset($filters['role']) || isset($filters['statut'])) {
-        $search = $filters['search'] ?? '';
-        $role_filter = $filters['role'] ?? '';
-        $statut_filter = $filters['statut'] ?? '';
-
-        $users = array_filter($allUsers, function($user) use ($search, $role_filter, $statut_filter) {
-            $match_search = true;
-            $match_role = true;
-            $match_statut = true;
-            
-            // Filtre de recherche
-            if ($search) {
-                $search_term = strtolower(trim($search));
-                $nom = strtolower($user['nom'] ?? '');
-                $prenom = strtolower($user['prenom'] ?? '');
-                $email = strtolower($user['email'] ?? '');
-                
-                $match_search = strpos($nom, $search_term) !== false ||
-                               strpos($prenom, $search_term) !== false ||
-                               strpos($email, $search_term) !== false;
-            }
-            
-            // Filtre par rôle
-            if ($role_filter) {
-                $match_role = ($user['role'] ?? '') === $role_filter;
-            }
-            
-            // Filtre par statut
-            if ($statut_filter) {
-                $match_statut = ($user['statut'] ?? '') === $statut_filter;
-            }
-            
-            return $match_search && $match_role && $match_statut;
-        });
-        
-        // Réindexer le tableau après filtrage
-        $users = array_values($users);
-    }
-
-    // Inclure TCPDF
-    require_once(ABSPATH . 'vendor/tecnickcom/tcpdf/tcpdf.php');
-    
-    // Créer un nouveau document PDF
-    $pdf = new TCPDF('L', PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-    
-    // Définir les informations du document
-    $pdf->SetCreator('Medsense Medical');
-    $pdf->SetAuthor('Medsense Medical');
-    $pdf->SetTitle('Liste des Utilisateurs');
-    $pdf->SetSubject('Export des utilisateurs');
-    
-    // Supprimer les en-têtes et pieds de page par défaut
-    $pdf->setPrintHeader(false);
-    $pdf->setPrintFooter(false);
-    
-    // Ajouter une page
-    $pdf->AddPage();
-    
-    // Définir le contenu du PDF
-    $html = '<h1>Liste des Utilisateurs</h1>';
-    $html .= '<p>Date d\'export : ' . date('d/m/Y H:i:s') . '</p>';
-    
-    // Ajouter les informations de filtrage si présentes
-    if (isset($filters['search']) && $filters['search']) {
-        $html .= '<p>Recherche : ' . htmlspecialchars($filters['search']) . '</p>';
-    }
-    if (isset($filters['role']) && $filters['role']) {
-        $html .= '<p>Rôle : ' . htmlspecialchars($filters['role']) . '</p>';
-    }
-    if (isset($filters['statut']) && $filters['statut']) {
-        $html .= '<p>Statut : ' . htmlspecialchars($filters['statut']) . '</p>';
-    }
-    
-    // Tableau des utilisateurs
-    $html .= '<table border="1" cellpadding="5" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nom</th>
-                        <th>Prénom</th>
-                        <th>Email</th>
-                        <th>Rôle</th>
-                        <th>Statut</th>
-                        <th>Date d\'inscription</th>
-                    </tr>
-                </thead>
-                <tbody>';
-    
-    foreach ($users as $user) {
-        $html .= '<tr>
-                    <td>' . $user['id_utilisateur'] . '</td>
-                    <td>' . htmlspecialchars($user['nom']) . '</td>
-                    <td>' . htmlspecialchars($user['prenom']) . '</td>
-                    <td>' . htmlspecialchars($user['email']) . '</td>
-                    <td>' . htmlspecialchars($user['role']) . '</td>
-                    <td>' . htmlspecialchars($user['statut']) . '</td>
-                    <td>' . date('d/m/Y', strtotime($user['date_inscription'])) . '</td>
-                </tr>';
-    }
-    
-    $html .= '</tbody></table>';
-    
-    // Écrire le contenu HTML
-    $pdf->writeHTML($html, true, false, true, false, '');
-    
-    // Générer le PDF et le télécharger
-    $pdf->Output('utilisateurs_export_' . date('Y-m-d_H-i-s') . '.pdf', 'D');
-    return true;
 }
-}
-?>

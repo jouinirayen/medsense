@@ -9,15 +9,13 @@ class ProfileController {
 
     public function __construct() {
         $this->pdo = config::getConnexion();
-        
-         $this->uploadDir = __DIR__ . '/../../uploads/profils/';
-        $this->webUploadPath = '/uploads/profils/';
+      
+        $this->uploadDir = __DIR__ . '/../../uploads/profiles/';
+        $this->webUploadPath = '/uploads/profiles/';
         $this->ensureUploadDirExists();  
     }
-
     
-    private function ensureUploadDirExists() {  // NOM CORRECT
-        // Créer le dossier s'il n'existe pas
+    private function ensureUploadDirExists() {  
         if (!is_dir($this->uploadDir)) {
             if (!mkdir($this->uploadDir, 0755, true)) {
                 error_log("Erreur: Impossible de créer le dossier " . $this->uploadDir);
@@ -27,14 +25,12 @@ class ProfileController {
         } else {
             error_log("Dossier existe déjà: " . $this->uploadDir);
         }
-        
-        // Créer un fichier index.html pour la sécurité
+       
         $indexFile = $this->uploadDir . 'index.html';
         if (!file_exists($indexFile)) {
             file_put_contents($indexFile, '<!DOCTYPE html><html><head><title>403 Forbidden</title></head><body><h1>Forbidden</h1><p>You don\'t have permission to access this resource.</p></body></html>');
         }
         
-        // .htaccess pour Apache (optionnel sur XAMPP)
         $htaccessPath = $this->uploadDir . '.htaccess';
         if (!file_exists($htaccessPath)) {
             $htaccessContent = "Order deny,allow\nDeny from all\n<Files ~ \"\\.(jpeg|jpg|png|gif|webp)$\">\nAllow from all\n</Files>";
@@ -42,12 +38,8 @@ class ProfileController {
         }
     }
 
-    /**
-     * Met à jour le profil d'un utilisateur
-     */
     public function updateProfile($user_id, array $data): array {
         try {
-            // Validation des données requises
             if (!$this->validateRequiredFields($data, ['nom', 'prenom', 'email'])) {
                 return [
                     "success" => false, 
@@ -55,7 +47,6 @@ class ProfileController {
                 ];
             }
 
-            // Vérification de l'unicité de l'email
             if ($this->emailExists($data['email'], $user_id)) {
                 return [
                     "success" => false, 
@@ -63,7 +54,6 @@ class ProfileController {
                 ];
             }
 
-            // Récupérer l'utilisateur existant
             $utilisateur = $this->getUserById($user_id);
             if (!$utilisateur) {
                 return [
@@ -72,7 +62,6 @@ class ProfileController {
                 ];
             }
 
-            // Mettre à jour les propriétés de l'utilisateur
             $this->updateUserProperties($utilisateur, $data);
 
             // Sauvegarder les modifications
@@ -97,91 +86,80 @@ class ProfileController {
         }
     }
 
-    /**
-     * Met à jour la photo de profil
-     */
-  public function updateProfilePhoto($user_id, array $photo_file): array {
-    try {
-        // --- 1. Vérification du fichier uploadé ---
-        $validation = $this->validateUploadedFile($photo_file);
-        if (!$validation['success']) {
-            return $validation;
-        }
-
-        // --- 2. Récupérer l'utilisateur ---
-        $utilisateur = $this->getUserById($user_id);
-        if (!$utilisateur) {
-            return [
-                "success" => false,
-                "message" => "Utilisateur non trouvé"
-            ];
-        }
-
-        // --- 3. Supprimer l'ancienne photo si existante ---
-        $this->deleteOldProfilePhoto($utilisateur);
-
-        // --- 4. Générer un nom unique pour la photo ---
-        $new_filename = $this->generateProfileFilename($user_id, $photo_file['name']);
-        $file_path = $this->uploadDir . $new_filename;
-
-        // --- 5. Déplacer le fichier uploadé ---
-        if (!move_uploaded_file($photo_file['tmp_name'], $file_path)) {
-            return [
-                "success" => false,
-                "message" => "Erreur lors de l'enregistrement du fichier"
-            ];
-        }
-
-        // --- 6. Mettre à jour l'objet utilisateur ---
-        $utilisateur->setPhotoProfil($new_filename);
-
-        // --- 7. Sauvegarde avec reconnexion si nécessaire ---
+    public function updateProfilePhoto($user_id, array $photo_file): array {
         try {
-            if (!$this->saveUser($utilisateur)) {
-                throw new Exception("Impossible de sauvegarder l'utilisateur dans la base.");
+            $validation = $this->validateUploadedFile($photo_file);
+            if (!$validation['success']) {
+                return $validation;
             }
-        } catch (PDOException $e) {
-            // Si MySQL a fermé la connexion, on tente de reconnecter
-            if (strpos($e->getMessage(), 'MySQL server has gone away') !== false) {
-                error_log("Reconnect MySQL après déconnexion: " . $e->getMessage());
-                $this->pdo = config::getConnexion(); // Nouvelle connexion
-                if (!$this->saveUser($utilisateur)) {
+        
+            $utilisateur = $this->getUserById($user_id);
+            if (!$utilisateur) {
+                return [
+                    "success" => false,
+                    "message" => "Utilisateur non trouvé"
+                ];
+            }
+
+            $this->deleteOldProfilePhoto($utilisateur);
+
+            $new_filename = $this->generateProfileFilename($user_id, $photo_file['name']);
+            $file_path = $this->uploadDir . $new_filename;
+
+            if (!move_uploaded_file($photo_file['tmp_name'], $file_path)) {
+                return [
+                    "success" => false,
+                    "message" => "Erreur lors de l'enregistrement du fichier"
+                ];
+            }
+
+            $utilisateur->setImage($new_filename);
+
+            try {
+                if (!$this->saveUserPhoto($utilisateur)) {
                     // Supprimer la photo uploadée si échec
                     $this->deletePhotoFile($new_filename);
                     return [
                         "success" => false,
-                        "message" => "Erreur lors de la mise à jour après reconnexion MySQL"
+                        "message" => "Erreur lors de la mise à jour de la photo dans la base de données"
                     ];
                 }
-            } else {
-                // Autre erreur PDO
-                $this->deletePhotoFile($new_filename);
-                return [
-                    "success" => false,
-                    "message" => "Erreur MySQL: " . $e->getMessage()
-                ];
+            } catch (PDOException $e) {
+                if (strpos($e->getMessage(), 'MySQL server has gone away') !== false) {
+                    error_log("Reconnect MySQL après déconnexion: " . $e->getMessage());
+                    $this->pdo = config::getConnexion(); // Nouvelle connexion
+                    if (!$this->saveUserPhoto($utilisateur)) {
+                        $this->deletePhotoFile($new_filename);
+                        return [
+                            "success" => false,
+                            "message" => "Erreur lors de la mise à jour après reconnexion MySQL"
+                        ];
+                    }
+                } else {
+                    $this->deletePhotoFile($new_filename);
+                    return [
+                        "success" => false,
+                        "message" => "Erreur MySQL: " . $e->getMessage()
+                    ];
+                }
             }
+
+            return [
+                "success" => true,
+                "message" => "Photo de profil mise à jour avec succès",
+                "filename" => $new_filename,
+                "photo_url" => $this->getProfilePhotoUrl($new_filename)
+            ];
+
+        } catch (Exception $e) {
+            error_log("Erreur updateProfilePhoto: " . $e->getMessage());
+            return [
+                "success" => false,
+                "message" => "Une erreur est survenue lors de la mise à jour de la photo"
+            ];
         }
-
-        return [
-            "success" => true,
-            "message" => "Photo de profil mise à jour avec succès",
-            "filename" => $new_filename
-        ];
-
-    } catch (Exception $e) {
-        error_log("Erreur updateProfilePhoto: " . $e->getMessage());
-        return [
-            "success" => false,
-            "message" => "Une erreur est survenue lors de la mise à jour de la photo"
-        ];
     }
-}
 
-
-    /**
-     * Supprime la photo de profil
-     */
     public function deleteProfilePhoto($user_id): array {
         try {
             $utilisateur = $this->getUserById($user_id);
@@ -192,13 +170,11 @@ class ProfileController {
                 ];
             }
 
-            // Supprimer le fichier physique
             $this->deleteOldProfilePhoto($utilisateur);
 
-            // Mettre à jour l'utilisateur
-            $utilisateur->setPhotoProfil(null);
+            $utilisateur->setImage(null);
             
-            if ($this->saveUser($utilisateur)) {
+            if ($this->saveUserPhoto($utilisateur)) {
                 return [
                     "success" => true, 
                     "message" => "Photo de profil supprimée avec succès"
@@ -219,9 +195,6 @@ class ProfileController {
         }
     }
 
-    /**
-     * Récupère un utilisateur par son ID
-     */
     private function getUserById($user_id): ?Utilisateur {
         try {
             $query = "SELECT * FROM utilisateur WHERE id_utilisateur = ?";
@@ -237,36 +210,65 @@ class ProfileController {
         }
     }
 
-    /**
-     * Crée un objet Utilisateur à partir d'une ligne de base de données
-     */
     private function createUserFromRow(array $row): Utilisateur {
         $utilisateur = new Utilisateur(
             $row['nom'],
             $row['prenom'],
             $row['email'],
-            '', // Mot de passe vide - nous ne le manipulons pas directement
+            '',
             $row['dateNaissance'] ?? '',
             $row['adresse'] ?? '',
-            $row['role'] ?? 'utilisateur',
-            $row['statut'] ?? 'actif'
+            $row['role'] ?? 'patient',
+            $row['statut'] ?? 'en_attente',
+            $row['diplome_path'] ?? null,
+            $row['bio'] ?? null,
+            $row['idService'] ?? null,
+            $row['heure1_debut'] ?? null,
+            $row['heure1_fin'] ?? null,
+            $row['heure2_debut'] ?? null,
+            $row['heure2_fin'] ?? null,
+            $row['heure3_debut'] ?? null,
+            $row['heure3_fin'] ?? null,
+            $row['heure4_debut'] ?? null,
+            $row['heure4_fin'] ?? null,
+            $row['image'] ?? null,
+            $row['note_globale'] ?? 0,
+            $row['nb_avis'] ?? 0,
+            $row['langues'] ?? null,
+            $row['prix_consultation'] ?? null,
+            $row['experience'] ?? null,
+            $row['username'] ?? null,
+            $row['specialite'] ?? null
         );
         
         $utilisateur->setId($row['id_utilisateur'])
-                   ->setDateInscription($row['date_inscription'])
-                   ->setPhotoProfil($row['photo_profil'] ?? null);
+                   ->setDateInscription($row['date_inscription'] ?? date('Y-m-d H:i:s'))
+                   ->setMotDePasse($row['mot_de_passe'], true)
+                   ->setResetToken($row['reset_token'] ?? null)
+                   ->setResetTokenExpires($row['reset_token_expires'] ?? null)
+                   ->setHistoriqueConnexions($row['historique_connexions'] ?? null)
+                   ->setDiplomeStatut($row['diplome_statut'] ?? 'en attente')
+                   ->setDiplomeCommentaire($row['diplome_commentaire'] ?? null)
+                   ->setDiplomeDateVerification($row['diplome_date_verification'] ?? null)
+                   ->setDerniereConnexion($row['derniere_connexion'] ?? null);
         
         return $utilisateur;
     }
 
-    /**
-     * Sauvegarde un utilisateur dans la base de données
-     */
     private function saveUser(Utilisateur $utilisateur): bool {
         try {
             $query = "UPDATE utilisateur SET 
                      nom = ?, prenom = ?, email = ?, dateNaissance = ?, 
-                     adresse = ?, role = ?, statut = ?, photo_profil = ?
+                     adresse = ?, role = ?, statut = ?, bio = ?, 
+                     idService = ?, username = ?, specialite = ?,
+                     date_inscription = ?, reset_token = ?, reset_token_expires = ?,
+                     diplome_path = ?, historique_connexions = ?, diplome_statut = ?,
+                     diplome_commentaire = ?, diplome_date_verification = ?,
+                     derniere_connexion = ?, heure1_debut = ?, heure1_fin = ?,
+                     heure2_debut = ?, heure2_fin = ?, heure3_debut = ?,
+                     heure3_fin = ?, heure4_debut = ?, heure4_fin = ?,
+                     note_globale = ?, nb_avis = ?, langues = ?,
+                     prix_consultation = ?, experience = ?, image = ?
                      WHERE id_utilisateur = ?";
             
             $stmt = $this->pdo->prepare($query);
@@ -279,7 +281,33 @@ class ProfileController {
                 $utilisateur->getAdresse(),
                 $utilisateur->getRole(),
                 $utilisateur->getStatut(),
-                $utilisateur->getPhotoProfil(),
+                $utilisateur->getBio(),
+                $utilisateur->getIdService(),
+                $utilisateur->getUsername(),
+                $utilisateur->getSpecialite(),
+                $utilisateur->getDateInscription(),
+                $utilisateur->getResetToken(),
+                $utilisateur->getResetTokenExpires(),
+                $utilisateur->getDiplomePath(),
+                $utilisateur->getHistoriqueConnexions(),
+                $utilisateur->getDiplomeStatut(),
+                $utilisateur->getDiplomeCommentaire(),
+                $utilisateur->getDiplomeDateVerification(),
+                $utilisateur->getDerniereConnexion(),
+                $utilisateur->getHeure1Debut(),
+                $utilisateur->getHeure1Fin(),
+                $utilisateur->getHeure2Debut(),
+                $utilisateur->getHeure2Fin(),
+                $utilisateur->getHeure3Debut(),
+                $utilisateur->getHeure3Fin(),
+                $utilisateur->getHeure4Debut(),
+                $utilisateur->getHeure4Fin(),
+                $utilisateur->getNoteGlobale(),
+                $utilisateur->getNbAvis(),
+                $utilisateur->getLangues(),
+                $utilisateur->getPrixConsultation(),
+                $utilisateur->getExperience(),
+                $utilisateur->getImage(),
                 $utilisateur->getId()
             ]);
             
@@ -289,9 +317,25 @@ class ProfileController {
         }
     }
 
-    /**
-     * Vérifie si un email existe déjà
-     */
+    private function saveUserPhoto(Utilisateur $utilisateur): bool {
+        try {
+            $query = "UPDATE utilisateur SET 
+                     image = ?
+                     WHERE id_utilisateur = ?";
+            
+            $stmt = $this->pdo->prepare($query);
+            
+            return $stmt->execute([
+                $utilisateur->getImage(),
+                $utilisateur->getId()
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Erreur saveUserPhoto: " . $e->getMessage());
+            return false;
+        }
+    }
+
     private function emailExists($email, $exclude_user_id = null): bool {
         try {
             if ($exclude_user_id) {
@@ -313,9 +357,6 @@ class ProfileController {
         }
     }
 
-    /**
-     * Valide les champs requis
-     */
     private function validateRequiredFields(array $data, array $required_fields): bool {
         foreach ($required_fields as $field) {
             if (empty($data[$field])) {
@@ -325,25 +366,27 @@ class ProfileController {
         return true;
     }
 
-    /**
-     * Met à jour les propriétés d'un utilisateur
-     */
     private function updateUserProperties(Utilisateur $utilisateur, array $data): void {
         $utilisateur->setNom($data['nom'])
                    ->setPrenom($data['prenom'])
                    ->setEmail($data['email'])
                    ->setDateNaissance($data['dateNaissance'] ?? null)
-                   ->setAdresse($data['adresse'] ?? null);
+                   ->setAdresse($data['adresse'] ?? null)
+                   ->setBio($data['bio'] ?? null);
+        
+        if (isset($data['username'])) {
+            $utilisateur->setUsername($data['username']);
+        }
+        
+        if (isset($data['specialite'])) {
+            $utilisateur->setSpecialite($data['specialite']);
+        }
     }
 
-    /**
-     * Valide un fichier uploadé
-     */
     private function validateUploadedFile(array $file): array {
         $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         $max_file_size = 2 * 1024 * 1024; // 2MB
 
-        // Vérifier les erreurs d'upload
         if ($file['error'] !== UPLOAD_ERR_OK) {
             return [
                 "success" => false,
@@ -351,7 +394,6 @@ class ProfileController {
             ];
         }
 
-        // Vérifier la taille
         if ($file['size'] > $max_file_size) {
             return [
                 "success" => false,
@@ -359,7 +401,6 @@ class ProfileController {
             ];
         }
 
-        // Vérifier le type MIME
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $file_type = finfo_file($finfo, $file['tmp_name']);
         finfo_close($finfo);
@@ -371,7 +412,6 @@ class ProfileController {
             ];
         }
 
-        // Vérifier que c'est une image valide
         if (!getimagesize($file['tmp_name'])) {
             return [
                 "success" => false,
@@ -382,9 +422,6 @@ class ProfileController {
         return ["success" => true];
     }
 
-    /**
-     * Génère un nom de fichier unique pour la photo de profil
-     */
     private function generateProfileFilename($user_id, $original_filename): string {
         $extension = strtolower(pathinfo($original_filename, PATHINFO_EXTENSION));
         $extension = $extension === 'jpeg' ? 'jpg' : $extension;
@@ -398,26 +435,13 @@ class ProfileController {
         );
     }
 
-    /**
-     * Déplace un fichier uploadé
-     */
-    private function moveUploadedFile($tmp_path, $destination): bool {
-        return move_uploaded_file($tmp_path, $destination);
-    }
-
-    /**
-     * Supprime l'ancienne photo de profil
-     */
     private function deleteOldProfilePhoto(Utilisateur $utilisateur): void {
-        $old_photo = $utilisateur->getPhotoProfil();
+        $old_photo = $utilisateur->getImage();
         if ($old_photo) {
             $this->deletePhotoFile($old_photo);
         }
     }
 
-    /**
-     * Supprime un fichier photo
-     */
     private function deletePhotoFile($filename): bool {
         $file_path = $this->uploadDir . $filename;
         if (file_exists($file_path)) {
@@ -426,9 +450,6 @@ class ProfileController {
         return false;
     }
 
-    /**
-     * Retourne un message d'erreur pour les codes d'erreur d'upload
-     */
     private function getUploadErrorMessage($error_code): string {
         $errors = [
             UPLOAD_ERR_INI_SIZE => 'Le fichier est trop volumineux',
@@ -443,9 +464,6 @@ class ProfileController {
         return $errors[$error_code] ?? 'Erreur inconnue lors de l\'upload';
     }
 
-    /**
-     * Obtient l'URL de la photo de profil
-     */
     public function getProfilePhotoUrl($photo_filename): ?string {
         if (empty($photo_filename)) {
             return null;
@@ -460,9 +478,6 @@ class ProfileController {
         return $this->webUploadPath . $photo_filename . '?t=' . filemtime($file_path);
     }
 
-    /**
-     * Obtient le chemin absolu de la photo
-     */
     public function getProfilePhotoPath($photo_filename): ?string {
         if (empty($photo_filename)) {
             return null;
@@ -472,9 +487,6 @@ class ProfileController {
         return file_exists($file_path) ? $file_path : null;
     }
 
-    /**
-     * Vérifie si une photo de profil existe
-     */
     public function profilePhotoExists($photo_filename) {
         if (empty($photo_filename)) {
             return false;
@@ -484,9 +496,6 @@ class ProfileController {
         return file_exists($file_path) && is_file($file_path);
     }
     
-    /**
-     * Méthode de débogage pour vérifier la configuration
-     */
     public function debugConfiguration() {
         return [
             'uploadDir' => $this->uploadDir,

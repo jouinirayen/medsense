@@ -132,12 +132,10 @@ class UtilisateurController {
         }
     }
 
-    /**
-     * Supprimer un utilisateur
-     */
+  
     public function deleteUser($id): array {
         try {
-            // Vérifier si l'utilisateur existe
+            
             $existingUser = $this->getUserById($id);
             if (!$existingUser) {
                 return ["success" => false, "message" => "Utilisateur non trouvé"];
@@ -156,9 +154,7 @@ class UtilisateurController {
         }
     }
 
-    /**
-     * Rechercher des utilisateurs
-     */
+    
     public function searchUsers($search) {
         try {
             $req = $this->pdo->prepare(
@@ -175,9 +171,8 @@ class UtilisateurController {
         }
     }
 
-    /**
-     * Obtenir les statistiques
-     */
+    
+     
     public function getStats(): array {
         try {
             $stats = [];
@@ -201,9 +196,7 @@ class UtilisateurController {
         }
     }
 
-    /**
-     * Vérifier si un email existe
-     */
+   
     public function emailExists($email, $excludeId = null): bool {
         try {
             if ($excludeId) {
@@ -223,9 +216,7 @@ class UtilisateurController {
         }
     }
 
-    /**
-     * Convertir une ligne DB en objet Utilisateur
-     */
+   
     private function rowToUser($row): Utilisateur {
         $user = new Utilisateur(
             $row['nom'],
@@ -249,12 +240,10 @@ class UtilisateurController {
         return $user;
     }
 
-    /**
-     * Mettre à jour le chemin du diplôme d'un utilisateur
-     */
+   
     public function updateDiplomePath($userId, $diplomePath): array {
         try {
-            // Vérifier si l'utilisateur existe
+           
             $existingUser = $this->getUserById($userId);
             if (!$existingUser) {
                 return ["success" => false, "message" => "Utilisateur non trouvé"];
@@ -274,12 +263,10 @@ class UtilisateurController {
         }
     }
 
-    /**
-     * Supprimer le diplôme d'un utilisateur
-     */
+  
     public function removeDiplome($userId): array {
         try {
-            // Vérifier si l'utilisateur existe
+            
             $existingUser = $this->getUserById($userId);
             if (!$existingUser) {
                 return ["success" => false, "message" => "Utilisateur non trouvé"];
@@ -299,9 +286,7 @@ class UtilisateurController {
         }
     }
 
-    /**
-     * Obtenir les médecins avec diplôme (pour validation)
-     */
+  
     public function getMedecinsWithDiplome() {
         try {
             $req = $this->pdo->query(
@@ -321,9 +306,7 @@ class UtilisateurController {
         }
     }
 
-    /**
-     * Obtenir les utilisateurs par rôle
-     */
+    
     public function getUsersByRole($role, $withDiplomeOnly = false) {
         try {
             $sql = 'SELECT * FROM utilisateur WHERE role = ?';
