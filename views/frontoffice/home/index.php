@@ -2,25 +2,6 @@
 session_start();
 require_once __DIR__ . '/../../../controllers/AuthController.php';
 
-
-$current_ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-$current_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
-
-$old_ip = $_SESSION['ia_last_ip'] ?? null;
-$old_agent = $_SESSION['ia_last_agent'] ?? null;
-
-$alerts = [];
-if ($old_ip && $old_ip !== $current_ip) {
-    $alerts[] = "⚠️ Nouvelle adresse IP détectée : $current_ip";
-}
-if ($old_agent && $old_agent !== $current_agent) {
-    $alerts[] = "⚠️ Nouveau navigateur détecté";
-}
-
-$_SESSION['ia_last_ip'] = $current_ip;
-$_SESSION['ia_last_agent'] = $current_agent;
-$ia_security_alert = $alerts ? implode("<br>", $alerts) : null;
-
 $authController = new AuthController();
 $isLoggedIn = $authController->isLoggedIn();
 
@@ -36,7 +17,6 @@ if ($isLoggedIn) {
 <!DOCTYPE html>
 <html lang="fr">
 <head>
- 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Medsense Medical - Votre plateforme de santé en ligne. Prenez rendez-vous avec des médecins qualifiés, gérez vos consultations et accédez à des ressources médicales.">
@@ -45,13 +25,10 @@ if ($isLoggedIn) {
     <title>Medsense Medical - Plateforme de santé en ligne</title>
     <link rel="icon" href="../../assets/img/favicon.png" type="image/png">
     
-    
     <link rel="stylesheet" href="../../assets/css/bootstrap.css">
     <link rel="stylesheet" href="../../assets/css/style.css">
-    <link rel="stylesheet" href="../../assets/css/chatbot.css">
     <link rel="stylesheet" href="../../assets/vendors/fontawesome/css/all.min.css">
     
-   
     <style>
         :root {
             --medical-blue: #1a73e8;
@@ -72,19 +49,6 @@ if ($isLoggedIn) {
             --shadow-medium: 0 6px 15px rgba(0, 0, 0, 0.07);
             --shadow-strong: 0 10px 25px rgba(0, 0, 0, 0.1);
             --transition: all 0.3s ease;
-        }
-      
-        .security-alert {
-            background: #fff5f5;
-            color: #c53030;
-            border-left: 4px solid var(--danger-color);
-            padding: 15px 20px;
-            margin: 0 auto 15px;
-            border-radius: 0 8px 8px 0;
-            font-size: 14px;
-            max-width: 100%;
-            box-shadow: var(--shadow-light);
-            animation: fadeInUp 0.6s ease-out;
         }
         
         .ms-header {
@@ -202,7 +166,6 @@ if ($isLoggedIn) {
             color: #c0392b !important;
         }
         
-       
         .ms-hero {
             background: linear-gradient(135deg, var(--medical-light-blue) 0%, var(--medical-light-cyan) 100%);
             padding: 120px 20px;
@@ -281,7 +244,6 @@ if ($isLoggedIn) {
             font-size: 20px;
         }
 
-      
         .appointment-section {
             padding: 100px 20px;
             background: var(--light-color);
@@ -368,7 +330,6 @@ if ($isLoggedIn) {
             cursor: not-allowed;
         }
         
-      
         .cta-section {
             background: linear-gradient(135deg, var(--medical-blue) 0%, var(--medical-teal) 100%);
             padding: 100px 20px;
@@ -455,7 +416,6 @@ if ($isLoggedIn) {
             transform: translateY(-3px);
         }
         
-        /* ============ FOOTER CORPORATE ============ */
         .ms-footer {
             background: var(--medical-dark-blue);
             color: white;
@@ -532,7 +492,6 @@ if ($isLoggedIn) {
             animation: fadeInUp 0.6s ease-out;
         }
         
-     
         .role-badge {
             display: inline-flex;
             align-items: center;
@@ -555,7 +514,6 @@ if ($isLoggedIn) {
             border: 1px solid rgba(244, 67, 54, 0.3);
         }
         
-   
         @media (max-width: 992px) {
             .ms-hero-title {
                 font-size: 2.8rem;
@@ -668,14 +626,6 @@ if ($isLoggedIn) {
     </style>
 </head>
 <body>
-    <?php if (!empty($ia_security_alert)): ?>
-    <div class="security-alert">
-        <strong><i class="fas fa-shield-alt"></i> Sécurité :</strong><br>
-        <?= $ia_security_alert ?>
-    </div>
-    <?php endif; ?>
-    
-
     <header class="ms-header animate-fade-in-up">
         <nav class="ms-nav">
             <div class="ms-left">
@@ -869,217 +819,6 @@ if ($isLoggedIn) {
         </div>
     </footer>
 
-    
-    <button class="chatbot-btn" id="chatbot-btn" title="Assistant Medsense AI">
-        <i class="fas fa-robot"></i>
-    </button>
-
-    <div class="chatbot-box" id="chatbot-box">
-        <div class="chatbot-header">
-            <h4><i class="fas fa-heartbeat"></i> Medsense AI Assistant</h4>
-            <button class="close-chat" id="close-chat" title="Fermer">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
-        <div class="chat-body" id="chat-body">
-            <div class="bot-msg">
-                <strong>👋 Bonjour ! Je suis Medsense AI, votre assistant médical virtuel.</strong> 🤖<br><br>
-                <strong>Je peux vous aider avec :</strong><br>
-                • <strong>Rendez-vous</strong> 🩺 : Prise de RDV en ligne<br>
-                • <strong>Réclamations</strong> 📝 : Dépôt et suivi<br>
-                • <strong>Urgences</strong> 🚨 : Guide d'urgence médicale<br>
-                • <strong>Blog</strong> 📚 : Articles médicaux<br>
-                • <strong>Fonctionnalités</strong> 🌟 : Utilisation du site<br><br>
-                <em>Comment puis-je vous aider aujourd'hui ?</em>
-            </div>
-        </div>
-        
-        <div class="suggestions">
-            <h6><i class="fas fa-lightbulb"></i> Suggestions rapides :</h6>
-            <div class="suggestion-chips">
-                <div class="suggestion-chip" data-question="Comment prendre rendez-vous ?">Prendre RDV</div>
-                <div class="suggestion-chip" data-question="Comment déposer une réclamation ?">Réclamation</div>
-                <div class="suggestion-chip urgent-chip" data-question="Que faire en cas d'urgence ?">URGENCE</div>
-                <div class="suggestion-chip" data-question="Comment accéder au blog ?">Blog médical</div>
-                <div class="suggestion-chip" data-question="Quelles sont vos fonctionnalités ?">Fonctionnalités</div>
-                <div class="suggestion-chip" data-question="Comment vous contacter ?">Contact</div>
-            </div>
-        </div>
-        
-        <div class="chat-input-area">
-            <input type="text" class="chat-input" id="user-input" 
-                   placeholder="Posez votre question sur Medsense..." autocomplete="off">
-            <button class="send-btn" id="send-btn" title="Envoyer">
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </div>
-    </div>
-
-    
     <script src="../../assets/js/animations.js"></script>
-    
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-       
-        const chatbotBtn = document.getElementById('chatbot-btn');
-        const chatbotBox = document.getElementById('chatbot-box');
-        const closeChat = document.getElementById('close-chat');
-        const sendBtn = document.getElementById('send-btn');
-        const userInput = document.getElementById('user-input');
-        const chatBody = document.getElementById('chat-body');
-        const suggestionChips = document.querySelectorAll('.suggestion-chip');
-        
-        let isTyping = false;
-
-        
-        chatbotBtn.addEventListener('click', () => {
-            chatbotBox.style.display = 'flex';
-            setTimeout(() => chatbotBox.style.opacity = '1', 10);
-            userInput.focus();
-        });
-       
-        closeChat.addEventListener('click', () => {
-            chatbotBox.style.opacity = '0';
-            setTimeout(() => chatbotBox.style.display = 'none', 300);
-        });
-        
-        document.addEventListener('click', (e) => {
-            if (!chatbotBox.contains(e.target) && 
-                e.target !== chatbotBtn && 
-                !chatbotBtn.contains(e.target)) {
-                chatbotBox.style.opacity = '0';
-                setTimeout(() => chatbotBox.style.display = 'none', 300);
-            }
-        });
-
-        
-        suggestionChips.forEach(chip => {
-            chip.addEventListener('click', () => {
-                const question = chip.getAttribute('data-question');
-                addMessage(question, 'user');
-                processMessage(question);
-            });
-        });
-
-       
-        userInput.addEventListener('keypress', (e) => {
-            if(e.key === 'Enter' && !e.shiftKey && !isTyping) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        sendBtn.addEventListener('click', sendMessage);
-
-        
-        function sendMessage() {
-            if (isTyping) return;
-            
-            const message = userInput.value.trim();
-            if(!message) return;
-
-            addMessage(message, 'user');
-            userInput.value = '';
-            
-            processMessage(message);
-        }
-
-        function processMessage(message) {
-            isTyping = true;
-            
-            const typingMsg = document.createElement('div');
-            typingMsg.className = 'bot-msg typing';
-            typingMsg.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
-            chatBody.appendChild(typingMsg);
-            chatBody.scrollTop = chatBody.scrollHeight;
-
-            setTimeout(() => {
-                fetch('../../../controllers/chatbot.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'message=' + encodeURIComponent(message)
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error('Erreur réseau');
-                    return response.json();
-                })
-                .then(data => {
-                    typingMsg.remove();
-                    
-                    if (data.choices?.[0]?.message?.content) {
-                        const botMessage = data.choices[0].message.content;
-                        addMessage(botMessage, 'bot');
-                    } else if (data.response) {
-                        addMessage(data.response, 'bot');
-                    } else {
-                        addMessage('Je n\'ai pas compris votre demande. Pouvez-vous reformuler ?', 'bot');
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur:', error);
-                    typingMsg.remove();
-                    addMessage('⚠️ **Service temporairement indisponible**\n\nContactez-nous :\n📞 **Téléphone** : 01 23 45 67 89\n📧 **Email** : contact@medsense.com', 'bot');
-                })
-                .finally(() => {
-                    isTyping = false;
-                });
-            }, 800);
-        }
-
-        
-        function speak(text) {
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'fr-FR';
-                utterance.pitch = 1;
-                utterance.rate = 1;
-                speechSynthesis.speak(utterance);
-            }
-        }
-
-     
-        function addMessage(text, sender) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `${sender}-msg`;
-
-            let formattedText = text
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/\n/g, '<br>')
-                .replace(/•/g, '•');
-
-            messageDiv.innerHTML = formattedText;
-            
-            chatBody.appendChild(messageDiv);
-            chatBody.scrollTop = chatBody.scrollHeight;
-
-            if(sender === 'bot') {
-                speak(text);
-            }
-        }
-        
-        
-        const observerOptions = {
-            threshold: 0.1
-        };
-        
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.animation = 'fadeInUp 0.6s ease-out forwards';
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, observerOptions);
-        
-        
-        document.querySelectorAll('.appointment-card, .cta-content, .ms-hero-badges').forEach(el => {
-            observer.observe(el);
-        });
-    });
-    </script>
 </body>
 </html>
