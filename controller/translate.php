@@ -12,7 +12,7 @@ if (empty($text)) {
 }
 
 // Colle TA NOUVELLE CLÉ ICI
-$api_key = "AIzaSyCyi8L3OW2jcokR310OUMm5kkfLRFO3CLU";  // Ex: AIzaSyBxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+$api_key = "AIzaSyD2fhNYnKvbGJqdwn4lHcWVXIMnZsHL-pA";  // Ex: AIzaSyBxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 $prompt = "Traduis ce texte en français, anglais et arabe.
 Réponds EXACTEMENT avec ce format (rien d'autre, pas de code, pas d'explication) :

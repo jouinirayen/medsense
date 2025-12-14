@@ -2,7 +2,7 @@
 <?php
 header('Content-Type: application/json');
 
-$api_key = 'AIzaSyDHALdM7gvJtLV6nDcKF2OdPWmQNu-g_As'; // Mets ici ta clé API Gemini
+$api_key = 'AIzaSyCIh75IA3NwdMxmGA9ZEdk_aDmNt-7PVfs'; // Mets ici ta clé API Gemini
 
 $data = json_decode(file_get_contents('php://input'), true);
 $message = trim($data['text'] ?? '');
