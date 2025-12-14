@@ -1,3 +1,4 @@
+
 <?php
 // translate.php – VERSION FINALE DÉCEMBRE 2025 (Gemini 2.5 Flash – 100% stable & fonctionnel)
 header('Content-Type: application/json');

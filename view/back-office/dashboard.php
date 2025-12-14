@@ -1,3 +1,4 @@
+
 <?php
 session_start();
 // Vérification d'authentification

@@ -1,3 +1,4 @@
+
 <?php
 class likeC {
     private $pdo;
