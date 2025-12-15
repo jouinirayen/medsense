@@ -1,7 +1,7 @@
 
 <?php
 // Controller/utilisateurC.php
-require_once '../../config.php';
+require_once '../../config/config.php';
 
 class utilisateurC {
 
