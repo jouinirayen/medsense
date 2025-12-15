@@ -1,8 +1,7 @@
-
 <?php
 header('Content-Type: application/json');
 
-$api_key = 'AIzaSyCIh75IA3NwdMxmGA9ZEdk_aDmNt-7PVfs'; // Mets ici ta clé API Gemini
+$api_key = 'AIzaSyCLy5UQYdKymJ1KsIctvDeSIrZ8Te76lBg'; // Crée une fraîche sur https://aistudio.google.com/app/apikey
 
 $data = json_decode(file_get_contents('php://input'), true);
 $message = trim($data['text'] ?? '');
@@ -42,7 +41,7 @@ $message
 ";
 
 /*
-   PAYLOAD JSON → structure officielle Gemini 2.5 v1beta
+   PAYLOAD JSON → structure officielle Gemini 2.5 v1beta (corrigé)
 */
 $payload = [
     "contents" => [
@@ -53,7 +52,7 @@ $payload = [
             ]
         ]
     ],
-    "system_instruction" => [
+    "systemInstruction" => [  // ← CHANGÉ : camelCase au lieu de snake_case
         "parts" => [
             ["text" => $systemPrompt]
         ]
@@ -64,17 +63,16 @@ $payload = [
     ]
 ];
 
-// Endpoint officiel
-$url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+// Endpoint officiel + clé en query param (CORRIGÉ)
+$url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" . $api_key;
 
-// cURL
+// cURL (header faux supprimé)
 $ch = curl_init($url);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST => true,
     CURLOPT_HTTPHEADER => [
-        'Content-Type: application/json',
-        'x-goog-api-key: ' . $api_key
+        'Content-Type: application/json'
     ],
     CURLOPT_POSTFIELDS => json_encode($payload),
     CURLOPT_TIMEOUT => 30,
@@ -87,17 +85,18 @@ $curl_error = curl_error($ch);
 curl_close($ch);
 
 /*
-   DEBUG LOGS — très utiles pour XAMPP
+   DEBUG LOGS — garde-les pour tester
 */
 error_log("=== GEMINI DEBUG ===");
 error_log("HTTP Code: $http_code");
 error_log("cURL Error: $curl_error");
 error_log("Message envoyé: $message");
+error_log("URL appelée: $url");
 error_log("Payload JSON: " . json_encode($payload));
 error_log("Réponse brute: " . $response);
 
 if ($curl_error || $http_code !== 200) {
-    echo json_encode(['response' => "IA indisponible ($http_code). Réessaie."]);
+    echo json_encode(['response' => "IA indisponible (HTTP $http_code). Réessaie ou vérifie les logs."]);
     exit;
 }
 

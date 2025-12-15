@@ -400,11 +400,11 @@ if (!document.getElementById('gemini-chat-widget')) {
 
         const loader = addMessage('En train de réfléchir...', 'bot');
         try {
-            const response = await fetch('../../Controller/gemini.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: text })  // ←←← IMPORTANT : "text" au lieu de juste "text"
-            });
+            const response = await fetch('../../Controllers/gemini.php', {  // ← Ajoute "s"
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: text })
+});
 
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);

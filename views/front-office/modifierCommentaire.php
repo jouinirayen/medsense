@@ -1,6 +1,6 @@
 
 <?php
-require_once '../../Controller/commentaireC.php';
+require_once '../../Controllers/commentaireC.php';
 
 $cc = new commentaireC();
 

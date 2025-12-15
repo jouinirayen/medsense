@@ -1,7 +1,7 @@
 
 <?php
 session_start();
-require_once '../../Controller/likeC.php';
+require_once '../../Controllers/likeC.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: liste.php');

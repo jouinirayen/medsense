@@ -1,6 +1,6 @@
 <?php
 // views/blog/supprimerCommentaire.php
-require_once '../../Controller/commentaireC.php';
+require_once '../../Controllers/commentaireC.php';
 
 if (isset($_GET['id'])) {
     $cc = new commentaireC();

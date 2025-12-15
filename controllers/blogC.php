@@ -1,7 +1,7 @@
 
 <?php
 require_once '../../config.php';
-require_once '../../model/blog.php';
+require_once '../../models/blog.php';
 
 class blogC {
 

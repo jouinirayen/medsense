@@ -1,8 +1,8 @@
 <?php
 session_start();
-require_once '../../Controller/blogC.php';
-require_once '../../Controller/commentaireC.php';
-require_once '../../Controller/likeC.php';
+require_once '../../Controllers/blogC.php';
+require_once '../../Controllers/commentaireC.php';
+require_once '../../Controllers/likeC.php';
 
 $blogC = new blogC();
 $liste = $blogC->publier();
@@ -886,8 +886,12 @@ foreach ($comments as $c):
                     return;
                 }
             } catch (err) {
-                console.warn('API badwords indisponible, on laisse passer');
-            }
+    console.warn('API badwords indisponible, on laisse passer');
+    Swal.fire('Erreur', 'Impossible de vérifier les mots interdits. Veuillez réessayer.', 'error');
+    btn.innerHTML = oldIcon;
+    btn.disabled = false;
+    return; // ← Bloque la soumission si API down
+}
 
             form.submit();
         }
@@ -999,9 +1003,10 @@ document.querySelectorAll('.translate-btn').forEach(btn => {
                 box.style.display = 'block';
             }
         } catch (e) {
-            box.innerHTML = '<span style="color:#ef4444;">Serveur indisponible</span>';
-            box.style.display = 'block';
-        }
+    console.error('Erreur traduction:', e);
+    box.innerHTML = '<span style="color:#ef4444;">Serveur indisponible<br><small>Vérifie la console pour détails</small></span>';
+    box.style.display = 'block';
+}
 
         // Remettre le bouton normal
         this.innerHTML = '<i class="fas fa-language"></i> Traduire';

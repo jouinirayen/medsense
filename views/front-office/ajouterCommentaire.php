@@ -1,7 +1,7 @@
 <?php
 session_start();
-require_once '../../Controller/commentaireC.php';
-require_once '../../Model/commentaire.php';
+require_once '../../Controllers/commentaireC.php';
+require_once '../../Models/commentaire.php';
 
 // === Vérification de connexion ===
 if (!isset($_SESSION['user_id'])) {

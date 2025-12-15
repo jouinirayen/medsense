@@ -1,6 +1,6 @@
 
 <?php
-require_once '../../Controller/blogC.php';
+require_once '../../Controllers/blogC.php';
 
 $pc = new blogC();
 

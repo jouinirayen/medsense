@@ -6,11 +6,11 @@ if (!isset($_SESSION['user_id'])) {
     die('Non connecté');
 }
 
-require_once '../../controller/blogC.php';
-require_once '../../model/blog.php';
+require_once '../../controllers/blogC.php';
+require_once '../../models/blog.php';
 
 // ================= CHEMINS SÛRS =================
-$uploadDirPhysical = __DIR__ . '/../../view/uploads/';  // Chemin ABSOLU sur le disque
+$uploadDirPhysical = __DIR__ . '/../../views/uploads/';  // Chemin ABSOLU sur le disque
 $uploadDirInDB     = 'uploads/';                        // Ce qu’on enregistre en base (parfait comme ça)
 
 // Créer le dossier s’il n’existe pas

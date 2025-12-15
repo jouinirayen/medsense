@@ -14,8 +14,8 @@ $avatarSVG = '<svg class="avatar-svg" width="100%" height="100%" viewBox="0 0 10
 </svg>';
 
 // Inclusion des contrôleurs
-require_once '../../Controller/blogC.php';
-require_once '../../Controller/commentaireC.php';
+require_once '../../Controllers/blogC.php';
+require_once '../../Controllers/commentaireC.php';
 
 $blogC = new blogC();
 $commentaireC = new commentaireC();
@@ -207,11 +207,11 @@ if (strpos($rawPath, 'http://') === 0 || strpos($rawPath, 'https://') === 0) {
 }
 // Cas 2 : chemin relatif qui commence déjà par uploads/
 elseif (strpos($rawPath, 'uploads/') === 0) {
-    $displayPath = '/blog/view/' . $rawPath;
+    $displayPath = '/projet_unifie/views/' . $rawPath;
 }
 // Cas 3 : juste le nom du fichier (ex: "photo.jpg" ou "dossier/photo.jpg")
 else {
-    $displayPath = '/blog/view/uploads/' . $rawPath;
+    $displayPath = '/projet_unifie/views/uploads/' . $rawPath;
 }
 ?>
 

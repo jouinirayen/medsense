@@ -3,11 +3,11 @@
 session_start();
 if (!isset($_SESSION['admin'])) exit;
 
-require_once '../../Controller/blogC.php';
+require_once '../../Controllers/blogC.php';
 $blogC = new blogC();
 
 if (isset($_POST['id'])) {
-    $blogC->refuserPost($_POST['id']);
+    $blogC->approuverPost($_POST['id']);
 }
 header("Location: dashboard.php");
 exit;

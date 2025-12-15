@@ -1,8 +1,8 @@
 
 <?php
 session_start();
-require_once '../../Controller/blogC.php';
-require_once '../../Model/blog.php';
+require_once '../../Controllers/blogC.php';
+require_once '../../Models/blog.php';
 
 $bc = new blogC();
 $id = (int)$_GET['id'] ?? 0;
