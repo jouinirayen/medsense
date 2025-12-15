@@ -983,7 +983,7 @@ document.querySelectorAll('.translate-btn').forEach(btn => {
         this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traduction...';
 
         try {
-            const res = await fetch('../../Controller/translate.php', {
+            const res = await fetch('../../Controllers/translate.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text: text })
